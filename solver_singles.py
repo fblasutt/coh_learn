@@ -58,7 +58,7 @@ def v_iter_single(setup,t,EV,female,ushift,force_f32=False):
         (x.squeeze(axis=2) for x in [V_0, c_opt, x_opt, s_opt, i_opt])
     
     
-    EVexp = setup.vsgrid_s.apply_preserve_shape(EV)
+    EVexp =  EV if isinstance(setup.vsgrid_s,(np.ndarray)) else setup.vsgrid_s.apply_preserve_shape(EV)
     V_ret = setup.u_single_pub(c_opt,x_opt,ls) + ushift + beta*np.take_along_axis(EVexp,i_opt,0)
     
     assert V_ret.dtype==dtype

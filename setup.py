@@ -19,7 +19,7 @@ from scipy import sparse
 class ModelSetup(object):
     def __init__(self,nogrid=False,divorce_costs='Default',separation_costs='Default',**kwargs): 
         p = dict()       
-        period_year=1#this can be 1,2,3 or 6
+        period_year=6#this can be 1,2,3 or 6
         transform=2#this tells how many periods to pull together for duration moments
         T = int(62/period_year)
         Tret = int(47/period_year) # first period when the agent is retired
@@ -320,6 +320,19 @@ class ModelSetup(object):
         self.sgrid_s = build_s_grid(self.agrid_s,s_between,s_da_min,s_da_max)
         self.vsgrid_s = VecOnGrid(self.agrid_s,self.sgrid_s)
         
+#        #No assets stuff
+#        self.na=1
+#        self.agrid_s=np.array([0.0])
+#        self.sgrid_s=np.array([0.0])
+#        self.vsgrid_s =np.array([0.0])
+#        self.agrid_c=np.array([0.0])
+#        self.sgrid_c=np.array([0.0])
+#        self.vsgrid_c =np.array([0.0])
+#        self.amin = 0
+#        self.amax = 0
+#        self.amax1 = 0
+        
+        
         # grid for theta
         self.ntheta = 21
         self.thetamin = 0.02
@@ -417,12 +430,12 @@ class ModelSetup(object):
         self.mgrid = np.zeros(nm,dtype=self.dtype)
         self.mgrid[ndense:] = gsparse
         self.mgrid[:(ndense+1)] = gdense
-        assert np.all(np.diff(self.mgrid)>0)
+        assert np.all(np.diff(self.mgrid)>=0)
         
         self.u_precompute()
         
         
-    def mar_mats_assets(self,npoints=8,abar=0.1):
+    def mar_mats_assets(self,npoints=1,abar=0.1):
         # for each grid point on single's grid it returns npoints positions
         # on (potential) couple's grid's and assets of potential partner 
         # (that can be off grid) and correpsonding probabilities. 
@@ -446,12 +459,12 @@ class ModelSetup(object):
             for ia, a in enumerate(agrid_s):
                 lagrid_t = np.zeros_like(agrid_c)
                 
-                i_neg = (agrid_c <= max(abar,a) - 1e-6)
+                i_neg = (agrid_c <= max(abar,a) - 1e-6) if na>1 else np.array([True],dtype=bool) 
                 
                 # if a is zero this works a bit weird but does the job
                 
                 lagrid_t[~i_neg] = np.log(2e-6 + (agrid_c[~i_neg] - a)/max(abar,a))
-                lmin = lagrid_t[~i_neg].min()
+                lmin = lagrid_t[~i_neg].min()  if na>1 else lagrid_t
                 # just fill with very negative values so this is never chosen
                 lagrid_t[i_neg] = lmin - s_a_partner*10 - \
                     s_a_partner*np.flip(np.arange(i_neg.sum())) 

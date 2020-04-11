@@ -53,7 +53,7 @@ def v_optimize_couple(money_in,sgrid,EV,mgrid,utilint,xint,ls,beta,ushift,
         assert len(EV) == 2
         vsgrid,EVin = EV
         EVin = EVin.astype(dtype,copy=False)
-        EV_by_l = vsgrid.apply_preserve_shape(EVin)
+        EV_by_l = EVin if isinstance(vsgrid,(np.ndarray)) else vsgrid.apply_preserve_shape(EVin)
         assert EVin.shape[1:] == EV_by_l.shape[1:]
         assert EVin.dtype == EV_by_l.dtype
 
@@ -129,16 +129,17 @@ def v_optimize_couple(money_in,sgrid,EV,mgrid,utilint,xint,ls,beta,ushift,
 
 
 
-@njit(parallel=True)
+#@njit(parallel=True)
 def v_couple_par(money,sgrid,EV,mgrid,u_on_mgrid,x_on_mgrid,beta,uadd,V_opt,i_opt,c_opt,x_opt,s_opt):
     # this is a looped version of the optimizer
     # the last two things are outputs
     
     na, nexo, ntheta = money.shape[0], money.shape[1], EV.shape[2]
     
+
     ns = sgrid.size
-    
-    #nm = mgrid.size
+
+    nm = mgrid.size
     
     assert money.shape == (na,nexo)
     assert V_opt.shape == (na,nexo,ntheta) == i_opt.shape
@@ -153,7 +154,7 @@ def v_couple_par(money,sgrid,EV,mgrid,u_on_mgrid,x_on_mgrid,beta,uadd,V_opt,i_op
             # finds index of maximum savings
             money_i = money[ind_a,ind_exo]
             i_opt_i, V_opt_i, x_opt_i, c_opt_i, s_opt_i = \
-                v_couple_par_int(money_i,sgrid,EV_slice,mgrid,u_on_mgrid,x_on_mgrid,beta,uadd)
+                v_couple_par_int(money_i,sgrid,EV_slice,mgrid,u_on_mgrid,x_on_mgrid,beta,uadd,ns,nm)
             
             i_opt[ind_a,ind_exo,:] = i_opt_i
             V_opt[ind_a,ind_exo,:] = V_opt_i
@@ -163,10 +164,9 @@ def v_couple_par(money,sgrid,EV,mgrid,u_on_mgrid,x_on_mgrid,beta,uadd,V_opt,i_op
             
 
 @njit
-def v_couple_par_int(money_i,sgrid,EV_slice,mgrid,u_on_mgrid,x_on_mgrid,beta,uadd):
+def v_couple_par_int(money_i,sgrid,EV_slice,mgrid,u_on_mgrid,x_on_mgrid,beta,uadd,ns,nm):
     
-    ns = sgrid.size
-    nm = mgrid.size
+
     ntheta = EV_slice.shape[1]
     
     i_opt_i = np.empty((ntheta,),dtype=np.int16)
