@@ -13,7 +13,7 @@ from gridvec import VecOnGrid
 
 
 from platform import system
-if system() != 'Darwin':
+if system() != 'Darwin' and system() != 'Windows'and system() != 'Linux':
     ugpu = True
 else:
     ugpu = False
@@ -62,12 +62,19 @@ def v_ren_uni(setup,V,marriage,t,return_extra=False,return_vdiv_only=False,resca
         V['Male, single']['V'], V['Female, single']['V'],
         izf, izm, cost_fem=dc.money_lost_f, cost_mal=dc.money_lost_m)
     
+    if vf_n.ndim<2:
+        vf_n1=np.expand_dims(vf_n,axis=0)
+        vm_n1=np.expand_dims(vm_n,axis=0)
+    else:
+        vm_n1=vm_n.copy()
+        vf_n1=vf_n.copy()
     
-    assert vf_n.dtype == vm_n.dtype
+    
+    assert vf_n1.dtype == vm_n1.dtype
     
     if return_vdiv_only:
-        return {'Value of Divorce, male': vm_n,
-                'Value of Divorce, female': vf_n}
+        return {'Value of Divorce, male': vm_n1,
+                'Value of Divorce, female': vf_n1}
     
 
     
@@ -82,7 +89,7 @@ def v_ren_uni(setup,V,marriage,t,return_extra=False,return_vdiv_only=False,resca
              v_ren_core_two_opts_with_int(V['Couple, M']['V'][None,...],
                                           V['Couple, M']['VF'][None,...], 
                                           V['Couple, M']['VM'][None,...], 
-                                          vf_n, vm_n,
+                                          vf_n1, vm_n1,
                                           itht, wntht, thtgrid, 
                                           rescale = rescale)
         else:
@@ -90,7 +97,7 @@ def v_ren_uni(setup,V,marriage,t,return_extra=False,return_vdiv_only=False,resca
                             v_ren_gpu_oneopt(V['Couple, M']['V'],
                                           V['Couple, M']['VF'], 
                                           V['Couple, M']['VM'], 
-                                          vf_n, vm_n,
+                                          vf_n1, vm_n1,
                                           itht, wntht, thtgrid, 
                                           rescale = rescale)
         
@@ -106,7 +113,7 @@ def v_ren_uni(setup,V,marriage,t,return_extra=False,return_vdiv_only=False,resca
                            np.stack([V['Couple, C']['V'], V['Couple, M']['V']]),
                            np.stack([V['Couple, C']['VF'],V['Couple, M']['VF']]), 
                            np.stack([V['Couple, C']['VM'],V['Couple, M']['VM']]), 
-                                    vf_n, vm_n,
+                                    vf_n1, vm_n1,
                                     itht, wntht, thtgrid, rescale = rescale)  
                 
         else:    
@@ -115,7 +122,7 @@ def v_ren_uni(setup,V,marriage,t,return_extra=False,return_vdiv_only=False,resca
                                    V['Couple, C']['V'], V['Couple, M']['V'],
                                    V['Couple, C']['VF'],V['Couple, M']['VF'], 
                                    V['Couple, C']['VM'],V['Couple, M']['VM'], 
-                                    vf_n, vm_n,
+                                    vf_n1, vm_n1,
                                     itht, wntht, thtgrid, rescale = rescale)     
         
         
@@ -126,7 +133,7 @@ def v_ren_uni(setup,V,marriage,t,return_extra=False,return_vdiv_only=False,resca
         
     decision = np.any((itheta_out>=0),axis=2)
     result =  {'Decision': decision, 'thetas': itheta_out,
-                'Values': (r(v_out), r(vf_out), r(vm_out)),'Divorce':(vf_n,vm_n)}
+                'Values': (r(v_out), r(vf_out), r(vm_out)),'Divorce':(vf_n1,vm_n1)}
     
     
     if not marriage:
@@ -134,7 +141,7 @@ def v_ren_uni(setup,V,marriage,t,return_extra=False,return_vdiv_only=False,resca
         
        
     extra = {'Values':result['Values'],
-             'Value of Divorce, male': vm_n, 'Value of Divorce, female': vf_n}
+             'Value of Divorce, male': vm_n1, 'Value of Divorce, female': vf_n1}
     
     
     if not return_extra:
@@ -148,18 +155,24 @@ def v_ren_uni(setup,V,marriage,t,return_extra=False,return_vdiv_only=False,resca
 shrs_def = [0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.40,0.45,0.5,0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95]#[0.2,0.35,0.5,0.65,0.8]
 def v_div_allsplits(setup,dc,t,sc,Vmale,Vfemale,izm,izf,
                         shrs=None,cost_fem=0.0,cost_mal=0.0):
-    if shrs is None: shrs = shrs_def # grid on possible assets divisions    
+    if shrs is None: shrs = shrs_def # grid on possible assets divisions 
+    if len(Vmale[:,0])<2:shrs=[0.5]
     shp  =  (sc.size,izm.size,len(shrs))  
     Vm_divorce_M = np.zeros(shp) 
     Vf_divorce_M = np.zeros(shp)
     
     # find utilities of divorce for different divisions of assets
-    for i, shr in enumerate(shrs):
-        sv_m = VecOnGrid(setup.agrid_s,shr*sc - cost_mal)
-        sv_f = VecOnGrid(setup.agrid_s,shr*sc - cost_fem)
+    if len(Vmale[:,0])>2:
+        for i, shr in enumerate(shrs):
+            sv_m = VecOnGrid(setup.agrid_s,shr*sc - cost_mal)
+            sv_f = VecOnGrid(setup.agrid_s,shr*sc - cost_fem)
+            
+            Vm_divorce_M[...,i] = sv_m.apply(Vmale,    axis=0,take=(1,izm),reshape_i=True) - dc.u_lost_m
+            Vf_divorce_M[...,i] = sv_f.apply(Vfemale,  axis=0,take=(1,izf),reshape_i=True) - dc.u_lost_f
+    else:
+        Vm_divorce_M[...,0]=Vmale[:,izm]- dc.u_lost_m
+        Vf_divorce_M[...,0]=Vfemale[:,izf]- dc.u_lost_f
         
-        Vm_divorce_M[...,i] = sv_m.apply(Vmale,    axis=0,take=(1,izm),reshape_i=True) - dc.u_lost_m
-        Vf_divorce_M[...,i] = sv_f.apply(Vfemale,  axis=0,take=(1,izf),reshape_i=True) - dc.u_lost_f
     
     return Vm_divorce_M, Vf_divorce_M
     
@@ -197,13 +210,15 @@ def v_div_byshare(setup,dc,t,sc,share_fem,share_mal,Vmale,Vfemale,izf,izm,
     inds_exo = np.arange(setup.pars['nexo_t'][t+1])
     
     
-    
-    Vf_divorce = (1-wn_fem[None,:])*Vf_divorce_M[:,inds_exo,i_fem] + \
-                wn_fem[None,:]*Vf_divorce_M[:,inds_exo,i_fem+1]
-    
-    Vm_divorce = (1-wn_mal[None,:])*Vm_divorce_M[:,inds_exo,i_mal] + \
-                wn_mal[None,:]*Vm_divorce_M[:,inds_exo,i_mal+1]
-                
+    if len(Vfemale[:,0])>1:
+        Vf_divorce = (1-wn_fem[None,:])*Vf_divorce_M[:,inds_exo,i_fem] + \
+                    wn_fem[None,:]*Vf_divorce_M[:,inds_exo,i_fem+1]
+        
+        Vm_divorce = (1-wn_mal[None,:])*Vm_divorce_M[:,inds_exo,i_mal] + \
+                    wn_mal[None,:]*Vm_divorce_M[:,inds_exo,i_mal+1]
+    else:
+        Vf_divorce=Vf_divorce_M[0,:,0]
+        Vm_divorce=Vm_divorce_M[0,:,0]
     
                 
     return Vf_divorce, Vm_divorce
@@ -234,7 +249,10 @@ def v_no_ren(setup,V,marriage,t):
     shape_notheta = v_y.shape[:-1]
     yes = np.full(shape_notheta,True)
     ntheta = setup.ntheta_fine
-    i_theta_out = np.broadcast_to(np.arange(ntheta,dtype=np.int16)[None,None,:],v_y.shape).copy()
+    if v_y.ndim>2:
+        i_theta_out = np.broadcast_to(np.arange(ntheta,dtype=np.int16)[None,None,:],v_y.shape).copy()
+    else:
+        i_theta_out = np.broadcast_to(np.arange(ntheta,dtype=np.int16)[None,:],v_y.shape).copy()
         
     vf_n, vm_n = np.full((2,) + shape_notheta,-np.inf,dtype=setup.dtype)
     

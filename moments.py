@@ -94,9 +94,9 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     ########################################## 
     #WELFARE DECOMPOSITION HERE 
     ######################################### 
-    if draw:
-        if len(mdl_list) > 1: 
-            welf_dec(mdl_list,agents) 
+    #if draw:
+      #  if len(mdl_list) > 1: 
+       #     welf_dec(mdl_list,agents) 
          
     ##########################################    
     #START COMPUTATION OF SIMULATED MOMENTS    

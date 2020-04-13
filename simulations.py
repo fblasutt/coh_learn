@@ -78,7 +78,8 @@ class Agents:
         
         self.iassets = np.zeros((N,T),np.int16)
         self.iassetss = np.zeros((N,T),np.int16)
-        self.tempo=VecOnGrid(self.setup.agrid_s,self.iassets[:,0])
+        if len(self.setup.agrid_s)>1  :
+            self.tempo=VecOnGrid(self.setup.agrid_s,self.iassets[:,0])
         
         # initialize FLS
         #self.ils=np.ones((N,T),np.float64)
@@ -162,8 +163,9 @@ class Agents:
         
         
         for t in range(self.T):
-         
-            self.anext(t) 
+            if len(self.setup.agrid_s)>1  :
+                self.anext(t) 
+                
             if t+1<self.T:
                 self.iexonext(t)            
                 self.statenext(t)
@@ -386,9 +388,13 @@ class Agents:
                         #self.ils_i[ind[i_ren],t+1] = 
                         tg = self.Mlist[ipol].setup.v_thetagrid_fine                    
                         fls_policy = self.Mlist[ipol].decisions[t+1]['Couple, M']['fls']
-                        
-                        self.ils_i[ind[i_agree_mar],t+1] = \
-                            fls_policy[self.iassets[ind[i_agree_mar],t+1],self.iexo[ind[i_agree_mar],t+1],self.itheta[ind[i_agree_mar],t+1]]
+                        if len(self.setup.agrid_s)>1  :
+                            self.ils_i[ind[i_agree_mar],t+1] = \
+                                fls_policy[self.iassets[ind[i_agree_mar],t+1],self.iexo[ind[i_agree_mar],t+1],self.itheta[ind[i_agree_mar],t+1]] 
+                            
+                        else:
+                            self.ils_i[ind[i_agree_mar],t+1] = \
+                                fls_policy[self.iexo[ind[i_agree_mar],t+1],self.itheta[ind[i_agree_mar],t+1],0]
                         
                         
                     if np.any(i_agree_coh):
@@ -404,8 +410,12 @@ class Agents:
                         #fls_policy = self.V[t+1]['Couple, C']['fls']
                         fls_policy = self.Mlist[ipol].decisions[t+1]['Couple, C']['fls']
                         
-                        self.ils_i[ind[i_agree_coh],t+1] = \
-                            fls_policy[self.iassets[ind[i_agree_coh],t+1],self.iexo[ind[i_agree_coh],t+1],self.itheta[ind[i_agree_coh],t+1]]
+                        if len(self.setup.agrid_s)>1  :
+                            self.ils_i[ind[i_agree_coh],t+1] = \
+                                 fls_policy[self.iassets[ind[i_agree_coh],t+1],self.iexo[ind[i_agree_coh],t+1],self.itheta[ind[i_agree_coh],t+1]]
+                        else:
+                            self.ils_i[ind[i_agree_coh],t+1] = \
+                                fls_policy[self.iexo[ind[i_agree_coh],t+1],self.itheta[ind[i_agree_coh],t+1],0]
                         
                     
                         
@@ -443,17 +453,20 @@ class Agents:
                     agrids =  self.Mlist[ipol].setup.agrid_s
                     sc = agrid[isc] # needed only for dividing asssets               
                     
-                    thts_all = decision['thetas']
+                    thts_all = decision['thetas'] if decision['thetas'].ndim>2 else np.expand_dims(decision['thetas'],axis=0)
+
                     thts_orig_all = np.broadcast_to(np.arange(nt)[None,None,:],thts_all.shape)
-                    
-                    
+           
                     thts = thts_all[isc,iall,itht]
                     thts_orig = thts_orig_all[isc,iall,itht]#this line below takes 43% of the time in coupls
                     
                     dec = decision['Decision']
                     #this guy below account for 24% of the time in couple
-                    i_stay = dec[isc,iall] if dec.ndim==2 else dec[isc,iall,itht]#i_stay = dec[isc,iall,itht] 
-                    
+                    if len(self.setup.agrid_s)>1  :
+                        i_stay = dec[isc,iall] if dec.ndim==2 else dec[isc,iall,itht]#i_stay = dec[isc,iall,itht] 
+                    else:
+                         i_stay = dec[iall] if dec.ndim==1 else dec[0,iall,itht]
+                         
                     bil_bribing = ('Bribing' in decision)
                     
                     
@@ -481,60 +494,62 @@ class Agents:
                     
                     if np.any(i_div):
                         
-                        income_fem = np.exp(zf_grid[izf[i_div]]+self.setup.pars['f_wage_trend'][t])
-                        income_mal = np.exp(zm_grid[izm[i_div]]+self.setup.pars['m_wage_trend'][t])
-                        
-                        income_share_fem = (income_fem) / (income_fem + income_mal)
-                        
-                        # this part determines assets
-                        costs = self.Mlist[ipol].setup.div_costs if sname == 'Couple, M' else self.Mlist[ipol].setup.sep_costs
-                                   
-                        share_f, share_m = costs.shares_if_split(income_share_fem)
-                        
-                        #Uncomment bnelowe if ren_theta
-                        share_f = costs.shares_if_split_theta(self.setup,self.setup.thetagrid[self.setup.v_thetagrid_fine.i[itht]+1])[i_div]
-                        share_m=1-share_f
-                      
-                        #sf = share_f[i_div]*sc[i_div]
-                        #assert np.all(share_f[i_div]>=0) and np.all(share_f[i_div]<=1)
-                        #sm = share_m[i_div]*sc[i_div]
-                        
-                        sf = share_f*sc[i_div]
-                        assert np.all(share_f>=0) and np.all(share_f<=1)
-                        sm = share_m*sc[i_div]
-                        
-                        s = sf if self.female else sm
-                        shks = 1-self.shocks_div_a[ind[i_div],t]
-
-                        # if bribing happens we overwrite this
-                        self.iassets[ind[i_div],t+1] = VecOnGrid(self.Mlist[ipol].setup.agrid_s,s).roll(shocks=shks)
-                        
-                        
-                        if bil_bribing:
+                        if len(self.setup.agrid_s)>1  :
+                            income_fem = np.exp(zf_grid[izf[i_div]]+self.setup.pars['f_wage_trend'][t])
+                            income_mal = np.exp(zm_grid[izm[i_div]]+self.setup.pars['m_wage_trend'][t])
                             
-                            iassets = decision['Bribing'][1] if self.female else decision['Bribing'][2] 
-                            do_bribing = decision['Bribing'][0]
+                            income_share_fem = (income_fem) / (income_fem + income_mal)
                             
-                            iassets_ifdiv = iassets[isc[i_div],iall[i_div],itht[i_div]] # assets resulted from bribing
-                            do_b = do_bribing[isc[i_div],iall[i_div],itht[i_div]] # True / False if bribing happens
-                            assert np.all(iassets_ifdiv[do_b] >= 0)
+                            # this part determines assets
+                            costs = self.Mlist[ipol].setup.div_costs if sname == 'Couple, M' else self.Mlist[ipol].setup.sep_costs
+                                       
+                            share_f, share_m = costs.shares_if_split(income_share_fem)
                             
-                            if np.any(do_b):
-                                #n_b = np.sum(do_b)
-                                #n_tot = np.sum(i_div)
-                                #share_b = int(100*n_b/n_tot)
-                                #print('bribing happens in {} cases, that is {}% of all divorces'.format(n_b,share_b))
-                                self.iassets[ind[i_div][do_b],t+1] = iassets_ifdiv[do_b]
+                            #Uncomment bnelowe if ren_theta
+                            share_f = costs.shares_if_split_theta(self.setup,self.setup.thetagrid[self.setup.v_thetagrid_fine.i[itht]+1])[i_div]
+                            share_m=1-share_f
+                          
+                            #sf = share_f[i_div]*sc[i_div]
+                            #assert np.all(share_f[i_div]>=0) and np.all(share_f[i_div]<=1)
+                            #sm = share_m[i_div]*sc[i_div]
+                            
+                            
+                            sf = share_f*sc[i_div]
+                            assert np.all(share_f>=0) and np.all(share_f<=1)
+                            sm = share_m*sc[i_div]
+                            
+                            s = sf if self.female else sm
+                            shks = 1-self.shocks_div_a[ind[i_div],t]
+    
+                            # if bribing happens we overwrite this
+                            self.iassets[ind[i_div],t+1] = VecOnGrid(self.Mlist[ipol].setup.agrid_s,s).roll(shocks=shks)
+                            
+                            
+                            if bil_bribing:
                                 
-                                #print(np.mean(agrid[isc[i_div][do_b]]/(agrids[decision['Bribing'][1][isc[i_div][do_b],iall[i_div][do_b],itht[i_div][do_b]]]+
-                                 #                                      agrids[decision['Bribing'][2][isc[i_div][do_b],iall[i_div][do_b],itht[i_div][do_b]]])))
+                                iassets = decision['Bribing'][1] if self.female else decision['Bribing'][2] 
+                                do_bribing = decision['Bribing'][0]
                                 
-                                #aaa=self.Mlist[ipol].setup.agrid_c[self.iassets[ind[i_div][do_b],t+1]]/(self.Mlist[ipol].setup.agrid_c[self.iassetss[ind[i_div][do_b],t+1]])
-                                #aaa1=(self.Mlist[ipol].setup.agrid_c[self.iassetss[ind[i_div][do_b],t+1]]>0) 
-                                #if sname == "Couple, M":print(np.mean(aaa[aaa1]))
-                         
+                                iassets_ifdiv = iassets[isc[i_div],iall[i_div],itht[i_div]] # assets resulted from bribing
+                                do_b = do_bribing[isc[i_div],iall[i_div],itht[i_div]] # True / False if bribing happens
+                                assert np.all(iassets_ifdiv[do_b] >= 0)
                                 
-                        
+                                if np.any(do_b):
+                                    #n_b = np.sum(do_b)
+                                    #n_tot = np.sum(i_div)
+                                    #share_b = int(100*n_b/n_tot)
+                                    #print('bribing happens in {} cases, that is {}% of all divorces'.format(n_b,share_b))
+                                    self.iassets[ind[i_div][do_b],t+1] = iassets_ifdiv[do_b]
+                                    
+                                    #print(np.mean(agrid[isc[i_div][do_b]]/(agrids[decision['Bribing'][1][isc[i_div][do_b],iall[i_div][do_b],itht[i_div][do_b]]]+
+                                     #                                      agrids[decision['Bribing'][2][isc[i_div][do_b],iall[i_div][do_b],itht[i_div][do_b]]])))
+                                    
+                                    #aaa=self.Mlist[ipol].setup.agrid_c[self.iassets[ind[i_div][do_b],t+1]]/(self.Mlist[ipol].setup.agrid_c[self.iassetss[ind[i_div][do_b],t+1]])
+                                    #aaa1=(self.Mlist[ipol].setup.agrid_c[self.iassetss[ind[i_div][do_b],t+1]]>0) 
+                                    #if sname == "Couple, M":print(np.mean(aaa[aaa1]))
+                             
+                                    
+                            
                         self.itheta[ind[i_div],t+1] = -1
                         self.iexo[ind[i_div],t+1] = iz[i_div]
                         self.state[ind[i_div],t+1] = self.state_codes[ss]
@@ -555,14 +570,20 @@ class Agents:
                         if sname == "Couple, M":
                             self.state[ind[i_ren],t+1] = self.state_codes[sname]
                             
-                            
-                            ipick = (self.iassets[ind[i_ren],t+1],self.iexo[ind[i_ren],t+1],self.itheta[ind[i_ren],t+1])
+                            if len(self.setup.agrid_s)>1  :
+                                ipick = (self.iassets[ind[i_ren],t+1],self.iexo[ind[i_ren],t+1],self.itheta[ind[i_ren],t+1])
+                            else:
+                                ipick = (self.iexo[ind[i_ren],t+1],self.itheta[ind[i_ren],t+1],0)
                             self.ils_i[ind[i_ren],t+1] = self.Mlist[ipol].decisions[t+1][sname]['fls'][ipick]
                         else:
                             i_coh = decision['Cohabitation preferred to Marriage'][isc,iall,thts]
                             i_coh1=i_coh[i_ren]
                             
-                            ipick = (self.iassets[ind[i_ren],t+1],self.iexo[ind[i_ren],t+1],self.itheta[ind[i_ren],t+1])
+                            if len(self.setup.agrid_s)>1  :
+                                ipick = (self.iassets[ind[i_ren],t+1],self.iexo[ind[i_ren],t+1],self.itheta[ind[i_ren],t+1])
+                            else:
+                               ipick = (self.iexo[ind[i_ren],t+1],self.itheta[ind[i_ren],t+1],0)
+                            
                             ils_if_mar = self.Mlist[ipol].decisions[t+1]["Couple, M"]['fls'][ipick]
                             ils_if_coh = self.Mlist[ipol].decisions[t+1]["Couple, C"]['fls'][ipick]
                             
@@ -580,15 +601,22 @@ class Agents:
                         if sname == "Couple, M":
                             self.state[ind[i_sq],t+1] = self.state_codes[sname]
                             
-                            ipick = (self.iassets[ind[i_sq],t+1],self.iexo[ind[i_sq],t+1],self.itheta[ind[i_sq],t+1])
+                            if len(self.setup.agrid_s)>1  :
+                                ipick = (self.iassets[ind[i_sq],t+1],self.iexo[ind[i_sq],t+1],self.itheta[ind[i_sq],t+1])
+                            else:
+                                ipick = (self.iexo[ind[i_sq],t+1],self.itheta[ind[i_sq],t+1],0)
+                            
                             self.ils_i[ind[i_sq],t+1] = self.Mlist[ipol].decisions[t+1][sname]['fls'][ipick]
                         else:
                             i_coh = decision['Cohabitation preferred to Marriage'][isc,iall,thts]
                             i_coh1=i_coh[i_sq]
                             self.state[ind[i_sq],t+1] = i_coh1*self.state_codes["Couple, C"]+(1-i_coh1)*self.state_codes["Couple, M"]
                             
-                            ipick = (self.iassets[ind[i_sq],t+1],self.iexo[ind[i_sq],t+1],self.itheta[ind[i_sq],t+1])
-                            
+                            if len(self.setup.agrid_s)>1  :
+                                ipick = (self.iassets[ind[i_sq],t+1],self.iexo[ind[i_sq],t+1],self.itheta[ind[i_sq],t+1])
+                            else:
+                                ipick = (self.iexo[ind[i_sq],t+1],self.itheta[ind[i_sq],t+1],0)
+                    
                             ils_if_mar = self.Mlist[ipol].decisions[t+1]["Couple, M"]['fls'][ipick]
                             ils_if_coh = self.Mlist[ipol].decisions[t+1]["Couple, C"]['fls'][ipick]
                            

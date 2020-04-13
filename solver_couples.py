@@ -65,6 +65,11 @@ def v_iter_couple(setup,t,EV_tuple,ushift,nbatch=nbatch_def,verbose=False,
     # type conversion
     sgrid,sigma,beta = (dtype(x) for x in (sgrid,sigma,beta))
     
+    if not isinstance(sgrid,np.ndarray):sgrid=np.array([0.0],dtype=dtype(sgrid))
+    
+    #Attention to type of sgrid
+    
+    
     V_couple, c_opt, s_opt, x_opt = np.empty((4,)+shp,dtype)
     i_opt, il_opt = np.empty(shp,np.int16), np.empty(shp,np.int16)
     
@@ -122,8 +127,10 @@ def v_iter_couple(setup,t,EV_tuple,ushift,nbatch=nbatch_def,verbose=False,
     uf, um = setup.u_part(c_opt,x_opt,il_opt,theta_val[None,None,:],ushift,psi_r)
     uc = setup.u_couple(c_opt,x_opt,il_opt,theta_val[None,None,:],ushift,psi_r)
     
-    
-    EVf_all, EVm_all, EV_all  = (setup.vsgrid_c.apply_preserve_shape(x) for x in (EV_fem_by_l, EV_mal_by_l,EV_by_l))
+    if isinstance(setup.vsgrid_c,(np.ndarray)):
+        EVf_all, EVm_all, EV_all=EV_fem_by_l, EV_mal_by_l,EV_by_l
+    else:
+        EVf_all, EVm_all, EV_all  = (setup.vsgrid_c.apply_preserve_shape(x) for x in (EV_fem_by_l, EV_mal_by_l,EV_by_l))
     
     
     

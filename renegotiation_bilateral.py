@@ -76,9 +76,10 @@ def v_ren_bil(setup,V,marriage,t,return_extra=False,return_vdiv_only=False,resca
         return {'Value of Divorce, male': vm_n,
                 'Value of Divorce, female': vf_n}
     
-    
-    assert vf_n.ndim == vm_n.ndim == 2
-    
+    if len(setup.agrid_c)==1:
+        assert vf_n.ndim == vm_n.ndim == 1
+    else:
+        assert vf_n.ndim == vm_n.ndim == 2
     
     
     
@@ -133,8 +134,11 @@ def ren_bilateral_wrap(setup,vy,vfy,vmy,vfn,vmn,vf_all_s,vm_all_s,aleft_c,
     
     
     vout, vfout, vmout, thetaout, yes, ithetaout, bribe, iaout_f, iaout_m = \
-        ren_loop_bilateral(vy,vfy,vmy,vfn,vmn,
-                           vf_all_s,vm_all_s,aleft_c,
+        ren_loop_bilateral(np.expand_dims(vy,axis=0),np.expand_dims(vfy,axis=0),
+                           np.expand_dims(vmy,axis=0),np.expand_dims(vfn,axis=0),
+                           np.expand_dims(vmn,axis=0),
+                           vf_all_s,
+                           vm_all_s,aleft_c,
                            ia_div_fem,ia_div_mal,
                            setup.agrid_s,
                            tgrid)
@@ -176,12 +180,12 @@ def ren_loop_bilateral(vy,vfy,vmy,vfn,vmn,vfn_as,vmn_as,aleft_c,ia_f_def_s,ia_m_
     
     thetaout = -1*np.ones(vout.shape,dtype=np.float32)
     ithetaout = -1*np.ones(vout.shape,dtype=np.int16)
-    
-    iaout_f = -1*np.ones(vout.shape,dtype=np.int16)
-    iaout_m = -1*np.ones(vout.shape,dtype=np.int16)
-   
-    
+
+       
     na_s = agrid_s.size
+    
+    iaout_f = -1*np.ones(vout.shape,dtype=np.int16) if na_s>1 else np.zeros(vout.shape,dtype=np.int16)
+    iaout_m = -1*np.ones(vout.shape,dtype=np.int16) if na_s>1 else np.zeros(vout.shape,dtype=np.int16)
     
     for ia in range(na):
         for ie in range(nexo):

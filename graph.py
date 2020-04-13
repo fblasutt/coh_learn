@@ -122,12 +122,19 @@ def graphs(mdl,ai,zfi,zmi,psii,ti,thi):
      
     # if ti = 0 it creates an object that was not used for the solutions,  
     # as V in v_ren_new is the next period value function. ti-1 should be here. 
-    V_ren_c = v_ren_uni(setup,Packed[ti],False,ti-1,return_extra=True)[1]['Values'][0][np.arange(agrid.size),nex,inde] 
-    
-    v_ren_mar = v_ren_uni if setup.div_costs.unilateral_divorce else v_ren_bil
-    
-    V_ren_m = v_ren_mar(setup,Packed[ti],True,ti-1,return_extra=True)[1]['Values'][0][np.arange(agrid.size),nex,inde] 
-    
+    if len(agrids)>1:
+        V_ren_c = v_ren_uni(setup,Packed[ti],False,ti-1,return_extra=True)[1]['Values'][0][np.arange(agrid.size),nex,inde] 
+        
+        v_ren_mar = v_ren_uni if setup.div_costs.unilateral_divorce else v_ren_bil
+        
+        V_ren_m = v_ren_mar(setup,Packed[ti],True,ti-1,return_extra=True)[1]['Values'][0][np.arange(agrid.size),nex,inde] 
+    else:
+        V_ren_c = v_ren_uni(setup,Packed[ti],False,ti-1,return_extra=True)[1]['Values'][0][np.arange(agrid.size),nex,inde] 
+        
+        v_ren_mar = v_ren_uni if setup.div_costs.unilateral_divorce else v_ren_bil
+        
+        V_ren_m = v_ren_mar(setup,Packed[ti],True,ti-1,return_extra=True)[1]['Values'][0][np.arange(agrid.size),nex,inde] 
+        
         
     #Divorced Women and Men 
      

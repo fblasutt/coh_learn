@@ -19,7 +19,7 @@ from scipy import sparse
 class ModelSetup(object):
     def __init__(self,nogrid=False,divorce_costs='Default',separation_costs='Default',**kwargs): 
         p = dict()       
-        period_year=6#this can be 1,2,3 or 6
+        period_year=1#this can be 1,2,3 or 6
         transform=2#this tells how many periods to pull together for duration moments
         T = int(62/period_year)
         Tret = int(47/period_year) # first period when the agent is retired
@@ -288,10 +288,10 @@ class ModelSetup(object):
             
             
         #Grid Couple
-        self.na = 40#40
+        self.na = 40
         self.amin = 0
-        self.amax = 80
-        self.amax1 = 180
+        self.amax = 80#0.001#60
+        self.amax1 = 180#0.001#60
         self.agrid_c = np.linspace(self.amin,self.amax,self.na,dtype=self.dtype)
         tune=2.5
         self.agrid_c = np.geomspace(self.amin+tune,self.amax+tune,num=self.na)-tune
@@ -321,16 +321,16 @@ class ModelSetup(object):
         self.vsgrid_s = VecOnGrid(self.agrid_s,self.sgrid_s)
         
 #        #No assets stuff
-#        self.na=1
-#        self.agrid_s=np.array([0.0])
-#        self.sgrid_s=np.array([0.0])
-#        self.vsgrid_s =np.array([0.0])
-#        self.agrid_c=np.array([0.0])
-#        self.sgrid_c=np.array([0.0])
-#        self.vsgrid_c =np.array([0.0])
-#        self.amin = 0
-#        self.amax = 0
-#        self.amax1 = 0
+        self.na=1
+        self.agrid_s=np.array([0.0])
+        self.sgrid_s=np.array([0.0])
+        self.vsgrid_s =np.array([0.0])
+        self.agrid_c=np.array([0.0])
+        self.sgrid_c=np.array([0.0])
+        self.vsgrid_c =np.array([0.0])
+        self.amin = 0
+        self.amax = 0
+        self.amax1 = 0
         
         
         # grid for theta
@@ -435,7 +435,7 @@ class ModelSetup(object):
         self.u_precompute()
         
         
-    def mar_mats_assets(self,npoints=1,abar=0.1):
+    def mar_mats_assets(self,npoints=1,abar=0.0001):
         # for each grid point on single's grid it returns npoints positions
         # on (potential) couple's grid's and assets of potential partner 
         # (that can be off grid) and correpsonding probabilities. 
@@ -459,11 +459,11 @@ class ModelSetup(object):
             for ia, a in enumerate(agrid_s):
                 lagrid_t = np.zeros_like(agrid_c)
                 
-                i_neg = (agrid_c <= max(abar,a) - 1e-6) if na>1 else np.array([True],dtype=bool) 
+                i_neg = (agrid_c <= max(abar,a) - 1e-16) if na>1 else np.array([True],dtype=bool) 
                 
                 # if a is zero this works a bit weird but does the job
                 
-                lagrid_t[~i_neg] = np.log(2e-6 + (agrid_c[~i_neg] - a)/max(abar,a))
+                lagrid_t[~i_neg] = np.log(2e-16 + (agrid_c[~i_neg] - a)/max(abar,a))
                 lmin = lagrid_t[~i_neg].min()  if na>1 else lagrid_t
                 # just fill with very negative values so this is never chosen
                 lagrid_t[i_neg] = lmin - s_a_partner*10 - \
@@ -474,7 +474,7 @@ class ModelSetup(object):
                     mean=self.pars['mean_partner_a_female']
                 else:
                     mean=self.pars['mean_partner_a_male']
-                p_a = int_prob(lagrid_t,mu=mean,sig=s_a_partner,n_points=npoints)
+                p_a = int_prob(lagrid_t,mu=mean,sig=s_a_partner,n_points=npoints) if na>1 else np.array([1.0])
                 i_pa = (-p_a).argsort()[:npoints] # this is more robust then nonzero
                 p_pa = p_a[i_pa]
                 prob_a_mat[ia,:] = p_pa
