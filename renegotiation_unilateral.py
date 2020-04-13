@@ -22,7 +22,7 @@ else:
 from renegotiation_unilateral_gpu import v_ren_gpu_oneopt
 from renegotiation_unilateral_gpu import v_ren_gpu_twoopt
 
-def v_ren_uni(setup,V,marriage,t,return_extra=False,return_vdiv_only=False,rescale=True,
+def v_ren_uni(setup,V,marriage,dd,t,return_extra=False,return_vdiv_only=False,rescale=True,
              thetafun=None):
     # this returns value functions for couple that entered the period with
     # (s,Z,theta) from the grid and is allowed to renegotiate them or breakup
@@ -153,7 +153,7 @@ def v_ren_uni(setup,V,marriage,t,return_extra=False,return_vdiv_only=False,resca
 
 
 shrs_def = [0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.40,0.45,0.5,0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95]#[0.2,0.35,0.5,0.65,0.8]
-def v_div_allsplits(setup,dc,t,sc,Vmale,Vfemale,izm,izf,
+def v_div_allsplits(setup,dc,dd,t,sc,Vmale,Vfemale,izm,izf,
                         shrs=None,cost_fem=0.0,cost_mal=0.0):
     if shrs is None: shrs = shrs_def # grid on possible assets divisions 
     if len(Vmale[:,0])<2:shrs=[0.5]
@@ -178,7 +178,7 @@ def v_div_allsplits(setup,dc,t,sc,Vmale,Vfemale,izm,izf,
     
 
 
-def v_div_byshare(setup,dc,t,sc,share_fem,share_mal,Vmale,Vfemale,izf,izm,
+def v_div_byshare(setup,dc,dd,t,sc,share_fem,share_mal,Vmale,Vfemale,izf,izm,
                   shrs=None,cost_fem=0.0,cost_mal=0.0):
     # this produces value of divorce for gridpoints given possibly different
     # shares of how assets are divided. 
@@ -225,7 +225,7 @@ def v_div_byshare(setup,dc,t,sc,share_fem,share_mal,Vmale,Vfemale,izf,izm,
 
 
 
-def v_no_ren(setup,V,marriage,t):
+def v_no_ren(setup,V,marriage,dd,t):
     
     # this works live v_ren_new but does not actually run renegotiation
     

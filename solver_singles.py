@@ -12,7 +12,7 @@ from optimizers import v_optimize_couple
 
 
 
-def v_iter_single(setup,t,EV,female,ushift,force_f32=False):
+def v_iter_single(setup,dd,t,EV,female,ushift,force_f32=False):
     
     agrid_s = setup.agrid_s
     sgrid_s = setup.sgrid_s
