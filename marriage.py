@@ -57,17 +57,17 @@ def v_mar_igrid(setup,t,V,icouple,ind_or_inds,*,female,marriage,interpolate=True
     
     
     # this implicitly trims negative or too large values
-    s_partner_v = VecOnGrid(agrid_s,s_partner,trim=True) 
+    s_partner_v = VecOnGrid(agrid_s,s_partner,trim=True) if len(agrid_s)>1 else s_partner 
     
     
     # this applies them
     
     if female:
         Vfs = VFval_single[:,izf]
-        Vms = s_partner_v.apply(VMval_single,axis=0,take=(1,izm))
+        Vms = s_partner_v.apply(VMval_single,axis=0,take=(1,izm))  if len(agrid_s)>1 else VMval_single[:,izm]
     else:
         Vms = VMval_single[:,izm]
-        Vfs = s_partner_v.apply(VFval_single,axis=0,take=(1,izf))
+        Vfs = s_partner_v.apply(VFval_single,axis=0,take=(1,izf))  if len(agrid_s)>1 else VFval_single[:,izf]
         
         
     
@@ -198,8 +198,17 @@ def mar_mat(vfy,vmy,vfn,vmn,gamma):
         nbsout[any_agree] = take(nbs_a) 
         assert np.all(nbsout[any_agree] > 0)
         ithetaout[any_agree] = inds_best
-        vfout[any_agree] = take(vfy[any_agree,:])
-        vmout[any_agree] = take(vmy[any_agree,:])
+        
+        if vfy.ndim<3:
+            vft=np.zeros((1,len(vfy[:,0]),len(vfy[0,:])))
+            vmt=np.zeros((1,len(vfy[:,0]),len(vfy[0,:])))
+            vft[0,:,:]=vfy.copy()
+            vmt[0,:,:]=vmy.copy()
+        else:
+            vft=vfy.copy()
+            vmt=vmy.copy()
+        vfout[any_agree] = take(vft[any_agree,:])
+        vmout[any_agree] = take(vmt[any_agree,:])
         
         
         

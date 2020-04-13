@@ -73,7 +73,7 @@ if __name__ == '__main__':
     
     out, mdl, agents, res = mdl_resid(x0,return_format=['distance','models','agents','scaled residuals'],
                                       #load_from=['mdl_save_bil.pkl','mdl_save_uni.pkl'],
-                                      solve_transition=True,                                    
+                                      solve_transition=False,                                    
                                       #save_to=['mdl_save_bil.pkl','mdl_save_uni.pkl'],
                                       store_path=path,
                                       verbose=True,calibration_report=False,draw=graphs,graphs=graphs,
@@ -85,7 +85,7 @@ if __name__ == '__main__':
     
     #Indexes for the graphs
     if graphs:
-        ai=3
+        ai=0
         zfi=3
         zmi=4
         psii=1

@@ -149,7 +149,7 @@ def v_div_vartheta(setup,dc,t,sc,Vmale,Vfemale,izf,izm,
     # optional cost_fem and cost_mal are monetary costs of divorce
     
     
-    shrs = setup.thetagrid
+    shrs = setup.thetagrid if len(setup.agrid_s)>1 else np.array([0.5])
     
     # these are interpolation points
     
@@ -157,28 +157,37 @@ def v_div_vartheta(setup,dc,t,sc,Vmale,Vfemale,izf,izm,
                                                  Vmale,Vfemale,izm,izf,
                                 shrs=shrs,cost_fem=cost_fem,cost_mal=cost_mal)
     
-    # share of assets that goes to the female
-    # this has many repetative values but it turns out it does not matter much
+
     
-    
-    share_fem, share_mal = fun(setup.thetagrid)
-    fem_gets = VecOnGrid(np.array(shrs),share_fem)
-    mal_gets = VecOnGrid(np.array(shrs),share_mal)
-    
-    i_fem = fem_gets.i
-    wn_fem = fem_gets.wnext
-    wt_fem = setup.dtype(1) - wn_fem
-    
-    i_mal = mal_gets.i
-    wn_mal = mal_gets.wnext
-    wt_mal = setup.dtype(1) - wn_mal
-    
-    
-    Vf_divorce = wt_fem[None,None,:]*Vf_divorce_M[:,:,i_fem] + \
-                     wn_fem[None,None,:]*Vf_divorce_M[:,:,i_fem+1]
-    
-    Vm_divorce = wt_mal[None,None,:]*Vm_divorce_M[:,:,i_mal] + \
-                     wn_mal[None,None,:]*Vm_divorce_M[:,:,i_mal+1]
+    if len(setup.agrid_s)>1:
+        
+                # share of assets that goes to the female
+        # this has many repetative values but it turns out it does not matter much
+        
+        
+        share_fem, share_mal = fun(setup.thetagrid)
+        fem_gets = VecOnGrid(np.array(shrs),share_fem)
+        mal_gets = VecOnGrid(np.array(shrs),share_mal)
+        
+        i_fem = fem_gets.i
+        wn_fem = fem_gets.wnext
+        wt_fem = setup.dtype(1) - wn_fem
+        
+        i_mal = mal_gets.i
+        wn_mal = mal_gets.wnext
+        wt_mal = setup.dtype(1) - wn_mal
+        
+        Vf_divorce = wt_fem[None,None,:]*Vf_divorce_M[:,:,i_fem] + \
+                         wn_fem[None,None,:]*Vf_divorce_M[:,:,i_fem+1]
+        
+        Vm_divorce = wt_mal[None,None,:]*Vm_divorce_M[:,:,i_mal] + \
+                         wn_mal[None,None,:]*Vm_divorce_M[:,:,i_mal+1]
+    else:
+        Vf_divorce = Vf_divorce_M
+        Vm_divorce = Vm_divorce_M
+        
+        return np.reshape(np.repeat(Vf_divorce,setup.ntheta),(1,len(izf),setup.ntheta)),\
+                  np.reshape(np.repeat(Vm_divorce,setup.ntheta),(1,len(izm),setup.ntheta))
                 
     
     assert Vf_divorce.dtype == setup.dtype

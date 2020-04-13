@@ -129,7 +129,7 @@ def v_optimize_couple(money_in,sgrid,EV,mgrid,utilint,xint,ls,beta,ushift,
 
 
 
-#@njit(parallel=True)
+@njit(parallel=True)
 def v_couple_par(money,sgrid,EV,mgrid,u_on_mgrid,x_on_mgrid,beta,uadd,V_opt,i_opt,c_opt,x_opt,s_opt):
     # this is a looped version of the optimizer
     # the last two things are outputs
@@ -153,8 +153,9 @@ def v_couple_par(money,sgrid,EV,mgrid,u_on_mgrid,x_on_mgrid,beta,uadd,V_opt,i_op
         for ind_a in prange(na):
             # finds index of maximum savings
             money_i = money[ind_a,ind_exo]
+            
             i_opt_i, V_opt_i, x_opt_i, c_opt_i, s_opt_i = \
-                v_couple_par_int(money_i,sgrid,EV_slice,mgrid,u_on_mgrid,x_on_mgrid,beta,uadd,ns,nm)
+                v_couple_par_int(money_i,sgrid,EV_slice,mgrid,u_on_mgrid,x_on_mgrid,beta,uadd)
             
             i_opt[ind_a,ind_exo,:] = i_opt_i
             V_opt[ind_a,ind_exo,:] = V_opt_i
@@ -164,28 +165,34 @@ def v_couple_par(money,sgrid,EV,mgrid,u_on_mgrid,x_on_mgrid,beta,uadd,V_opt,i_op
             
 
 @njit
-def v_couple_par_int(money_i,sgrid,EV_slice,mgrid,u_on_mgrid,x_on_mgrid,beta,uadd,ns,nm):
+def v_couple_par_int(money_i,sgrid,EV_slice,mgrid,u_on_mgrid,x_on_mgrid,beta,uadd):
     
-
+    
     ntheta = EV_slice.shape[1]
+     
+    ns = sgrid.size
+
+    nm = mgrid.size
     
+   
+   
     i_opt_i = np.empty((ntheta,),dtype=np.int16)
     V_opt_i = np.empty((ntheta,),dtype=np.float64)
     x_opt_i = np.empty((ntheta,),dtype=np.float64)
     c_opt_i = np.empty((ntheta,),dtype=np.float64)
     s_opt_i = np.empty((ntheta,),dtype=np.float64)
     
-    
+   
     money_minus_coh = money_i - mgrid[0]
-            
+   
     ind_s = np.minimum( np.searchsorted(sgrid,money_minus_coh)-1,ns-1)
-    
+   
     i_m = np.minimum( np.searchsorted(mgrid,money_i)-1,nm-1)
     
     i_m_all = np.zeros((ind_s+1,),np.int16)
-    
+   
     i_m_all[0] = i_m
-    
+  
     for i_cand in range(1,ind_s+1):
         m_after_s = money_i - sgrid[i_cand]
         while mgrid[i_m] > m_after_s:
@@ -223,7 +230,7 @@ def v_couple_par_int(money_i,sgrid,EV_slice,mgrid,u_on_mgrid,x_on_mgrid,beta,uad
         c_opt_i[ind_theta] = money_i - x_opt_i[ind_theta] - sgrid[io]
         s_opt_i[ind_theta] = sgrid[io]        
        
-        assert Vo > -1e20
+        #assert Vo > -1e20
     return i_opt_i, V_opt_i, x_opt_i, c_opt_i, s_opt_i
 
     

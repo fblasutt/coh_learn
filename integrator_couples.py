@@ -34,8 +34,10 @@ def ev_couple_m_c(setup,Vpostren,t,marriage,use_sparse=True):
     #_Vren2=out['Values']
     dec = out
     
-    
-    tk = lambda x : x[:,:,setup.theta_orig_on_fine]
+    if _Vren2[0].ndim>2:
+        tk = lambda x : x[:,:,setup.theta_orig_on_fine]
+    else:
+        tk = lambda x : x[:,setup.theta_orig_on_fine]
     
     Vren = {'M':{'V':tk(_Vren2[0]),'VF':tk(_Vren2[1]),'VM':tk(_Vren2[2])},
             'SF':Vpostren['Female, single'],

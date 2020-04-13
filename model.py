@@ -202,7 +202,10 @@ class Model(object):
             
             if Vint.ndim < 4: Vint = Vint[:,:,:,None]
             
-            fls = Vint.argmax(axis=3).astype(np.int8)
+            if len(self.setup.agrid_c)>1:
+                fls = Vint.argmax(axis=3).astype(np.int8)
+            else:
+                fls = Vint.argmax(axis=2).astype(np.int8)
             
             dec.update({'s':sint,'fls':fls,'c':cint,'x':xint})
             del sint,fls
