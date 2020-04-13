@@ -19,7 +19,7 @@ from scipy import sparse
 class ModelSetup(object):
     def __init__(self,nogrid=False,divorce_costs='Default',separation_costs='Default',**kwargs): 
         p = dict()       
-        period_year=6#this can be 1,2,3 or 6
+        period_year=1#this can be 1,2,3 or 6
         transform=2#this tells how many periods to pull together for duration moments
         T = int(62/period_year)
         Tret = int(47/period_year) # first period when the agent is retired
@@ -40,7 +40,7 @@ class ModelSetup(object):
         p['n_zm_t']      = [5]*Tret + [1]*(T-Tret)
         p['sigma_psi_mult'] = 0.28
         p['sigma_psi']   = 0.11
-        p['R_t'] = [1.02**period_year]*T
+        p['R_t'] = [0.0**period_year]*T
         p['n_psi_t']     = [11]*T
         p['beta_t'] = [0.98**period_year]*T
         p['A'] = 1.0 # consumption in couple: c = (1/A)*[c_f^(1+rho) + c_m^(1+rho)]^(1/(1+rho))
@@ -290,8 +290,8 @@ class ModelSetup(object):
         #Grid Couple
         self.na = 40
         self.amin = 0
-        self.amax = 80#0.001#60
-        self.amax1 = 180#0.001#60
+        self.amax =80#60
+        self.amax1 = 180#60
         self.agrid_c = np.linspace(self.amin,self.amax,self.na,dtype=self.dtype)
         tune=2.5
         self.agrid_c = np.geomspace(self.amin+tune,self.amax+tune,num=self.na)-tune
@@ -321,16 +321,16 @@ class ModelSetup(object):
         self.vsgrid_s = VecOnGrid(self.agrid_s,self.sgrid_s)
         
 #        #No assets stuff
-#        self.na=1
-#        self.agrid_s=np.array([0.0])
-#        self.sgrid_s=np.array([0.0])
-#        self.vsgrid_s =np.array([0.0])
-#        self.agrid_c=np.array([0.0])
-#        self.sgrid_c=np.array([0.0])
-#        self.vsgrid_c =np.array([0.0])
-#        self.amin = 0
-#        self.amax = 0
-#        self.amax1 = 0
+        self.na=1
+        self.agrid_s=np.array([0.0])
+        self.sgrid_s=np.array([0.0])
+        self.vsgrid_s =np.array([0.0])
+        self.agrid_c=np.array([0.0])
+        self.sgrid_c=np.array([0.0])
+        self.vsgrid_c =np.array([0.0])
+        self.amin = 0
+        self.amax = 0
+        self.amax1 = 0
 #        
         
         # grid for theta

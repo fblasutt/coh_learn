@@ -230,7 +230,7 @@ def v_couple_par_int(money_i,sgrid,EV_slice,mgrid,u_on_mgrid,x_on_mgrid,beta,uad
         c_opt_i[ind_theta] = money_i - x_opt_i[ind_theta] - sgrid[io]
         s_opt_i[ind_theta] = sgrid[io]        
        
-        #assert Vo > -1e20
+        assert Vo > -1e20
     return i_opt_i, V_opt_i, x_opt_i, c_opt_i, s_opt_i
 
     
