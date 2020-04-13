@@ -22,6 +22,7 @@ class ModelSetup(object):
         period_year=1#this can be 1,2,3 or 6
         transform=2#this tells how many periods to pull together for duration moments
         T = int(62/period_year)
+        dm=4
         Tret = int(47/period_year) # first period when the agent is retired
         Tbef=int(2/period_year)
         Tren  = int(47/period_year)#int(42/period_year) # period starting which people do not renegotiate/divroce
@@ -29,6 +30,7 @@ class ModelSetup(object):
         p['py']=period_year
         p['ty']=transform
         p['T'] = T
+        p['dm'] = dm
         p['Tret'] = Tret
         p['Tren'] = Tren
         p['Tbef'] = Tbef
@@ -170,8 +172,14 @@ class ModelSetup(object):
             
             p['n_zf_t']      = [5]*Tret + [5]*(T-Tret)
             p['n_zm_t']      = [5]*Tret + [5]*(T-Tret)
-            exogrid['zf_t'],  exogrid['zf_t_mat'] = rouw_nonst(p['T'],p['sig_zf']*period_year**0.5,p['sig_zf_0'],p['n_zf_t'][0])
-            exogrid['zm_t'],  exogrid['zm_t_mat'] = rouw_nonst(p['T'],p['sig_zm']*period_year**0.5,p['sig_zm_0'],p['n_zm_t'][0])
+            
+
+            exogrid['zf_t'],  exogrid['zf_t_mat']=list(np.ones((p['dm']))),list(np.ones((p['dm'])))
+            exogrid['zm_t'],  exogrid['zm_t_mat']=list(np.ones((p['dm']))),list(np.ones((p['dm'])))
+                
+            for dd in range(dm):
+                exogrid['zf_t'][dd],  exogrid['zf_t_mat'][dd] = rouw_nonst(p['T'],p['sig_zf']*period_year**0.5,p['sig_zf_0'],p['n_zf_t'][0])
+                exogrid['zm_t'][dd],  exogrid['zm_t_mat'][dd] = rouw_nonst(p['T'],p['sig_zm']*period_year**0.5,p['sig_zm_0'],p['n_zm_t'][0])
             
             ################################
             #First mimic US pension system
@@ -195,36 +203,36 @@ class ModelSetup(object):
                 return inc1*0.9+inc2*0.32+inc3*0.15
                 
               
-            
-            for t in range(Tret,T):
-                exogrid['zf_t'][t] = np.array([np.log(p['wret'])])
-                exogrid['zm_t'][t] = np.array([np.log(p['wret'])])
-                exogrid['zf_t_mat'][t] = np.atleast_2d(1.0)
-                exogrid['zm_t_mat'][t] = np.atleast_2d(1.0)
+            for dd in range(dm):
+                for t in range(Tret,T):
+                    exogrid['zf_t'][dd][t] = np.array([np.log(p['wret'])])
+                    exogrid['zm_t'][dd][t] = np.array([np.log(p['wret'])])
+                    exogrid['zf_t_mat'][dd][t] = np.atleast_2d(1.0)
+                    exogrid['zm_t_mat'][dd][t] = np.atleast_2d(1.0)
+                    
+                    
+                # fix transition from non-retired to retired    
+                exogrid['zf_t_mat'][dd][Tret-1] = np.ones((p['n_zf_t'][Tret-1],1))
+                exogrid['zm_t_mat'][dd][Tret-1] = np.ones((p['n_zm_t'][Tret-1],1))
                 
+                #Tax system as in Wu and Kruger
+                for t in range(0,Tret):
+                    exogrid['zf_t'][dd][t] = exogrid['zf_t'][dd][t]#*(1-0.1327)+np.log(1-0.1575)
+                    exogrid['zm_t'][dd][t] = exogrid['zm_t'][dd][t]#*(1-0.1327)+np.log(1-0.1575)  
                 
-            # fix transition from non-retired to retired    
-            exogrid['zf_t_mat'][Tret-1] = np.ones((p['n_zf_t'][Tret-1],1))
-            exogrid['zm_t_mat'][Tret-1] = np.ones((p['n_zm_t'][Tret-1],1))
-            
-            #Tax system as in Wu and Kruger
-            for t in range(0,Tret):
-                exogrid['zf_t'][t] = exogrid['zf_t'][t]#*(1-0.1327)+np.log(1-0.1575)
-                exogrid['zm_t'][t] = exogrid['zm_t'][t]#*(1-0.1327)+np.log(1-0.1575)  
-            
-            #Comment out the following if you dont want retirment based on income
-            for t in range(Tret,T):
-                #exogrid['zf_t'][t] = np.log(p['wret']*np.exp(p['f_wage_trend'][Tret-1]+exogrid['zf_t'][Tret-1]))#np.array([np.log(p['wret'])])
-                #exogrid['zm_t'][t] = np.log(p['wret']*np.exp(p['m_wage_trend'][Tret-1]+exogrid['zm_t'][Tret-1]))
-                exogrid['zf_t'][t] = np.log(pens(np.exp(p['f_wage_trend'][Tret-1]+exogrid['zf_t'][Tret-1])))#np.array([np.log(p['wret'])])
-                exogrid['zm_t'][t] = np.log(pens(np.exp(p['m_wage_trend'][Tret-1]+exogrid['zm_t'][Tret-1])))               
-                exogrid['zf_t_mat'][t] = np.diag(np.ones(len(exogrid['zf_t'][t])))#p.atleast_2d(1.0)
-                exogrid['zm_t_mat'][t] = np.diag(np.ones(len(exogrid['zm_t'][t])))
-                
-            # fix transition from non-retired to retired    
-            exogrid['zf_t_mat'][Tret-1] = np.diag(np.ones(len(exogrid['zf_t'][Tret-1])))
-            exogrid['zm_t_mat'][Tret-1] = np.diag(np.ones(len(exogrid['zm_t'][Tret-1])))
-
+                #Comment out the following if you dont want retirment based on income
+                for t in range(Tret,T):
+                    #exogrid['zf_t'][t] = np.log(p['wret']*np.exp(p['f_wage_trend'][Tret-1]+exogrid['zf_t'][Tret-1]))#np.array([np.log(p['wret'])])
+                    #exogrid['zm_t'][t] = np.log(p['wret']*np.exp(p['m_wage_trend'][Tret-1]+exogrid['zm_t'][Tret-1]))
+                    exogrid['zf_t'][dd][t] = np.log(pens(np.exp(p['f_wage_trend'][Tret-1]+exogrid['zf_t'][dd][Tret-1])))#np.array([np.log(p['wret'])])
+                    exogrid['zm_t'][dd][t] = np.log(pens(np.exp(p['m_wage_trend'][Tret-1]+exogrid['zm_t'][dd][Tret-1])))               
+                    exogrid['zf_t_mat'][dd][t] = np.diag(np.ones(len(exogrid['zf_t'][dd][t])))#p.atleast_2d(1.0)
+                    exogrid['zm_t_mat'][dd][t] = np.diag(np.ones(len(exogrid['zm_t'][dd][t])))
+                    
+                # fix transition from non-retired to retired    
+                exogrid['zf_t_mat'][dd][Tret-1] = np.diag(np.ones(len(exogrid['zf_t'][dd][Tret-1])))
+                exogrid['zm_t_mat'][dd][Tret-1] = np.diag(np.ones(len(exogrid['zm_t'][dd][Tret-1])))
+    
 
             
             exogrid['psi_t'], exogrid['psi_t_mat'] = tauchen_nonst(p['T'],p['sigma_psi']*period_year**0.5,p['sigma_psi_init'],p['n_psi_t'][0])
