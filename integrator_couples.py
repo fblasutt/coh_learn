@@ -15,21 +15,21 @@ from renegotiation_bilateral import v_ren_bil
 from renegotiation_vartheta import v_ren_vt
 #from ren_mar_pareto import v_ren_new as ren_pareto
 
-def ev_couple_m_c(setup,Vpostren,dd,t,marriage,use_sparse=True):
+def ev_couple_m_c(setup,Vpostren,t,marriage,use_sparse=True):
     # computes expected value of couple entering the next period with an option
     # to renegotiate or to break up
     
-    can_divorce = setup.pars['can divorce'][dd][t]
+    can_divorce = setup.pars['can divorce'][t]
     if can_divorce:
         uni_div = setup.div_costs.unilateral_divorce if marriage else setup.sep_costs.unilateral_divorce
         if uni_div:
             # choose your fighter
             #out = v_ren_uni(setup,Vpostren,marriage,t)
-            out = v_ren_vt(setup,Vpostren,marriage,dd,t)            
+            out = v_ren_vt(setup,Vpostren,marriage,t)            
         else:
-            out = v_ren_bil(setup,Vpostren,marriage,dd,t)
+            out = v_ren_bil(setup,Vpostren,marriage,t)
     else:
-        out = v_no_ren(setup,Vpostren,marriage,dd,t)
+        out = v_no_ren(setup,Vpostren,marriage,t)
     _Vren2 = out.pop('Values') 
     #_Vren2=out['Values']
     dec = out
@@ -54,7 +54,7 @@ def ev_couple_m_c(setup,Vpostren,dd,t,marriage,use_sparse=True):
     return (EV, EVf, EVm), dec
 
 
-def ev_couple_exo(setup,Vren,dd,t,use_sparse=True,down=False):
+def ev_couple_exo(setup,Vren,t,use_sparse=True,down=False):
     
  
     # this does dot product along 3rd dimension
@@ -80,7 +80,7 @@ def ev_couple_exo(setup,Vren,dd,t,use_sparse=True,down=False):
     
     for il in range(nl):
         
-        M = setup.exogrid.all_t_mat_by_l_spt[il][dd][t] if use_sparse else setup.exogrid.all_t_mat_by_l[il][dd][t]
+        M = setup.exogrid.all_t_mat_by_l_spt[il][t] if use_sparse else setup.exogrid.all_t_mat_by_l[il][t]
         
         
         

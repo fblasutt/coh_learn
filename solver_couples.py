@@ -16,7 +16,7 @@ if system() != 'Darwin' and system() != 'Windows':
 else:    
     nbatch_def = 17
 
-def v_iter_couple(setup,dd,t,EV_tuple,ushift,nbatch=nbatch_def,verbose=False,
+def v_iter_couple(setup,t,EV_tuple,ushift,nbatch=nbatch_def,verbose=False,
                               force_f32 = False):
     
     if verbose: start = default_timer()
@@ -32,12 +32,12 @@ def v_iter_couple(setup,dd,t,EV_tuple,ushift,nbatch=nbatch_def,verbose=False,
     
     # type conversion is here
     
-    zf  = setup.exogrid.all_t[dd][t][:,0]
-    zm  = setup.exogrid.all_t[dd][t][:,1]
+    zf  = setup.exogrid.all_t[t][:,0]
+    zm  = setup.exogrid.all_t[t][:,1]
     zftrend = setup.pars['f_wage_trend'][t]
     zmtrend = setup.pars['m_wage_trend'][t]
 
-    psi = setup.exogrid.all_t[dd][t][:,2]
+    psi = setup.exogrid.all_t[t][:,2]
     beta = setup.pars['beta_t'][t]
     sigma = setup.pars['crra_power']
     R = setup.pars['R_t'][t]

@@ -22,7 +22,7 @@ else:
 from renegotiation_vartheta_gpu import v_ren_gpu_oneopt, v_ren_gpu_twoopt
         
 
-def v_ren_vt(setup,V,marriage,dd,t,return_extra=False,return_vdiv_only=False,rescale=True,
+def v_ren_vt(setup,V,marriage,t,return_extra=False,return_vdiv_only=False,rescale=True,
              thetafun=None):
     # this returns value functions for couple that entered the period with
     # (s,Z,theta) from the grid and is allowed to renegotiate them or breakup
@@ -52,7 +52,7 @@ def v_ren_vt(setup,V,marriage,dd,t,return_extra=False,return_vdiv_only=False,res
     
     # values of divorce
     vf_n, vm_n = v_div_vartheta(
-        setup, dc, dd,t, sc,
+        setup, dc, t, sc,
         V['Male, single']['V'], V['Female, single']['V'],
         izf, izm, cost_fem=dc.money_lost_f, cost_mal=dc.money_lost_m, fun=thetafun)
     
@@ -139,7 +139,7 @@ def v_ren_vt(setup,V,marriage,dd,t,return_extra=False,return_vdiv_only=False,res
 from renegotiation_unilateral import v_div_allsplits
 
 
-def v_div_vartheta(setup,dc,dd,t,sc,Vmale,Vfemale,izf,izm,
+def v_div_vartheta(setup,dc,t,sc,Vmale,Vfemale,izf,izm,
                    cost_fem=0.0,cost_mal=0.0, fun=lambda x : (x,1-x) ):
     # this produces value of divorce for gridpoints given possibly different
     # shares of how assets are divided. 

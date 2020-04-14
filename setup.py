@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 This contains things relevant for setting up the model
-f"""
+"""
 
 import numpy as np
 
@@ -22,7 +22,6 @@ class ModelSetup(object):
         period_year=1#this can be 1,2,3 or 6
         transform=2#this tells how many periods to pull together for duration moments
         T = int(62/period_year)
-        dm=4
         Tret = int(47/period_year) # first period when the agent is retired
         Tbef=int(2/period_year)
         Tren  = int(47/period_year)#int(42/period_year) # period starting which people do not renegotiate/divroce
@@ -30,19 +29,18 @@ class ModelSetup(object):
         p['py']=period_year
         p['ty']=transform
         p['T'] = T
-        p['dm'] = dm
         p['Tret'] = Tret
         p['Tren'] = Tren
         p['Tbef'] = Tbef
-        p['sig_zf_0']  =  0.5449176#0.4096**(0.5)
-        p['sig_zf']    = .0272437**(0.5)#[0.5449176,.0272437**(0.5),.0272437**(0.5),.0272437**(0.5)]#0.0399528**(0.5)
+        p['sig_zf_0']  = 0.5449176#0.4096**(0.5)
+        p['sig_zf']    = .0272437**(0.5)#0.0399528**(0.5)
         p['n_zf_t']      = [5]*Tret + [1]*(T-Tret)
         p['sig_zm_0']  = 0.54896510#.405769**(0.5)
-        p['sig_zm']    = .025014**(0.5)#[0.54896510,.025014**(0.5),.025014**(0.5),.025014**(0.5)]#0.0417483**(0.5)
+        p['sig_zm']    = .025014**(0.5)#0.0417483**(0.5)
         p['n_zm_t']      = [5]*Tret + [1]*(T-Tret)
         p['sigma_psi_mult'] = 0.28
         p['sigma_psi']   = 0.11
-        p['R_t'] = [0.0**period_year]*T
+        p['R_t'] = [1.02**period_year]*T
         p['n_psi_t']     = [11]*T
         p['beta_t'] = [0.98**period_year]*T
         p['A'] = 1.0 # consumption in couple: c = (1/A)*[c_f^(1+rho) + c_m^(1+rho)]^(1/(1+rho))
@@ -172,11 +170,8 @@ class ModelSetup(object):
             
             p['n_zf_t']      = [5]*Tret + [5]*(T-Tret)
             p['n_zm_t']      = [5]*Tret + [5]*(T-Tret)
-            
-
-
-            exogrid['zf_t'],  exogrid['zf_t_mat']= rouw_nonst(p['T'],p['sig_zf']*period_year**0.5,p['sig_zf_0'],p['n_zf_t'][0])
-            exogrid['zm_t'],  exogrid['zm_t_mat']= rouw_nonst(p['T'],p['sig_zm']*period_year**0.5,p['sig_zm_0'],p['n_zm_t'][0])
+            exogrid['zf_t'],  exogrid['zf_t_mat'] = rouw_nonst(p['T'],p['sig_zf']*period_year**0.5,p['sig_zf_0'],p['n_zf_t'][0])
+            exogrid['zm_t'],  exogrid['zm_t_mat'] = rouw_nonst(p['T'],p['sig_zm']*period_year**0.5,p['sig_zm_0'],p['n_zm_t'][0])
             
             ################################
             #First mimic US pension system
@@ -199,7 +194,8 @@ class ModelSetup(object):
                 
                 return inc1*0.9+inc2*0.32+inc3*0.15
                 
-
+              
+            
             for t in range(Tret,T):
                 exogrid['zf_t'][t] = np.array([np.log(p['wret'])])
                 exogrid['zm_t'][t] = np.array([np.log(p['wret'])])
@@ -228,15 +224,13 @@ class ModelSetup(object):
             # fix transition from non-retired to retired    
             exogrid['zf_t_mat'][Tret-1] = np.diag(np.ones(len(exogrid['zf_t'][Tret-1])))
             exogrid['zm_t_mat'][Tret-1] = np.diag(np.ones(len(exogrid['zm_t'][Tret-1])))
-    
 
-            exogrid['psi_t'], exogrid['psi_t_mat']=list(np.ones((p['dm']))),list(np.ones((p['dm'])))
-           
-            for dd in range(p['dm']):
-                exogrid['psi_t'][dd], exogrid['psi_t_mat'][dd] = tauchen_nonst(p['T'],p['sigma_psi']*period_year**0.5,p['sigma_psi_init'],p['n_psi_t'][0])
-                exogrid['psi_t_mat'][dd][Tret-1] = np.diag(np.ones(len(exogrid['psi_t_mat'][dd][Tret-1])))
-                exogrid['psi_t_mat'][dd][Tret] = np.diag(np.ones(len(exogrid['psi_t_mat'][dd][Tret-1])))
-                exogrid['psi_t_mat'][dd][Tret+1] = np.diag(np.ones(len(exogrid['psi_t_mat'][dd][Tret-1])))
+
+            
+            exogrid['psi_t'], exogrid['psi_t_mat'] = tauchen_nonst(p['T'],p['sigma_psi']*period_year**0.5,p['sigma_psi_init'],p['n_psi_t'][0])
+            exogrid['psi_t_mat'][Tret-1] = np.diag(np.ones(len(exogrid['psi_t_mat'][Tret-1])))
+            exogrid['psi_t_mat'][Tret] = np.diag(np.ones(len(exogrid['psi_t_mat'][Tret-1])))
+            exogrid['psi_t_mat'][Tret+1] = np.diag(np.ones(len(exogrid['psi_t_mat'][Tret-1])))
             
             #Here I impose no change in psi from retirement till the end of time 
            # for t in range(Tret,T-1):
@@ -244,49 +238,45 @@ class ModelSetup(object):
              #   exogrid['psi_t'][t] = exogrid['psi_t'][Tret-1]#np.array([np.log(p['wret'])])             
              #   exogrid['psi_t_mat'][t] = np.diag(np.ones(len(exogrid['psi_t'][t])))#p.atleast_2d(1.0)
 
+                
             
             zfzm, zfzmmat = combine_matrices_two_lists(exogrid['zf_t'], exogrid['zm_t'], exogrid['zf_t_mat'], exogrid['zm_t_mat'])
+            all_t, all_t_mat = combine_matrices_two_lists(zfzm,exogrid['psi_t'],zfzmmat,exogrid['psi_t_mat'])
+            all_t_mat_sparse_T = [sparse.csc_matrix(D.T) if D is not None else None for D in all_t_mat]
+            
             
             #Create a new bad version of transition matrix p(zf_t)
-                
-                
+            
+            
             zf_bad = [tauchen_drift(exogrid['zf_t'][t], exogrid['zf_t'][t+1], 
-                                        1.0, p['sig_zf'], p['z_drift'])
-                            for t in range(self.pars['Tret']-1) ]
-                
+                                    1.0, p['sig_zf'], p['z_drift'])
+                        for t in range(self.pars['Tret']-1) ]
+            
             #Account for retirement here
             zf_bad = zf_bad+[exogrid['zf_t_mat'][t] for t in range(self.pars['Tret']-1,self.pars['T']-1)]+ [None]
-                
+            
             zf_t_mat_down = zf_bad
             
             zfzm, zfzmmat = combine_matrices_two_lists(exogrid['zf_t'], exogrid['zm_t'], zf_t_mat_down, exogrid['zm_t_mat'])
+            all_t_down, all_t_mat_down = combine_matrices_two_lists(zfzm,exogrid['psi_t'],zfzmmat,exogrid['psi_t_mat'])
+            all_t_mat_down_sparse_T = [sparse.csc_matrix(D.T) if D is not None else None for D in all_t_mat_down]
             
-            exogrid['all_t_mat_by_l'],  exogrid['all_t_mat_by_l_spt'],exogrid['all_t']=list(np.ones((p['dm']))),list(np.ones((p['dm']))),list(np.ones((p['dm'])))
-            for dd in range(p['dm']):
-                
-                all_t, all_t_mat = combine_matrices_two_lists(zfzm,exogrid['psi_t'][dd],zfzmmat,exogrid['psi_t_mat'][dd])
-                all_t_mat_sparse_T = [sparse.csc_matrix(D.T) if D is not None else None for D in all_t_mat]
-                
-                
-                all_t_down, all_t_mat_down = combine_matrices_two_lists(zfzm,exogrid['psi_t'][dd],zfzmmat,exogrid['psi_t_mat'][dd])
-                all_t_mat_down_sparse_T = [sparse.csc_matrix(D.T) if D is not None else None for D in all_t_mat_down]
-                
-                
-                
-                all_t_mat_by_l = [ [(1-p)*m + p*md if m is not None else None 
-                                    for m , md in zip(all_t_mat,all_t_mat_down)]
-                                   for p in self.ls_pdown ]
-                
-                all_t_mat_by_l_spt = [ [(1-p)*m + p*md if m is not None else None
-                                        for m, md in zip(all_t_mat_sparse_T,all_t_mat_down_sparse_T)]
-                                   for p in self.ls_pdown ]
-                
-                
-                
-                exogrid['all_t_mat_by_l'][dd] = all_t_mat_by_l
-                exogrid['all_t_mat_by_l_spt'][dd] = all_t_mat_by_l_spt
-                
-                exogrid['all_t'][dd] = all_t
+            
+            
+            all_t_mat_by_l = [ [(1-p)*m + p*md if m is not None else None 
+                                for m , md in zip(all_t_mat,all_t_mat_down)]
+                               for p in self.ls_pdown ]
+            
+            all_t_mat_by_l_spt = [ [(1-p)*m + p*md if m is not None else None
+                                    for m, md in zip(all_t_mat_sparse_T,all_t_mat_down_sparse_T)]
+                               for p in self.ls_pdown ]
+            
+            
+            
+            exogrid['all_t_mat_by_l'] = all_t_mat_by_l
+            exogrid['all_t_mat_by_l_spt'] = all_t_mat_by_l_spt
+            
+            exogrid['all_t'] = all_t
             
             Exogrid_nt = namedtuple('Exogrid_nt',exogrid.keys())
             
@@ -300,8 +290,8 @@ class ModelSetup(object):
         #Grid Couple
         self.na = 40
         self.amin = 0
-        self.amax =80#60
-        self.amax1 = 180#60
+        self.amax = 80#0.001#60
+        self.amax1 = 180#0.001#60
         self.agrid_c = np.linspace(self.amin,self.amax,self.na,dtype=self.dtype)
         tune=2.5
         self.agrid_c = np.geomspace(self.amin+tune,self.amax+tune,num=self.na)-tune
@@ -341,7 +331,7 @@ class ModelSetup(object):
         self.amin = 0
         self.amax = 0
         self.amax1 = 0
-#        
+        
         
         # grid for theta
         self.ntheta = 21
@@ -402,11 +392,9 @@ class ModelSetup(object):
         
         
         # this pre-computes transition matrices for meeting a partner
-        zf_t_partmat,zm_t_partmat=list(np.ones((self.pars['dm']))),list(np.ones((self.pars['dm'])))
-        for dd in range(self.pars['dm']):
-            zf_t_partmat[dd] = [self.mar_mats_iexo(t,dd,female=True) if t < p['T'] - 1 else None 
+        zf_t_partmat = [self.mar_mats_iexo(t,female=True) if t < p['T'] - 1 else None 
                             for t in range(p['T'])]
-            zm_t_partmat[dd] = [self.mar_mats_iexo(t,dd,female=False) if t < p['T'] - 1 else None 
+        zm_t_partmat = [self.mar_mats_iexo(t,female=False) if t < p['T'] - 1 else None 
                             for t in range(p['T'])]
         
         self.part_mats = {'Female, single':zf_t_partmat,
@@ -499,7 +487,7 @@ class ModelSetup(object):
 
         
     
-    def mar_mats_iexo(self,t,dd,female=True,trim_lvl=0.001):
+    def mar_mats_iexo(self,t,female=True,trim_lvl=0.001):
         # TODO: check timing
         # this returns transition matrix for single agents into possible couples
         # rows are single's states
@@ -510,7 +498,7 @@ class ModelSetup(object):
         nexo = setup.pars['nexo_t'][t]
         sigma_psi_init = setup.pars['sigma_psi_init']
         #sig_z_partner = setup.pars['sig_partner_z']
-        psi_couple = setup.exogrid.psi_t[dd][t+1]
+        psi_couple = setup.exogrid.psi_t[t+1]
         
         
         if female:
@@ -593,39 +581,39 @@ class ModelSetup(object):
             
             match_matrix = list()
             
-            for dd in range(self.pars['dm']):
-                for t in range(self.pars['T']-1):
-                    pmat_iexo = pmats[dd][t] # nz X nexo
-                    # note that here we do not use transpose
-                    
-                    nz = pmat_iexo.shape[0]
-                    
-                    inds = np.where( np.any(pmat_iexo>0,axis=0) )[0]
-                    
-                    npos_iexo = inds.size
-                    npos_a = pmat_a.shape[1]
-                    npos = npos_iexo*npos_a
-                    pmatch = np.zeros((self.na,nz,npos),dtype=self.dtype)
-                    iamatch = np.zeros((self.na,nz,npos),dtype=np.int32)
-                    iexomatch = np.zeros((self.na,nz,npos),dtype=np.int32)
-                    
-                    i_conv = np.zeros((npos_iexo,npos_a),dtype=np.int32)
+            
+            for t in range(self.pars['T']-1):
+                pmat_iexo = pmats[t] # nz X nexo
+                # note that here we do not use transpose
+                
+                nz = pmat_iexo.shape[0]
+                
+                inds = np.where( np.any(pmat_iexo>0,axis=0) )[0]
+                
+                npos_iexo = inds.size
+                npos_a = pmat_a.shape[1]
+                npos = npos_iexo*npos_a
+                pmatch = np.zeros((self.na,nz,npos),dtype=self.dtype)
+                iamatch = np.zeros((self.na,nz,npos),dtype=np.int32)
+                iexomatch = np.zeros((self.na,nz,npos),dtype=np.int32)
+                
+                i_conv = np.zeros((npos_iexo,npos_a),dtype=np.int32)
+                
+                for ia in range(npos_a):
+                    i_conv[:,ia] = np.arange(npos_iexo*ia,npos_iexo*(ia+1))
+                 
+                
+                for iz in range(nz):
+                    probs = pmat_iexo[iz,inds]
                     
                     for ia in range(npos_a):
-                        i_conv[:,ia] = np.arange(npos_iexo*ia,npos_iexo*(ia+1))
-                     
-                    
-                    for iz in range(nz):
-                        probs = pmat_iexo[iz,inds]
                         
-                        for ia in range(npos_a):
-                            
-                            pmatch[:,iz,(npos_iexo*ia):(npos_iexo*(ia+1))] = \
-                                (pmat_a[:,ia][:,None])*(probs[None,:])
-                            iamatch[:,iz,(npos_iexo*ia):(npos_iexo*(ia+1))] = \
-                                imat_a[:,ia][:,None]
-                            iexomatch[:,iz,(npos_iexo*ia):(npos_iexo*(ia+1))] = \
-                                inds[None,:]
+                        pmatch[:,iz,(npos_iexo*ia):(npos_iexo*(ia+1))] = \
+                            (pmat_a[:,ia][:,None])*(probs[None,:])
+                        iamatch[:,iz,(npos_iexo*ia):(npos_iexo*(ia+1))] = \
+                            imat_a[:,ia][:,None]
+                        iexomatch[:,iz,(npos_iexo*ia):(npos_iexo*(ia+1))] = \
+                            inds[None,:]
                             
                         
                 assert np.allclose(np.sum(pmatch,axis=2),1.0)

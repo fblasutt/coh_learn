@@ -52,7 +52,7 @@ class Model(object):
         return psutil.Process(os.getpid()).memory_info().rss/1e6
         
         
-    def time(self,whatisdone,verbose=True,mintime=0.005):
+    def time(self,whatisdone,verbose=True,mintime=0.5):
         # mintime removes actions that take too little
         
         total_time = default_timer() - self.start
@@ -105,7 +105,7 @@ class Model(object):
         
         # first we define the iterator
          
-        def v_iterator(setup,desc,dd,t,EV=None):
+        def v_iterator(setup,desc,t,EV=None):
             # this takes integrated future type-specific value function and returns
             # this period value function. Integration is done separately.
             # If None is feeded for EV this assumes that we are in the last period
@@ -118,7 +118,7 @@ class Model(object):
             if desc == 'Female, single' or desc == 'Male, single':
                 
                 female = (desc == 'Female, single')                
-                V, c, x, s = v_iter_single(setup,dd,t,EV,female,ushift)    
+                V, c, x, s = v_iter_single(setup,t,EV,female,ushift)    
 
                 
                 if self.display_v: print('at t = {} for {} mean V[0,:] is {}'.format(t,desc,V[0,:].mean()))
@@ -128,7 +128,7 @@ class Model(object):
              
             elif desc == 'Couple, M' or desc == 'Couple, C':
                 
-                V, VF, VM, c, x, s, fls, V_all_l = v_iter_couple(setup,dd,t,EV,ushift)    
+                V, VF, VM, c, x, s, fls, V_all_l = v_iter_couple(setup,t,EV,ushift)    
 
                       
                 if self.display_v: print('at t = {} for {} mean V[0,:,:] is {}'.format(t,desc,V[0,:,:].mean()))
@@ -138,15 +138,15 @@ class Model(object):
             
         # and the integrator   
         
-        def v_integrator(setup,desc,dd,t,V_next):
+        def v_integrator(setup,desc,t,V_next):
             
             if desc == 'Female, single' or desc == 'Male, single':
                 female = (desc == 'Female, single')
-                EV, dec = ev_single(setup,V_next,setup.agrid_s,female,dd,t)
+                EV, dec = ev_single(setup,V_next,setup.agrid_s,female,t)
             elif desc == 'Couple, M':
-                EV, dec = ev_couple_m_c(setup,V_next,dd,t,True)
+                EV, dec = ev_couple_m_c(setup,V_next,t,True)
             elif desc == 'Couple, C':
-                EV, dec = ev_couple_m_c(setup,V_next,dd,t,False)
+                EV, dec = ev_couple_m_c(setup,V_next,t,False)
                 
                 
             if type(EV) is tuple:
@@ -164,17 +164,17 @@ class Model(object):
         
         if name == 'default' or name == 'default-timed':
             timed = (name == 'default-timed')
-            def iterate(desc,dd,t,Vnext):
-                EV, dec = v_integrator(self.setup,desc,dd,t,Vnext)
+            def iterate(desc,t,Vnext):
+                EV, dec = v_integrator(self.setup,desc,t,Vnext)
                 if timed: self.time('Integration for {}'.format(desc))
-                vout = v_iterator(self.setup,desc,dd,t,EV)
+                vout = v_iterator(self.setup,desc,t,EV)
                 if timed: self.time('Optimization for {}'.format(desc))
                 
                 self.wrap_decisions(desc,dec,vout)
                 
                 return vout, dec
-            def initialize(desc,dd,t):
-                vout = v_iterator(self.setup,desc,dd,t,None)
+            def initialize(desc,t):
+                vout = v_iterator(self.setup,desc,t,None)
                 if timed: self.time('Initialization for {}'.format(desc))
                 dec = {}
                 self.wrap_decisions(desc,dec,vout)
@@ -219,7 +219,6 @@ class Model(object):
         show_mem = self.verbose
         
         T = self.setup.pars['T']
-        dmax=self.setup.pars['dm']
         self.V = list()
         self.decisions = list()
         
@@ -227,29 +226,20 @@ class Model(object):
         if till is None: till = 0
         
         for t in reversed(range(T)):
+            Vnow = dict()
+            decnow = dict()
             
-            Vnow = list()
-            decnow = list()
+            Vnext = self.V[0] if t<T-1 else None
             
-            for dd in reversed(range(dmax)):
-                Vnowd = dict()
-                decnowd = dict()
+            for desc in self.setup.state_names:
+                if t == T-1:
+                    V_d, dec = self.initializer(desc,t)
+                else:
+                    V_d, dec = self.iterator(desc,t,Vnext)   
+                   
+                Vnow.update(V_d)
+                decnow.update({desc:dec})
                 
-
-                Vnext = self.V[0][dd]  if t<T-1 else None
-
-                for desc in self.setup.state_names:
-                    if t == T-1:
-                        V_d, dec = self.initializer(desc,dd,t)
-                    else:
-                        V_d, dec = self.iterator(desc,dd,t,Vnext)   
-                       
-                    Vnowd.update(V_d)
-                    decnowd.update({desc:dec})
-                    
-                Vnow=[Vnowd]+Vnow
-                decnow=[decnowd]+decnow
-                    
             self.V = [Vnow] + self.V
             self.decisions = [decnow] + self.decisions
             
@@ -264,9 +254,9 @@ class Model(object):
             import pickle
             pickle.dump(self,open('model_save.pkl','wb+'))
         
-    def graph(self,ai,zfi,zmi,psii,di,ti,thi):        
+    def graph(self,ai,zfi,zmi,psii,ti,thi):        
         #Draw some graph of Value and Policy Functions
-        #V=graphs(self,ai,zfi,zmi,psii,di,ti,thi)        
+        V=graphs(self,ai,zfi,zmi,psii,ti,thi)        
         return V
       
         
