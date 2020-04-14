@@ -153,7 +153,7 @@ def v_div_vartheta(setup,dc,dd,t,sc,Vmale,Vfemale,izf,izm,
     
     # these are interpolation points
     
-    Vm_divorce_M, Vf_divorce_M = v_div_allsplits(setup,dc,t,sc,
+    Vm_divorce_M, Vf_divorce_M = v_div_allsplits(setup,dc,dd,t,sc,
                                                  Vmale,Vfemale,izm,izf,
                                 shrs=shrs,cost_fem=cost_fem,cost_mal=cost_mal)
     

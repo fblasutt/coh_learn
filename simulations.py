@@ -110,6 +110,9 @@ class Agents:
         self.x = np.zeros((N,T),np.float32)
         self.s = np.zeros((N,T),np.float32)
         
+        #Initialize relationship duration
+        self.du=np.zeros((N,T),np.int16)
+        
 
         
         
@@ -163,13 +166,14 @@ class Agents:
         
         
         for t in range(self.T):
-            if len(self.setup.agrid_s)>1  :
-                self.anext(t) 
-                
-            if t+1<self.T:
-                self.iexonext(t)            
-                self.statenext(t)
-            self.timer('Simulations, iteration',verbose=self.verbose)
+            for dd in range(self.setup.pars['dm']):
+                if len(self.setup.agrid_s)>1  :
+                    self.anext(dd,t) 
+                    
+                if t+1<self.T:
+                    self.iexonext(dd,t)            
+                    self.statenext(dd,t)
+                self.timer('Simulations, iteration',verbose=self.verbose)
         
         
         #return self.gsavings, self.iexo, self.state,self.gtheta
@@ -177,7 +181,7 @@ class Agents:
     
 
     
-    def anext(self,t):
+    def anext(self,dd,t):
         # finds savings (potenitally off-grid)
         
         
@@ -198,7 +202,7 @@ class Agents:
                 
                 ind = np.where(is_state)[0]
                 
-                pol = self.Mlist[ipol].decisions[t][sname]
+                pol = self.Mlist[ipol].decisions[t][dd][sname]
                 
                 if not use_theta:
                     
@@ -231,7 +235,7 @@ class Agents:
                 assert np.all(anext >= 0)
     
     
-    def iexonext(self,t):
+    def iexonext(self,dd,t):
         
         # let's find out new exogenous state
         
@@ -239,7 +243,7 @@ class Agents:
             for ist,sname in enumerate(self.state_names):
                 is_state_any_pol = (self.state[:,t]==ist)
                 is_pol = (self.policy_ind[:,t+1]==ipol)
-                is_state = (is_state_any_pol) & (is_pol)   
+                is_state = (is_state_any_pol) & (is_pol) & (self.du[:,t]==dd)
                 
                 nst = np.sum(is_state)
                 
@@ -252,6 +256,10 @@ class Agents:
                 
                 
                 if sname == 'Couple, C' or sname == 'Couple, M':
+                    
+                    
+                    #Update couple duration
+                    dur=self.du[ind,t]
                     
                     ls_val = self.ils_i[ind,t] 
                     
@@ -266,7 +274,7 @@ class Agents:
                         if self.verbose: print('At t = {} for {} {} have LS of {}'.format(t,sname,cnt,lvl))
                         
                         
-                        mat = self.Mlist[ipol].setup.exo_mats[sname][ils][t]
+                        mat = self.Mlist[ipol].setup.exo_mats[sname][dd][ils][t]
                         
                         shks = self.shocks_couple_iexo[ind[this_ls],t]
                         
@@ -274,6 +282,11 @@ class Agents:
                         iexo_next_this_ls = mc_simulate(iexo_now[this_ls],mat,shocks=shks)
                         self.iexo[ind[this_ls],t+1] = iexo_next_this_ls
                         self.iexos[ind[this_ls],t+1] = iexo_next_this_ls
+                        maxx=(dur[this_ls]==self.setup.pars['dm']-1)
+                        minn=(self.setup.pars['dm']==1)
+                        self.du[ind[this_ls],t+1] = dur[this_ls]+1
+                        self.du[ind[this_ls][maxx],t+1] = dur[this_ls][maxx]-1
+                        self.du[ind[this_ls][minn],t+1] = dur[this_ls][minn]
                         
                 else:
                     mat = self.Mlist[ipol].setup.exo_mats[sname][t]
@@ -283,23 +296,21 @@ class Agents:
                     self.iexos[ind,t+1] = iexo_next
             
     
-    def statenext(self,t):
+    def statenext(self,dd,t):
         
-        
-        
-        
+
         for ipol in range(self.npol):
             for ist,sname in enumerate(self.state_names):
                 is_state_any_pol = (self.state[:,t]==ist)
                 is_pol = (self.policy_ind[:,t+1]==ipol)
-                is_state = (is_state_any_pol) & (is_pol) 
+                is_state = (is_state_any_pol) & (is_pol) & (self.du[:,t]==dd)
                 
                 if self.verbose: print('At t = {} count of {} is {}'.format(t,sname,np.sum(is_state)))
                 
                 if not np.any(is_state):
                     continue
                 
-                ind = np.where(is_state)[0]
+                ind = np.where(is_state)[0] 
                 
                 nind = ind.size
                 
@@ -317,7 +328,7 @@ class Agents:
                     pmeet = self.Mlist[ipol].setup.pars['pmeet_t'][t] # TODO: check timing
                     
                     
-                    matches = self.Mlist[ipol].decisions[t][ss]
+                    matches = self.Mlist[ipol].decisions[t][dd][ss]
                     
                     ia = self.iassets[ind,t+1] # note that timing is slightly inconsistent  
                     
@@ -387,7 +398,7 @@ class Agents:
                         # FLS decision
                         #self.ils_i[ind[i_ren],t+1] = 
                         tg = self.Mlist[ipol].setup.v_thetagrid_fine                    
-                        fls_policy = self.Mlist[ipol].decisions[t+1]['Couple, M']['fls']
+                        fls_policy = self.Mlist[ipol].decisions[t+1][dd]['Couple, M']['fls']
                         if len(self.setup.agrid_s)>1  :
                             self.ils_i[ind[i_agree_mar],t+1] = \
                                 fls_policy[self.iassets[ind[i_agree_mar],t+1],self.iexo[ind[i_agree_mar],t+1],self.itheta[ind[i_agree_mar],t+1]] 
@@ -408,7 +419,7 @@ class Agents:
                         # FLS decision
                         tg = self.Mlist[ipol].setup.v_thetagrid_fine
                         #fls_policy = self.V[t+1]['Couple, C']['fls']
-                        fls_policy = self.Mlist[ipol].decisions[t+1]['Couple, C']['fls']
+                        fls_policy = self.Mlist[ipol].decisions[t+1][dd]['Couple, C']['fls']
                         
                         if len(self.setup.agrid_s)>1  :
                             self.ils_i[ind[i_agree_coh],t+1] = \
@@ -431,8 +442,7 @@ class Agents:
                 def couples():
                     
                     ss = self.single_state
-                    
-                    decision = self.Mlist[ipol].decisions[t][sname]
+                    decision = self.Mlist[ipol].decisions[t][dd][sname]
     
                     
                     # by default keep the same theta and weights
@@ -574,7 +584,7 @@ class Agents:
                                 ipick = (self.iassets[ind[i_ren],t+1],self.iexo[ind[i_ren],t+1],self.itheta[ind[i_ren],t+1])
                             else:
                                 ipick = (self.iexo[ind[i_ren],t+1],self.itheta[ind[i_ren],t+1],0)
-                            self.ils_i[ind[i_ren],t+1] = self.Mlist[ipol].decisions[t+1][sname]['fls'][ipick]
+                            self.ils_i[ind[i_ren],t+1] = self.Mlist[ipol].decisions[t+1][dd][sname]['fls'][ipick]
                         else:
                             i_coh = decision['Cohabitation preferred to Marriage'][isc,iall,thts]
                             i_coh1=i_coh[i_ren]
@@ -584,8 +594,8 @@ class Agents:
                             else:
                                ipick = (self.iexo[ind[i_ren],t+1],self.itheta[ind[i_ren],t+1],0)
                             
-                            ils_if_mar = self.Mlist[ipol].decisions[t+1]["Couple, M"]['fls'][ipick]
-                            ils_if_coh = self.Mlist[ipol].decisions[t+1]["Couple, C"]['fls'][ipick]
+                            ils_if_mar = self.Mlist[ipol].decisions[t+1][dd]["Couple, M"]['fls'][ipick]
+                            ils_if_coh = self.Mlist[ipol].decisions[t+1][dd]["Couple, C"]['fls'][ipick]
                             
                             self.ils_i[ind[i_ren],t+1] = i_coh1*ils_if_coh+(1-i_coh1)*ils_if_mar
                             self.state[ind[i_ren],t+1] = i_coh1*self.state_codes["Couple, C"]+(1-i_coh1)*self.state_codes["Couple, M"]
@@ -606,7 +616,7 @@ class Agents:
                             else:
                                 ipick = (self.iexo[ind[i_sq],t+1],self.itheta[ind[i_sq],t+1],0)
                             
-                            self.ils_i[ind[i_sq],t+1] = self.Mlist[ipol].decisions[t+1][sname]['fls'][ipick]
+                            self.ils_i[ind[i_sq],t+1] = self.Mlist[ipol].decisions[t+1][dd][sname]['fls'][ipick]
                         else:
                             i_coh = decision['Cohabitation preferred to Marriage'][isc,iall,thts]
                             i_coh1=i_coh[i_sq]
@@ -617,8 +627,8 @@ class Agents:
                             else:
                                 ipick = (self.iexo[ind[i_sq],t+1],self.itheta[ind[i_sq],t+1],0)
                     
-                            ils_if_mar = self.Mlist[ipol].decisions[t+1]["Couple, M"]['fls'][ipick]
-                            ils_if_coh = self.Mlist[ipol].decisions[t+1]["Couple, C"]['fls'][ipick]
+                            ils_if_mar = self.Mlist[ipol].decisions[t+1][dd]["Couple, M"]['fls'][ipick]
+                            ils_if_coh = self.Mlist[ipol].decisions[t+1][dd]["Couple, C"]['fls'][ipick]
                            
                             self.ils_i[ind[i_sq],t+1] = i_coh1*ils_if_coh+(1-i_coh1)*ils_if_mar
                             self.state[ind[i_sq],t+1] = i_coh1*self.state_codes["Couple, C"]+(1-i_coh1)*self.state_codes["Couple, M"]
@@ -656,6 +666,7 @@ class AgentsPooled:
         self.c = combine([a.c for a in AgentsList])
         self.s = combine([a.s for a in AgentsList])
         self.x = combine([a.x for a in AgentsList])
+        self.du = combine([a. du for a in AgentsList])
         self.shocks_single_iexo=combine([a.shocks_single_iexo for a in AgentsList])
         self.shocks_couple_a=combine([a.shocks_couple_a for a in AgentsList])
         self.shocks_single_a=combine([a.shocks_single_a for a in AgentsList])

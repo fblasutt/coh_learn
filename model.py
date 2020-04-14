@@ -235,8 +235,10 @@ class Model(object):
                 Vnowd = dict()
                 decnowd = dict()
                 
-
-                Vnext = self.V[0][dd]  if t<T-1 else None
+                if dd<dmax-1:
+                    Vnext = self.V[0][dd+1]  if t<T-1 else None
+                else:
+                    Vnext = self.V[0][dd]  if t<T-1 else None
 
                 for desc in self.setup.state_names:
                     if t == T-1:
@@ -264,9 +266,9 @@ class Model(object):
             import pickle
             pickle.dump(self,open('model_save.pkl','wb+'))
         
-    def graph(self,ai,zfi,zmi,psii,di,ti,thi):        
+    def graph(self,ai,zfi,zmi,psii,ti,thi,dd):        
         #Draw some graph of Value and Policy Functions
-        #V=graphs(self,ai,zfi,zmi,psii,di,ti,thi)        
+        V=graphs(self,ai,zfi,zmi,psii,ti,thi,dd)        
         return V
       
         

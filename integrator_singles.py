@@ -14,7 +14,7 @@ from marriage import v_mar_igrid, v_no_mar
 
 
 
-def ev_single(setup,V,sown,female,t,trim_lvl=0.001):
+def ev_single(setup,V,sown,female,dd,t,trim_lvl=0.001):
     # expected value of single person meeting a partner with a chance pmeet
     pmeet = setup.dtype( setup.pars['pmeet_t'][t] )
     
@@ -25,7 +25,7 @@ def ev_single(setup,V,sown,female,t,trim_lvl=0.001):
     #ev_single_meet_test(setup,V,sown,female,t,
      #                                 skip_mar=skip_mar,trim_lvl=trim_lvl)
     
-    EV_meet, dec = ev_single_meet(setup,V,sown,female,t,
+    EV_meet, dec = ev_single_meet(setup,V,sown,female,dd,t,
                                       skip_mar=skip_mar,trim_lvl=trim_lvl)
     
     
@@ -44,7 +44,7 @@ def ev_single(setup,V,sown,female,t,trim_lvl=0.001):
     return (1-pmeet)*EV_nomeet + pmeet*EV_meet, dec
     
 
-def ev_single_meet(setup,V,sown,female,t,skip_mar=False,trim_lvl=0.000001):
+def ev_single_meet(setup,V,sown,female,dd,t,skip_mar=False,trim_lvl=0.000001):
     # computes expected value of single person meeting a partner
     
     # this creates potential partners and integrates over them
@@ -55,7 +55,7 @@ def ev_single_meet(setup,V,sown,female,t,skip_mar=False,trim_lvl=0.000001):
     ns = sown.size
     
     
-    p_mat = setup.part_mats['Female, single'][0][t].T if female else setup.part_mats['Male, single'][0][t].T
+    p_mat = setup.part_mats['Female, single'][dd][t].T if female else setup.part_mats['Male, single'][dd][t].T
     p_mat = p_mat.astype(setup.dtype,copy=False)
         
     V_next = np.ones((ns,nexo),dtype=setup.dtype)*(-1e10)

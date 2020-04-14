@@ -55,6 +55,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     cons=agents.c 
     consx=agents.x 
     labor=agents.ils_i 
+    dur=agents.du
     shks = agents.shocks_single_iexo  
     psi_check=np.zeros(state.shape) 
     shift_check=np.array((state==2),dtype=np.float32) 
@@ -65,7 +66,9 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
      
     #Fill psi and ushift here 
     for i in range(len(state[0,:])): 
-        psi_check[:,i]=((setup.exogrid.psi_t[i][(setup.all_indices(i,iexo[:,i]))[3]]))  
+        for dd in range(setup.pars['dm']):
+            duration=(dur[:,i]==dd)
+            psi_check[:,i]=((setup.exogrid.psi_t[dd][i][(setup.all_indices(i,iexo[:,i]))[3]]))  
      
      
     psi_check[single]=0.0 
@@ -1131,7 +1134,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
             if np.any(singlem):wage_m[singlem,i]=np.exp(setup.pars['m_wage_trend'][i]+setup.exogrid.zm_t[i][iexo_w[singlem,i]])  
             if np.any(nsinglef):wage_mp[nsinglef,i]=np.exp(setup.pars['m_wage_trend'][i]+setup.exogrid.zm_t[i][((setup.all_indices(i,iexo_w[:,i]))[2])])[nsinglef] 
             if np.any(nsinglem):wage_fp[nsinglem,i]=np.exp(setup.pars['f_wage_trend'][i]+setup.exogrid.zf_t[i][((setup.all_indices(i,iexo_w[:,i]))[1])])[nsinglem] 
-            if np.any(marf):psis[:,i]=((setup.exogrid.psi_t[i][(setup.all_indices(i,iexo_w[:,i]))[3]])) 
+            if np.any(marf):psis[:,i]=psi_check[:,i]#((setup.exogrid.psi_t[i][(setup.all_indices(i,iexo_w[:,i]))[3]])) 
              
             #Single only Income 
             wage_fs[i]=np.mean(setup.pars['f_wage_trend'][i]+setup.exogrid.zf_t[i][iexo_w[singlef,i]] ) 

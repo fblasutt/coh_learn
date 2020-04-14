@@ -15,15 +15,15 @@ import matplotlib.backends.backend_pdf
 #from ren_mar_alt import v_mar_igrid 
 #from ren_mar_alt import v_ren_new 
 from marriage import v_mar_igrid 
-from renegotiation_unilateral import v_ren_uni
+from renegotiation_vartheta import v_ren_vt as v_ren_uni
 from renegotiation_bilateral import v_ren_bil
 
  
-def v_reshape(setup,desc,field,V_by_t,Tmax): 
+def v_reshape(setup,desc,field,V_by_t,Tmax,dd): 
     # this reshapes V into many-dimensional object 
     if desc == "Couple, C" or desc == "Couple, M": 
          
-        v0 = V_by_t[0][desc][field] 
+        v0 = V_by_t[0][dd][desc][field] if dd>=0 else V_by_t[0][desc][field]
         shp_v0 = v0.shape 
          
         tht_shape = (v0.ndim>2)*(shp_v0[-1],) # can be empty if no theta dimension 
@@ -31,13 +31,13 @@ def v_reshape(setup,desc,field,V_by_t,Tmax):
         shape = (shp_v0[0],setup.pars['n_zf_t'][0],setup.pars['n_zm_t'][0],setup.pars['n_psi_t'][0]) + tht_shape + (Tmax,) 
         out = np.empty(shape,v0.dtype)         
         for t in range(Tmax): 
-            vin = V_by_t[t][desc][field] 
+            vin = V_by_t[t][dd][desc][field] if dd>=0 else V_by_t[t][desc][field]
             out[...,t] = vin.reshape(shape[:-1]) 
     else: 
-        shape = V_by_t[0][desc][field].shape + (Tmax,) 
-        out = np.empty(shape,V_by_t[0][desc][field].dtype) 
+        shape = V_by_t[0][dd][desc][field].shape + (Tmax,) if dd>=0 else V_by_t[0][desc][field].shape + (Tmax,)
+        out = np.empty(shape,V_by_t[0][dd][desc][field].dtype) if dd>=0 else np.empty(shape,V_by_t[0][desc][field].dtype)
         for t in range(Tmax): 
-            vin = V_by_t[t][desc][field] 
+            vin = V_by_t[t][dd][desc][field] if dd>=0 else  V_by_t[t][desc][field]
             out[...,t] = vin 
      
     return out 
@@ -47,7 +47,7 @@ def v_reshape(setup,desc,field,V_by_t,Tmax):
  
  
  
-def graphs(mdl,ai,zfi,zmi,psii,ti,thi): 
+def graphs(mdl,ai,zfi,zmi,psii,ti,thi,dd): 
     # Import Value Funcrtion previously saved on File 
     #with open('name_model.pkl', 'rb') as file: 
     #    (Packed,dec) = pickle.load(file) 
@@ -62,7 +62,7 @@ def graphs(mdl,ai,zfi,zmi,psii,ti,thi):
     T = setup.pars['Tret'] 
     agrid = setup.agrid_c 
     agrids = setup.agrid_s 
-    psig = setup.exogrid.psi_t[ti] 
+    psig = setup.exogrid.psi_t[dd][ti] 
     vtoutf=np.zeros([T,len(agrids),len(psig)]) 
     thetf=np.zeros([T,len(agrids),len(psig)]) 
     thetf_c=np.zeros([T,len(agrids),len(psig)]) 
@@ -84,14 +84,14 @@ def graphs(mdl,ai,zfi,zmi,psii,ti,thi):
          
         ai_a = ai*np.ones_like(setup.agrid_s,dtype=np.int32) # these are assets of potential partner 
          
-        resc = v_mar_igrid(setup,t+1,Packed[t],ai_a,inds,female=True,marriage=False) 
+        resc = v_mar_igrid(setup,t+1,Packed[t][dd],ai_a,inds,female=True,marriage=False) 
         (vf_c,vm_c), nbs_c, decc, tht_c = resc['Values'], resc['NBS'], resc['Decision'], resc['theta'] 
          
         tcv=setup.thetagrid_fine[tht_c] 
         tcv[tht_c==-1]=None 
          
         # marriage 
-        resm = v_mar_igrid(setup,t,Packed[t],ai_a,inds,female=True,marriage=True) 
+        resm = v_mar_igrid(setup,t,Packed[t][dd],ai_a,inds,female=True,marriage=True) 
         (vf_m,vm_m), nbs_m, decm, tht_m = resm['Values'], resm['NBS'], resm['Decision'], resm['theta'] 
          
          
@@ -123,17 +123,17 @@ def graphs(mdl,ai,zfi,zmi,psii,ti,thi):
     # if ti = 0 it creates an object that was not used for the solutions,  
     # as V in v_ren_new is the next period value function. ti-1 should be here. 
     if len(agrids)>1:
-        V_ren_c = v_ren_uni(setup,Packed[ti],False,ti-1,return_extra=True)[1]['Values'][0][np.arange(agrid.size),nex,inde] 
+        V_ren_c = v_ren_uni(setup,Packed[ti][dd],False,dd,ti-1,return_extra=True)[1]['Values'][0][np.arange(agrid.size),nex,inde] 
         
         v_ren_mar = v_ren_uni if setup.div_costs.unilateral_divorce else v_ren_bil
         
-        V_ren_m = v_ren_mar(setup,Packed[ti],True,ti-1,return_extra=True)[1]['Values'][0][np.arange(agrid.size),nex,inde] 
+        V_ren_m = v_ren_mar(setup,Packed[ti][dd],True,dd,ti-1,return_extra=True)[1]['Values'][0][np.arange(agrid.size),nex,inde] 
     else:
-        V_ren_c = v_ren_uni(setup,Packed[ti],False,ti-1,return_extra=True)[1]['Values'][0][np.arange(agrid.size),nex,inde] 
+        V_ren_c = v_ren_uni(setup,Packed[ti][dd],False,dd,ti-1,return_extra=True)[1]['Values'][0][np.arange(agrid.size),nex,inde] 
         
         v_ren_mar = v_ren_uni if setup.div_costs.unilateral_divorce else v_ren_bil
         
-        V_ren_m = v_ren_mar(setup,Packed[ti],True,ti-1,return_extra=True)[1]['Values'][0][np.arange(agrid.size),nex,inde] 
+        V_ren_m = v_ren_mar(setup,Packed[ti][dd],True,dd,ti-1,return_extra=True)[1]['Values'][0][np.arange(agrid.size),nex,inde] 
         
         
     #Divorced Women and Men 
@@ -143,43 +143,43 @@ def graphs(mdl,ai,zfi,zmi,psii,ti,thi):
     
     
     vals = [{'Couple, M': 
-            v_ren_mar(setup,Packed[t],True,t-1,return_vdiv_only=True), 
+            v_ren_mar(setup,Packed[t][dd],True,dd,t-1,return_vdiv_only=True), 
             'Couple, C': 
-            v_ren_uni(setup,Packed[t],False,t-1,return_vdiv_only=True), 
+            v_ren_uni(setup,Packed[t][dd],False,dd,t-1,return_vdiv_only=True), 
            } 
             for t in range(T)] 
         
      
-    Vf_div = v_reshape(setup,'Couple, M','Value of Divorce, female',vals,T)[...,0,:] 
-    Vm_div = v_reshape(setup,'Couple, M','Value of Divorce, male',vals,T)[...,0,:] 
+    Vf_div = v_reshape(setup,'Couple, M','Value of Divorce, female',vals,T,-1)[...,0,:] 
+    Vm_div = v_reshape(setup,'Couple, M','Value of Divorce, male',vals,T,-1)[...,0,:] 
      
      
     # I take index 0 as ipsi does not matter for this 
      
     #Single Women 
              
-    Vfs, cfs, sfs = [v_reshape(setup,'Female, single',f,Packed,T) 
+    Vfs, cfs, sfs = [v_reshape(setup,'Female, single',f,Packed,T,dd) 
                         for f in ['V','c','s']] 
      
      
-    Vms, cms, sms = [v_reshape(setup,'Male, single',f,Packed,T) 
+    Vms, cms, sms = [v_reshape(setup,'Male, single',f,Packed,T,dd) 
                         for f in ['V','c','s']] 
                       
     #Couples: Marriage+Cohabitation 
      
-    ithetam_R = v_reshape(setup,'Couple, M','thetas',dec,T-1) 
+    ithetam_R = v_reshape(setup,'Couple, M','thetas',dec,T-1,dd) 
      
     thetam_R = setup.thetagrid_fine[ithetam_R] 
     thetam_R[ithetam_R==-1] = None 
      
-    ithetac_R = v_reshape(setup,'Couple, C','thetas',dec,T-1) 
+    ithetac_R = v_reshape(setup,'Couple, C','thetas',dec,T-1,dd) 
     thetac_R = setup.thetagrid_fine[ithetac_R] 
     thetac_R[ithetac_R==-1] = None 
      
      
-    Vm, Vmm, Vfm, cm, sm, flsm = [v_reshape(setup,'Couple, M',f,Packed,T) 
+    Vm, Vmm, Vfm, cm, sm, flsm = [v_reshape(setup,'Couple, M',f,Packed,T,dd) 
                                     for f in ['V','VM','VF','c','s','fls']] 
-    Vc, Vmc, Vfc, cc, sc, flsc = [v_reshape(setup,'Couple, C',f,Packed,T) 
+    Vc, Vmc, Vfc, cc, sc, flsc = [v_reshape(setup,'Couple, C',f,Packed,T,dd) 
                                     for f in ['V','VM','VF','c','s','fls']] 
      
      

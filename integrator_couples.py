@@ -19,7 +19,7 @@ def ev_couple_m_c(setup,Vpostren,dd,t,marriage,use_sparse=True):
     # computes expected value of couple entering the next period with an option
     # to renegotiate or to break up
     
-    can_divorce = setup.pars['can divorce'][dd][t]
+    can_divorce = setup.pars['can divorce'][t]
     if can_divorce:
         uni_div = setup.div_costs.unilateral_divorce if marriage else setup.sep_costs.unilateral_divorce
         if uni_div:
@@ -46,7 +46,7 @@ def ev_couple_m_c(setup,Vpostren,dd,t,marriage,use_sparse=True):
     
     # accounts for exogenous transitions
     
-    EV, EVf, EVm = ev_couple_exo(setup,Vren['M'],t,use_sparse,down=False)
+    EV, EVf, EVm = ev_couple_exo(setup,Vren['M'],dd,t,use_sparse,down=False)
     
     
     assert EV.dtype == setup.dtype
@@ -69,7 +69,7 @@ def ev_couple_exo(setup,Vren,dd,t,use_sparse=True,down=False):
             return np.dot(a,b.T).astype(a.dtype,copy=False)
         
     
-    nl = len(setup.exogrid.all_t_mat_by_l_spt)
+    nl = len(setup.exogrid.all_t_mat_by_l_spt[dd])
     
     na, nexo, ntheta = setup.na, setup.pars['nexo_t'][t], setup.ntheta 
     
@@ -80,7 +80,7 @@ def ev_couple_exo(setup,Vren,dd,t,use_sparse=True,down=False):
     
     for il in range(nl):
         
-        M = setup.exogrid.all_t_mat_by_l_spt[il][dd][t] if use_sparse else setup.exogrid.all_t_mat_by_l[il][dd][t]
+        M = setup.exogrid.all_t_mat_by_l_spt[dd][il][t] if use_sparse else setup.exogrid.all_t_mat_by_l[dd][il][t]
         
         
         

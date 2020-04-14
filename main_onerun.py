@@ -72,9 +72,9 @@ if __name__ == '__main__':
         path = None
     
     out, mdl, agents, res = mdl_resid(x0,return_format=['distance','models','agents','scaled residuals'],
-                                      #load_from=['mdl_save_bil.pkl','mdl_save_uni.pkl'],
+                                      #load_from=['mdl_save_uni.pkl'],#'mdl_save_uni.pkl'],
                                       solve_transition=False,                                    
-                                      #save_to=['mdl_save_bil.pkl','mdl_save_uni.pkl'],
+                                      #save_to=['mdl_save_uni.pkl'],#'mdl_save_uni.pkl'],
                                       store_path=path,
                                       verbose=True,calibration_report=False,draw=graphs,graphs=graphs,
                                       welf=True) #Switch to true for decomposition of welfare analysis
@@ -91,9 +91,10 @@ if __name__ == '__main__':
         psii=1
         ti=4
         thi=5
+        dd=0
          
         #Actual Graphs
-        mdl[0].graph(ai,zfi,zmi,psii,ti,thi)
+        mdl[0].graph(ai,zfi,zmi,psii,ti,thi,dd)
         #get_ipython().magic('reset -f')
         #If you plan to use graphs only once, deselect below to save space on disk
         #os.remove('name_model.pkl')
