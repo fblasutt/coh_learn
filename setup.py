@@ -34,7 +34,7 @@ class ModelSetup(object):
         p['Tret'] = Tret
         p['Tren'] = Tren
         p['Tbef'] = Tbef
-        p['sig_zf_0']  = 0.5449176#0.4096**(0.5)
+        p['sig_zf_0']  = .5449176#mk0.4096**(0.5)
         p['sig_zf']    = .0272437**(0.5)#0.0399528**(0.5)
         p['n_zf_t']      = [5]*Tret + [1]*(T-Tret)
         p['sig_zm_0']  = 0.54896510#.405769**(0.5)
