@@ -245,29 +245,34 @@ class ModelSetup(object):
              #   exogrid['psi_t_mat'][t] = np.diag(np.ones(len(exogrid['psi_t'][t])))#p.atleast_2d(1.0)
 
             
-            zfzm, zfzmmat = combine_matrices_two_lists(exogrid['zf_t'], exogrid['zm_t'], exogrid['zf_t_mat'], exogrid['zm_t_mat'])
+            
             
             #Create a new bad version of transition matrix p(zf_t)
                 
-                
-            zf_bad = [tauchen_drift(exogrid['zf_t'][t], exogrid['zf_t'][t+1], 
-                                        1.0, p['sig_zf'], p['z_drift'])
-                            for t in range(self.pars['Tret']-1) ]
-                
-            #Account for retirement here
-            zf_bad = zf_bad+[exogrid['zf_t_mat'][t] for t in range(self.pars['Tret']-1,self.pars['T']-1)]+ [None]
-                
-            zf_t_mat_down = zf_bad
+           
             
-            zfzm, zfzmmat = combine_matrices_two_lists(exogrid['zf_t'], exogrid['zm_t'], zf_t_mat_down, exogrid['zm_t_mat'])
+            #zfzm, zfzmmat = combine_matrices_two_lists(exogrid['zf_t'], exogrid['zm_t'], zf_t_mat_down, exogrid['zm_t_mat'])
             
             exogrid['all_t_mat_by_l'],  exogrid['all_t_mat_by_l_spt'],exogrid['all_t']=list(np.ones((p['dm']))),list(np.ones((p['dm']))),list(np.ones((p['dm'])))
             for dd in range(p['dm']):
                 
+                zfzm, zfzmmat = combine_matrices_two_lists(exogrid['zf_t'], exogrid['zm_t'], exogrid['zf_t_mat'], exogrid['zm_t_mat'])
                 all_t, all_t_mat = combine_matrices_two_lists(zfzm,exogrid['psi_t'][dd],zfzmmat,exogrid['psi_t_mat'][dd])
                 all_t_mat_sparse_T = [sparse.csc_matrix(D.T) if D is not None else None for D in all_t_mat]
                 
                 
+                
+                
+                     
+                zf_bad = [tauchen_drift(exogrid['zf_t'][t], exogrid['zf_t'][t+1], 
+                                        1.0, p['sig_zf'], p['z_drift'])
+                            for t in range(self.pars['Tret']-1) ]
+                
+                #Account for retirement here
+                zf_bad = zf_bad+[exogrid['zf_t_mat'][t] for t in range(self.pars['Tret']-1,self.pars['T']-1)]+ [None]
+                
+                zf_t_mat_down = zf_bad
+                zfzm, zfzmmat = combine_matrices_two_lists(exogrid['zf_t'], exogrid['zm_t'], zf_t_mat_down, exogrid['zm_t_mat'])
                 all_t_down, all_t_mat_down = combine_matrices_two_lists(zfzm,exogrid['psi_t'][dd],zfzmmat,exogrid['psi_t_mat'][dd])
                 all_t_mat_down_sparse_T = [sparse.csc_matrix(D.T) if D is not None else None for D in all_t_mat_down]
                 
@@ -420,9 +425,9 @@ class ModelSetup(object):
         
         
         # building m grid
-        ezfmin = min([np.min(1.0*np.exp(g+t)) for g,t in zip(exogrid['zf_t'],p['f_wage_trend'])])
+        ezfmin = min([np.min(0.8*np.exp(g+t)) for g,t in zip(exogrid['zf_t'],p['f_wage_trend'])])
         ezmmin = min([np.min(np.exp(g+t)) for g,t in zip(exogrid['zm_t'],p['m_wage_trend'])])
-        ezfmax = max([np.max(1.0*np.exp(g+t)) for g,t in zip(exogrid['zf_t'],p['f_wage_trend'])])
+        ezfmax = max([np.max(0.8*np.exp(g+t)) for g,t in zip(exogrid['zf_t'],p['f_wage_trend'])])
         ezmmax = max([np.max(np.exp(g+t)) for g,t in zip(exogrid['zm_t'],p['m_wage_trend'])])
         
         

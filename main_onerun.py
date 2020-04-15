@@ -46,7 +46,7 @@ if __name__ == '__main__':
     #For graphs later
     graphs=True
     #Build  data moments and pickle them
-    #dat_moments(period=1,sampling_number=4,transform=2)
+    dat_moments(period=6,sampling_number=4,transform=2)
     
          
     #Initialize the file with parameters
