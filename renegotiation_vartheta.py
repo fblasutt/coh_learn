@@ -77,8 +77,7 @@ def v_ren_vt(setup,V,marriage,dd,t,return_extra=False,return_vdiv_only=False,res
                                           V['Couple, M']['VF'][None,...], 
                                           V['Couple, M']['VM'][None,...], 
                                           vf_n, vm_n,
-                                          itht, wntht, thtgrid, 
-                                          rescale = rescale)
+                                          itht, wntht, thtgrid)
              
         else:
            
@@ -219,8 +218,7 @@ def v_div_vartheta(setup,dc,dd,t,sc,Vmale,Vfemale,izf,izm,
 
 
 @njit(parallel=True)
-def v_ren_core_two_opts_with_int(v_y_ni, vf_y_ni, vm_y_ni, vf_n_ni, vm_n_ni, itht, wntht, thtgrid, 
-                                 rescale=False):
+def v_ren_core_two_opts_with_int(v_y_ni, vf_y_ni, vm_y_ni, vf_n_ni, vm_n_ni, itht, wntht, thtgrid):
     # this takes values with no interpolation and interpolates inside
     # this also makes a choice of mar / coh
     # choice is based on comparing v_y_ni_0 vs v_y_ni_1 in the interpolated pt

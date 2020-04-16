@@ -23,7 +23,7 @@ from renegotiation_unilateral_gpu import v_ren_gpu_oneopt
 from renegotiation_unilateral_gpu import v_ren_gpu_twoopt
 
 def v_ren_uni(setup,V,marriage,dd,t,return_extra=False,return_vdiv_only=False,rescale=True,
-             thetafun=None, mixed_rescale=True,):
+             thetafun=None, mixed_rescale=True):
     # this returns value functions for couple that entered the period with
     # (s,Z,theta) from the grid and is allowed to renegotiate them or breakup
     # 
@@ -112,7 +112,7 @@ def v_ren_uni(setup,V,marriage,dd,t,return_extra=False,return_vdiv_only=False,re
                            np.stack([V['Couple, C']['VF'],V['Couple, M']['VF']]), 
                            np.stack([V['Couple, C']['VM'],V['Couple, M']['VM']]), 
                                     vf_n1, vm_n1,
-                                    itht, wntht, thtgrid, rescale = rescale)  
+                                    itht, wntht, thtgrid)  
                 
         else:    
             v_ou_nor, vf_out, vm_out, itheta_out, switch = \
@@ -121,7 +121,7 @@ def v_ren_uni(setup,V,marriage,dd,t,return_extra=False,return_vdiv_only=False,re
                                    V['Couple, C']['VF'],V['Couple, M']['VF'], 
                                    V['Couple, C']['VM'],V['Couple, M']['VM'], 
                                     vf_n1, vm_n1,
-                                    itht, wntht, thtgrid, rescale = rescale)     
+                                    itht, wntht, thtgrid)     
         
         
         assert v_out_nor.dtype == setup.dtype
@@ -276,7 +276,7 @@ def v_no_ren(setup,V,marriage,dd,t):
     vf_n, vm_n = np.full((2,) + shape_notheta,-np.inf,dtype=setup.dtype)
     
     result =  {'Decision': yes, 'thetas': i_theta_out,
-            'Values': (r(v_y), r(vf_y), r(vm_y)),'Divorce':(vf_n,vm_n)}
+            'Values': (r(v_y),r(v_y), r(vf_y), r(vm_y)),'Divorce':(vf_n,vm_n)}
     
     if not marriage:
         result['Cohabitation preferred to Marriage'] = ~switch
@@ -290,8 +290,7 @@ def v_no_ren(setup,V,marriage,dd,t):
 
 
 @njit(parallel=True)
-def v_ren_core_two_opts_with_int(v_y_ni, vf_y_ni, vm_y_ni, vf_no, vm_no, itht, wntht, thtgrid, 
-                                 rescale=False):
+def v_ren_core_two_opts_with_int(v_y_ni, vf_y_ni, vm_y_ni, vf_no, vm_no, itht, wntht, thtgrid):
     # this takes values with no interpolation and interpolates inside
     # this also makes a choice of mar / coh
     # choice is based on comparing v_y_ni_0 vs v_y_ni_1 in the interpolated pt

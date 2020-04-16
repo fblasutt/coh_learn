@@ -150,7 +150,7 @@ class VecOnGrid(object):
         # TODO: check if this hurts dimensionality
         # FIXME: yes it does
         
-        return (np.atleast_1d(out.astype(typein).squeeze()))
+        return (np.atleast_1d(out.astype(typein,copy=False).squeeze()))
     
     
     def apply_2dim(self,xin,*,apply_first,axis_first,axis_this=0,take=None,pick=None,reshape_i=True):

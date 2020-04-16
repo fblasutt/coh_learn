@@ -53,7 +53,7 @@ def v_optimize_couple(money_in,sgrid,EV,mgrid,utilint,xint,ls,beta,ushift,
         assert len(EV) == 2
         vsgrid,EVin = EV
         EVin = EVin.astype(dtype,copy=False)
-        EV_by_l = vsgrid.apply_preserve_shape(EVin)
+        EV_by_l = EVin if isinstance(vsgrid,(np.ndarray)) else vsgrid.apply_preserve_shape(EVin)
         assert EVin.shape[1:] == EV_by_l.shape[1:]
         assert EVin.dtype == EV_by_l.dtype
 

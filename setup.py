@@ -124,7 +124,7 @@ class ModelSetup(object):
         
         # female labor supply
         self.ls_levels = np.array([0.0,0.8],dtype=self.dtype)
-        self.mlevel=0.8
+        self.mlevel=1.0
         #self.ls_utilities = np.array([p['uls'],0.0],dtype=self.dtype)
         self.ls_pdown = np.array([p['pls'],0.0],dtype=self.dtype)
         self.nls = len(self.ls_levels)
@@ -426,10 +426,10 @@ class ModelSetup(object):
         
         
         # building m grid
-        ezfmin = min([np.min(1.0*np.exp(g+t)) for g,t in zip(exogrid['zf_t'],p['f_wage_trend'])])
-        ezmmin = min([np.min(np.exp(g+t)) for g,t in zip(exogrid['zm_t'],p['m_wage_trend'])])
-        ezfmax = max([np.max(1.0*np.exp(g+t)) for g,t in zip(exogrid['zf_t'],p['f_wage_trend'])])
-        ezmmax = max([np.max(np.exp(g+t)) for g,t in zip(exogrid['zm_t'],p['m_wage_trend'])])
+        ezfmin = min([np.min(self.ls_levels[-1]*np.exp(g+t)) for g,t in zip(exogrid['zf_t'],p['f_wage_trend'])])
+        ezmmin = min([np.min(self.mlevel*np.exp(g+t)) for g,t in zip(exogrid['zm_t'],p['m_wage_trend'])])
+        ezfmax = max([np.max(self.ls_levels[-1]*np.exp(g+t)) for g,t in zip(exogrid['zf_t'],p['f_wage_trend'])])
+        ezmmax = max([np.max(self.mlevel*np.exp(g+t)) for g,t in zip(exogrid['zm_t'],p['m_wage_trend'])])
         
         
         
