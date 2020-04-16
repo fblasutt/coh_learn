@@ -55,9 +55,11 @@ def v_iter_couple(setup,dd,t,EV_tuple,ushift,nbatch=nbatch_def,verbose=False,
     dtype_here = np.float32 if force_f32 else dtype
     
     if EV_tuple is None:
-        EV_by_l, EV_fem_by_l, EV_mal_by_l = np.zeros(((3,) + shp + (nls,)), dtype=dtype )
+        EVr_by_l, EVc_by_l, EV_fem_by_l, EV_mal_by_l = np.zeros(((4,) + shp + (nls,)), dtype=dtype )
     else:
-        EV_by_l, EV_fem_by_l, EV_mal_by_l = EV_tuple
+        EVr_by_l, EVc_by_l, EV_fem_by_l, EV_mal_by_l = EV_tuple
+    
+    
     
     
     
@@ -83,6 +85,9 @@ def v_iter_couple(setup,dd,t,EV_tuple,ushift,nbatch=nbatch_def,verbose=False,
     istart = 0
     ifinish = nbatch if nbatch < nexo else nexo
     
+    #Time husband contribute to build Q
+    mt=1.0-setup.mlevel
+    
     # this natually splits everything onto slices
     
     
@@ -92,13 +97,13 @@ def v_iter_couple(setup,dd,t,EV_tuple,ushift,nbatch=nbatch_def,verbose=False,
         assert ifinish > istart
         
         money_t = (R*agrid, wf[istart:ifinish], wm[istart:ifinish])
-        EV_t = (setup.vsgrid_c,EV_by_l[:,istart:ifinish,:,:])
+        EV_t = (setup.vsgrid_c,EVr_by_l[:,istart:ifinish,:,:])
         
         
         V_pure_i, c_opt_i, x_opt_i, s_opt_i, i_opt_i, il_opt_i, V_all_l_i = \
            v_optimize_couple(money_t,sgrid,EV_t,setup.mgrid,
                              setup.ucouple_precomputed_u,setup.ucouple_precomputed_x,
-                                 ls,beta,ushift,dtype=dtype_here)
+                                 ls,beta,ushift,dtype=dtype_here,mt=mt)
            
         V_ret_i = V_pure_i + psi[None,istart:ifinish,None]
         
@@ -121,22 +126,22 @@ def v_iter_couple(setup,dd,t,EV_tuple,ushift,nbatch=nbatch_def,verbose=False,
     
     assert np.all(c_opt > 0)
     
-    psi_r = psi[None,:,None].astype(dtype)
+    psi_r = psi[None,:,None].astype(setup.dtype,copy=False)
     
     # finally obtain value functions of partners
     uf, um = setup.u_part(c_opt,x_opt,il_opt,theta_val[None,None,:],ushift,psi_r)
     uc = setup.u_couple(c_opt,x_opt,il_opt,theta_val[None,None,:],ushift,psi_r)
     
     if isinstance(setup.vsgrid_c,(np.ndarray)):
-        EVf_all, EVm_all, EV_all=EV_fem_by_l, EV_mal_by_l,EV_by_l
+        EVf_all, EVm_all, EVc_all=EV_fem_by_l, EV_mal_by_l,EVc_by_l
     else:
-        EVf_all, EVm_all, EV_all  = (setup.vsgrid_c.apply_preserve_shape(x) for x in (EV_fem_by_l, EV_mal_by_l,EV_by_l))
+        EVf_all, EVm_all, EVc_all  = (setup.vsgrid_c.apply_preserve_shape(x) for x in (EV_fem_by_l, EV_mal_by_l,EVc_by_l))
     
     
     
     V_fem = uf + beta*np.take_along_axis(np.take_along_axis(EVf_all,i_opt[...,None],0),il_opt[...,None],3).squeeze(axis=3)
     V_mal = um + beta*np.take_along_axis(np.take_along_axis(EVm_all,i_opt[...,None],0),il_opt[...,None],3).squeeze(axis=3)
-    V_all = uc + beta*np.take_along_axis(np.take_along_axis(EV_all,i_opt[...,None],0),il_opt[...,None],3).squeeze(axis=3)
+    V_all = uc + beta*np.take_along_axis(np.take_along_axis(EVc_all,i_opt[...,None],0),il_opt[...,None],3).squeeze(axis=3)
     #def r(x): return x.astype(dtype)
     
     def r(x): return x

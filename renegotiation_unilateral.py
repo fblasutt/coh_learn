@@ -23,7 +23,7 @@ from renegotiation_unilateral_gpu import v_ren_gpu_oneopt
 from renegotiation_unilateral_gpu import v_ren_gpu_twoopt
 
 def v_ren_uni(setup,V,marriage,dd,t,return_extra=False,return_vdiv_only=False,rescale=True,
-             thetafun=None):
+             thetafun=None, mixed_rescale=True,):
     # this returns value functions for couple that entered the period with
     # (s,Z,theta) from the grid and is allowed to renegotiate them or breakup
     # 
@@ -85,30 +85,28 @@ def v_ren_uni(setup,V,marriage,dd,t,return_extra=False,return_vdiv_only=False,re
     if marriage:        
         
         if not ugpu:
-            v_out, vf_out, vm_out, itheta_out, _ = \
+            v_out_nor, vf_out, vm_out, itheta_out, _ = \
              v_ren_core_two_opts_with_int(V['Couple, M']['V'][None,...],
                                           V['Couple, M']['VF'][None,...], 
                                           V['Couple, M']['VM'][None,...], 
                                           vf_n1, vm_n1,
-                                          itht, wntht, thtgrid, 
-                                          rescale = rescale)
+                                          itht, wntht, thtgrid)
         else:
-            v_out, vf_out, vm_out, itheta_out = \
+            v_out_nor, vf_out, vm_out, itheta_out = \
                             v_ren_gpu_oneopt(V['Couple, M']['V'],
                                           V['Couple, M']['VF'], 
                                           V['Couple, M']['VM'], 
                                           vf_n1, vm_n1,
-                                          itht, wntht, thtgrid, 
-                                          rescale = rescale)
+                                          itht, wntht, thtgrid)
         
              
             
-        assert v_out.dtype == setup.dtype
+        assert v_out_nor.dtype == setup.dtype
          
     else:
         
         if not ugpu:
-            v_out, vf_out, vm_out, itheta_out, switch = \
+            v_out_nor, vf_out, vm_out, itheta_out, switch = \
                 v_ren_core_two_opts_with_int(
                            np.stack([V['Couple, C']['V'], V['Couple, M']['V']]),
                            np.stack([V['Couple, C']['VF'],V['Couple, M']['VF']]), 
@@ -117,7 +115,7 @@ def v_ren_uni(setup,V,marriage,dd,t,return_extra=False,return_vdiv_only=False,re
                                     itht, wntht, thtgrid, rescale = rescale)  
                 
         else:    
-            v_out, vf_out, vm_out, itheta_out, switch = \
+            v_ou_nor, vf_out, vm_out, itheta_out, switch = \
                    v_ren_gpu_twoopt(
                                    V['Couple, C']['V'], V['Couple, M']['V'],
                                    V['Couple, C']['VF'],V['Couple, M']['VF'], 
@@ -126,14 +124,35 @@ def v_ren_uni(setup,V,marriage,dd,t,return_extra=False,return_vdiv_only=False,re
                                     itht, wntht, thtgrid, rescale = rescale)     
         
         
-        assert v_out.dtype == setup.dtype
+        assert v_out_nor.dtype == setup.dtype
         
         
+    def v_rescale(v,it_out):
+    
+        vo = v.copy()
+        itheta_in = np.broadcast_to(np.arange(thtgrid.size,dtype=np.int16)[None,None,:],it_out.shape)
+        stay = (it_out!=-1)
+        
+        decrease = (it_out < itheta_in) & stay
+        f_dec = ((thtgrid[itheta_in[decrease]])/(thtgrid[it_out[decrease]]))
+        vo[decrease] = f_dec*vo[decrease]
+        assert np.all(f_dec>1)
+        increase = (it_out > itheta_in) & stay
+        f_inc = ((1-thtgrid[itheta_in[increase]])/(1-thtgrid[it_out[increase]]))
+        assert np.all(f_inc>1)
+        vo[increase] = f_inc*vo[increase]
+        
+        return vo
+    
+    v_resc = v_rescale(v_out_nor,itheta_out) if rescale else v_out_nor
+    v_out = v_out_nor if mixed_rescale else v_resc
+    
     def r(x): return x
         
     decision = np.any((itheta_out>=0),axis=2)
     result =  {'Decision': decision, 'thetas': itheta_out,
-                'Values': (r(v_out), r(vf_out), r(vm_out)),'Divorce':(vf_n1,vm_n1)}
+                'Values': (r(v_resc), r(v_out), r(vf_out), r(vm_out)),'Divorce':(vf_n1,vm_n1)}
+    
     
     
     if not marriage:
@@ -428,17 +447,9 @@ def v_ren_core_two_opts_with_int(v_y_ni, vf_y_ni, vm_y_ni, vf_no, vm_no, itht, w
                     
                     
                     
-                    if rescale:
-                        tht_old = thtgrid[it]
-                        tht_new = thtgrid[itb]
-                        if tht_old>tht_new:
-                            factor = tht_old/tht_new
-                        else:
-                            factor = (1-tht_old)/(1-tht_new)
-                    else:
-                        factor = 1
+
                     
-                    v_out[ia,ie,it] = factor*v_opt[itb]
+                    v_out[ia,ie,it] = v_opt[itb]
                     vf_out[ia,ie,it] = vf_opt[itb]
                     vm_out[ia,ie,it] = vm_opt[itb]
                     itheta_out[ia,ie,it] = itb

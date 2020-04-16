@@ -25,7 +25,7 @@ else:
     ugpu = False
     
 def v_optimize_couple(money_in,sgrid,EV,mgrid,utilint,xint,ls,beta,ushift,
-                              use_gpu=ugpu,dtype=np.float32):
+                              use_gpu=ugpu,dtype=np.float32,mt=0.0):
     
     # This optimizer avoids creating big arrays and uses parallel-CPU on 
     # machines without NUMBA-CUDA codes otherwise
@@ -53,7 +53,7 @@ def v_optimize_couple(money_in,sgrid,EV,mgrid,utilint,xint,ls,beta,ushift,
         assert len(EV) == 2
         vsgrid,EVin = EV
         EVin = EVin.astype(dtype,copy=False)
-        EV_by_l = EVin if isinstance(vsgrid,(np.ndarray)) else vsgrid.apply_preserve_shape(EVin)
+        EV_by_l = vsgrid.apply_preserve_shape(EVin)
         assert EVin.shape[1:] == EV_by_l.shape[1:]
         assert EVin.dtype == EV_by_l.dtype
 
@@ -79,7 +79,7 @@ def v_optimize_couple(money_in,sgrid,EV,mgrid,utilint,xint,ls,beta,ushift,
         util = utilint[...,i]
         xvals = xint[...,i]
         
-        money_left = (money - (1-lval)*wf.reshape((1,nexo))).astype(dtype,copy=False)
+        money_left = (money - (1-lval)*wf.reshape((1,nexo))- mt*wm.reshape((1,nexo))).astype(dtype,copy=False)
         
         if not use_gpu:
             
@@ -136,10 +136,9 @@ def v_couple_par(money,sgrid,EV,mgrid,u_on_mgrid,x_on_mgrid,beta,uadd,V_opt,i_op
     
     na, nexo, ntheta = money.shape[0], money.shape[1], EV.shape[2]
     
-
     ns = sgrid.size
-
-    nm = mgrid.size
+    
+    #nm = mgrid.size
     
     assert money.shape == (na,nexo)
     assert V_opt.shape == (na,nexo,ntheta) == i_opt.shape
@@ -153,7 +152,6 @@ def v_couple_par(money,sgrid,EV,mgrid,u_on_mgrid,x_on_mgrid,beta,uadd,V_opt,i_op
         for ind_a in prange(na):
             # finds index of maximum savings
             money_i = money[ind_a,ind_exo]
-            
             i_opt_i, V_opt_i, x_opt_i, c_opt_i, s_opt_i = \
                 v_couple_par_int(money_i,sgrid,EV_slice,mgrid,u_on_mgrid,x_on_mgrid,beta,uadd)
             
@@ -167,32 +165,27 @@ def v_couple_par(money,sgrid,EV,mgrid,u_on_mgrid,x_on_mgrid,beta,uadd,V_opt,i_op
 @njit
 def v_couple_par_int(money_i,sgrid,EV_slice,mgrid,u_on_mgrid,x_on_mgrid,beta,uadd):
     
-    
-    ntheta = EV_slice.shape[1]
-     
     ns = sgrid.size
-
     nm = mgrid.size
+    ntheta = EV_slice.shape[1]
     
-   
-   
     i_opt_i = np.empty((ntheta,),dtype=np.int16)
     V_opt_i = np.empty((ntheta,),dtype=np.float64)
     x_opt_i = np.empty((ntheta,),dtype=np.float64)
     c_opt_i = np.empty((ntheta,),dtype=np.float64)
     s_opt_i = np.empty((ntheta,),dtype=np.float64)
     
-   
+    
     money_minus_coh = money_i - mgrid[0]
-   
+            
     ind_s = np.minimum( np.searchsorted(sgrid,money_minus_coh)-1,ns-1)
-   
+    
     i_m = np.minimum( np.searchsorted(mgrid,money_i)-1,nm-1)
     
     i_m_all = np.zeros((ind_s+1,),np.int16)
-   
+    
     i_m_all[0] = i_m
-  
+    
     for i_cand in range(1,ind_s+1):
         m_after_s = money_i - sgrid[i_cand]
         while mgrid[i_m] > m_after_s:

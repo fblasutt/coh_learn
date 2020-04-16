@@ -22,13 +22,11 @@ else:
 
 from math import ceil
 
-def v_ren_gpu_oneopt(v_y_ni, vf_y_ni, vm_y_ni, vf_n_ni, vm_n_ni, itht, wntht, thtgrid, 
-                          rescale = True):
+def v_ren_gpu_oneopt(v_y_ni, vf_y_ni, vm_y_ni, vf_n_ni, vm_n_ni, itht, wntht, thtgrid):
     
                     
     na, ne, nt_coarse = v_y_ni.shape
     nt = thtgrid.size
-    assert rescale, 'no rescale is not implemented'
     
     assert nt < 500 
     
@@ -195,15 +193,9 @@ def cuda_ker_one_opt(v_y_ni, vf_y_ni, vm_y_ni, vf_n, vm_n, itht, wntht, thtgrid,
             itb = it_best_store[it]
             
         
-            tht_old = thtgrid[it]
-            tht_new = thtgrid[itb]
-            if tht_old>tht_new:
-                factor = tht_old/tht_new
-            else:
-                factor = (1-tht_old)/(1-tht_new)
             
             
-            v_out[ia,ie,it] = factor*v_in_store[itb]
+            v_out[ia,ie,it] = v_in_store[itb]
             vf_out[ia,ie,it] = vf_in_store[itb]
             vm_out[ia,ie,it] = vm_in_store[itb]
             itheta_out[ia,ie,it] = itb
@@ -213,13 +205,11 @@ def cuda_ker_one_opt(v_y_ni, vf_y_ni, vm_y_ni, vf_n, vm_n, itht, wntht, thtgrid,
             
             
 
-def v_ren_gpu_twoopt(v_y_ni0, v_y_ni1, vf_y_ni0, vf_y_ni1, vm_y_ni0, vm_y_ni1, vf_n_ni, vm_n_ni, itht, wntht, thtgrid, 
-                          rescale = True):
+def v_ren_gpu_twoopt(v_y_ni0, v_y_ni1, vf_y_ni0, vf_y_ni1, vm_y_ni0, vm_y_ni1, vf_n_ni, vm_n_ni, itht, wntht, thtgrid):
     
     
     na, ne, nt_coarse = v_y_ni0.shape
     nt = thtgrid.size
-    assert rescale, 'no rescale is not implemented'
     
     assert nt < 500 
     
@@ -405,15 +395,8 @@ def cuda_ker_two_opt(v_y_ni0, v_y_ni1, vf_y_ni0, vf_y_ni1, vm_y_ni0, vm_y_ni1, v
             
             itb = it_best_store[it]
             
-        
-            tht_old = thtgrid[it]
-            tht_new = thtgrid[itb]
-            if tht_old>tht_new:
-                factor = tht_old/tht_new
-            else:
-                factor = (1-tht_old)/(1-tht_new)
             
-            v_out[ia,ie,it] = factor*v_in_store[itb]
+            v_out[ia,ie,it] = v_in_store[itb]
             vf_out[ia,ie,it] = vf_in_store[itb]
             vm_out[ia,ie,it] = vm_in_store[itb]
             itheta_out[ia,ie,it] = itb

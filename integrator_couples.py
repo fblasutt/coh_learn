@@ -39,19 +39,19 @@ def ev_couple_m_c(setup,Vpostren,dd,t,marriage,use_sparse=True):
     else:
         tk = lambda x : x[:,setup.theta_orig_on_fine]
     
-    Vren = {'M':{'V':tk(_Vren2[0]),'VF':tk(_Vren2[1]),'VM':tk(_Vren2[2])},
+    Vren = {'M':{'VR':tk(_Vren2[0]),'VC':tk(_Vren2[1]), 'VF':tk(_Vren2[2]),'VM':tk(_Vren2[3])},
             'SF':Vpostren['Female, single'],
             'SM':Vpostren['Male, single']}
 
     
     # accounts for exogenous transitions
     
-    EV, EVf, EVm = ev_couple_exo(setup,Vren['M'],dd,t,use_sparse,down=False)
+    EVr, EVc, EVf, EVm = ev_couple_exo(setup,Vren['M'],dd,t,use_sparse,down=False)
     
     
-    assert EV.dtype == setup.dtype
+    assert EVr.dtype == setup.dtype
     
-    return (EV, EVf, EVm), dec
+    return (EVr, EVc, EVf, EVm), dec
 
 
 def ev_couple_exo(setup,Vren,dd,t,use_sparse=True,down=False):
@@ -74,8 +74,9 @@ def ev_couple_exo(setup,Vren,dd,t,use_sparse=True,down=False):
     na, nexo, ntheta = setup.na, setup.pars['nexo_t'][t], setup.ntheta 
     
     
-    V, Vf, Vm = Vren['V'], Vren['VF'], Vren['VM']
-    EV, EVf, EVm = np.zeros((3,na,nexo,ntheta,nl),dtype=setup.dtype)
+    Vr, Vc, Vf, Vm = Vren['VR'], Vren['VC'], Vren['VF'], Vren['VM']
+    EVr, EVc, EVf, EVm = np.zeros((4,na,nexo,ntheta,nl),dtype=setup.dtype)
+    
     
     
     for il in range(nl):
@@ -85,12 +86,13 @@ def ev_couple_exo(setup,Vren,dd,t,use_sparse=True,down=False):
         
         
         for itheta in range(ntheta):
-            EV[...,itheta,il]  = mmult( V[...,itheta],M)
-            EVf[...,itheta,il] = mmult(Vf[...,itheta],M)         
-            EVm[...,itheta,il] = mmult(Vm[...,itheta],M)            
+            EVr[...,itheta,il]  = mmult(Vr[...,itheta],M)
+            EVc[...,itheta,il]  = mmult(Vc[...,itheta],M)
+            EVf[...,itheta,il]  = mmult(Vf[...,itheta],M)         
+            EVm[...,itheta,il]  = mmult(Vm[...,itheta],M)            
             
 
     #assert not np.allclose( EV[...,0], EV[...,1])
     
     
-    return EV, EVf, EVm
+    return EVr, EVc, EVf, EVm

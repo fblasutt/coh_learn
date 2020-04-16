@@ -19,7 +19,7 @@ from scipy import sparse
 class ModelSetup(object):
     def __init__(self,nogrid=False,divorce_costs='Default',separation_costs='Default',**kwargs): 
         p = dict()       
-        period_year=1#this can be 1,2,3 or 6
+        period_year=6#this can be 1,2,3 or 6
         transform=2#this tells how many periods to pull together for duration moments
         T = int(62/period_year)
         Tret = int(47/period_year) # first period when the agent is retired
@@ -124,6 +124,7 @@ class ModelSetup(object):
         
         # female labor supply
         self.ls_levels = np.array([0.0,0.8],dtype=self.dtype)
+        self.mlevel=0.8
         #self.ls_utilities = np.array([p['uls'],0.0],dtype=self.dtype)
         self.ls_pdown = np.array([p['pls'],0.0],dtype=self.dtype)
         self.nls = len(self.ls_levels)
@@ -135,7 +136,7 @@ class ModelSetup(object):
         #Cost of Divorce
         if divorce_costs == 'Default':
             # by default the costs are set in the bottom
-            self.div_costs = DivorceCosts(eq_split=1.0,assets_kept=0.9)
+            self.div_costs = DivorceCosts(eq_split=1.0,assets_kept=1.0)
         else:
             if isinstance(divorce_costs,dict):
                 # you can feed in arguments to DivorceCosts
@@ -432,6 +433,7 @@ class ModelSetup(object):
         
         
         
+        
         self.money_min = 0.95*min(ezmmin,ezfmin) # cause FLS can be up to 0
         #self.mgrid = ezmmin + self.sgrid_c # this can be changed later
         mmin = self.money_min
@@ -696,24 +698,26 @@ class ModelSetup(object):
         return u_aux(c,self.pars['crra_power'])#(c**(1-self.pars['crra_power']))/(1-self.pars['crra_power'])
     
     
-    def u_pub(self,x,l):
+    
+    
+    def u_pub(self,x,l,mt=0.0):
         alp = self.pars['util_alp_m']
         xi = self.pars['util_xi']
         lam = self.pars['util_lam']
         kap = self.pars['util_kap_m']        
-        return alp*(x**lam + kap*(1-l)**lam)**((1-xi)/lam)/(1-xi)
+        return alp*(x**lam + kap*(1+mt-l)**lam)**((1-xi)/lam)/(1-xi)
     
     
     def u_part(self,c,x,il,theta,ushift,psi): # this returns utility of each partner out of some c
         kf, km = self.c_mult(theta)   
         l = self.ls_levels[il]
-        upub = self.u_pub(x,l) + ushift + psi
+        upub = self.u_pub(x,l,mt=1.0-self.mlevel) + ushift + psi
         return self.u(kf*c) + upub, self.u(km*c) + upub
     
     def u_couple(self,c,x,il,theta,ushift,psi): # this returns utility of each partner out of some c
         umult = self.u_mult(theta) 
         l = self.ls_levels[il]
-        return umult*self.u(c) + self.u_pub(x,l) + ushift + psi
+        return umult*self.u(c) + self.u_pub(x,l,mt=1.0-self.mlevel) + ushift + psi
     
     def u_single_pub(self,c,x,l):
         return self.u(c) + self.u_pub(x,l)
@@ -740,7 +744,7 @@ class ModelSetup(object):
             for itheta in range(ntheta):
                 A = self.u_mult(self.thetagrid[itheta])
                 ls = self.ls_levels[il]
-                x, c, u = int_sol(self.mgrid,A=A,alp=alp,sig=sig,xi=xi,lam=lam,kap=kap,lbr=ls)
+                x, c, u = int_sol(self.mgrid,A=A,alp=alp,sig=sig,xi=xi,lam=lam,kap=kap,lbr=ls,mt=1.0-self.mlevel)
                 uout[:,itheta,il] = u
                 xout[:,itheta,il] = x
                 
@@ -751,10 +755,10 @@ class ModelSetup(object):
         
         # singles have just one level of labor supply (work all the time)
         
-        xout, cout, uout = int_sol(self.mgrid,A=1,alp=alp,sig=sig,xi=xi,lam=lam,kap=kap,lbr=self.ls_levels[-1])
+        xout, cout, uout = int_sol(self.mgrid,A=1,alp=alp,sig=sig,xi=xi,lam=lam,kap=kap,lbr=self.ls_levels[-1])#self.ls_levels[-1]
         self.usinglef_precomputed_u = uout
         self.usinglef_precomputed_x = xout
-        xout, cout, uout = int_sol(self.mgrid,A=1,alp=alp,sig=sig,xi=xi,lam=lam,kap=kap,lbr=1.0)
+        xout, cout, uout = int_sol(self.mgrid,A=1,alp=alp,sig=sig,xi=xi,lam=lam,kap=kap,lbr=self.mlevel)
         self.usinglem_precomputed_u = uout
         self.usinglem_precomputed_x = xout
     

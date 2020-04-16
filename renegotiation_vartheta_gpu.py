@@ -19,13 +19,11 @@ else:
     cpu_type = np.float64
 
 
-def v_ren_gpu_oneopt(v_y_ni, vf_y_ni, vm_y_ni, vf_n_ni, vm_n_ni, itht, wntht, thtgrid, 
-                          rescale = True):
+def v_ren_gpu_oneopt(v_y_ni, vf_y_ni, vm_y_ni, vf_n_ni, vm_n_ni, itht, wntht, thtgrid):
     
                     
     na, ne, nt_coarse = v_y_ni.shape
     nt = thtgrid.size
-    assert rescale, 'no rescale is not implemented'
     
     assert nt < 500 
     
@@ -196,12 +194,7 @@ def cuda_ker_one_opt(v_y_ni, vf_y_ni, vm_y_ni, vf_n_ni, vm_n_ni, itht, wntht, th
             itheta_out[ia,ie,it] = -1
         else:
              
-            # rescaling
-            tht_old = thtgrid[it]
-            tht_new = thtgrid[it_ren]
-            factor = (1-tht_old)/(1-tht_new) if tht_old < tht_new else tht_old/tht_new
-             
-            v_out[ia,ie,it] = factor*v_in_store[it_ren]
+            v_out[ia,ie,it] = v_in_store[it_ren]
             vf_out[ia,ie,it] = vf_in_store[it_ren]
             vm_out[ia,ie,it] = vm_in_store[it_ren]
             itheta_out[ia,ie,it] = it_ren
@@ -210,13 +203,11 @@ def cuda_ker_one_opt(v_y_ni, vf_y_ni, vm_y_ni, vf_n_ni, vm_n_ni, itht, wntht, th
 
 
 
-def v_ren_gpu_twoopt(v_y_ni0, v_y_ni1, vf_y_ni0, vf_y_ni1, vm_y_ni0, vm_y_ni1, vf_n_ni, vm_n_ni, itht, wntht, thtgrid, 
-                          rescale = True):
+def v_ren_gpu_twoopt(v_y_ni0, v_y_ni1, vf_y_ni0, vf_y_ni1, vm_y_ni0, vm_y_ni1, vf_n_ni, vm_n_ni, itht, wntht, thtgrid):
     
                     
     na, ne, nt_coarse = v_y_ni0.shape
     nt = thtgrid.size
-    assert rescale, 'no rescale is not implemented'
     
     assert nt < 500 
     
@@ -405,12 +396,7 @@ def cuda_ker_two_opt(v_y_ni0, v_y_ni1, vf_y_ni0, vf_y_ni1, vm_y_ni0, vm_y_ni1, v
             itheta_out[ia,ie,it] = -1
         else:
              
-            # rescaling
-            tht_old = thtgrid[it]
-            tht_new = thtgrid[it_ren]
-            factor = (1-tht_old)/(1-tht_new) if tht_old < tht_new else tht_old/tht_new
-             
-            v_out[ia,ie,it] = factor*v_in_store[it_ren]
+            v_out[ia,ie,it] = v_in_store[it_ren]
             vf_out[ia,ie,it] = vf_in_store[it_ren]
             vm_out[ia,ie,it] = vm_in_store[it_ren]
             itheta_out[ia,ie,it] = it_ren

@@ -8,11 +8,11 @@ Created on Fri Jan 24 16:50:59 2020
 import numpy as np
 from scipy.optimize import brentq
 
-def int_sol(m_in,newton=True,step=1e-6,nint=2000,*,A,alp,sig,xi,lam,kap,lbr):
+def int_sol(m_in,newton=True,step=1e-6,nint=2000,*,A,alp,sig,xi,lam,kap,lbr,mt=0.0):
     m_in = np.atleast_1d(m_in)    
     
     def foc_expression(x):
-        return ((A/alp)**(1/sig))*(x**lam + kap*(1-lbr)**lam)**((lam+xi-1)/(lam*sig)) * \
+        return ((A/alp)**(1/sig))*(x**lam + kap*(1+mt-lbr)**lam)**((lam+xi-1)/(lam*sig)) * \
                 x**((1-lam)/sig) + x
     
     
@@ -47,7 +47,7 @@ def int_sol(m_in,newton=True,step=1e-6,nint=2000,*,A,alp,sig,xi,lam,kap,lbr):
     if newton: 
         # perform  iteration of Newton method
         def foc_deriv(x):
-            logder = ((lam+xi-1)/(sig)) * (x**(lam-1))/(x**lam + kap*(1-lbr)**lam) + \
+            logder = ((lam+xi-1)/(sig)) * (x**(lam-1))/(x**lam + kap*(1+mt-lbr)**lam) + \
                 ((1-lam)/sig)/x
             return 1 + (foc_expression(x) - x)*logder
         
@@ -82,7 +82,7 @@ def int_sol(m_in,newton=True,step=1e-6,nint=2000,*,A,alp,sig,xi,lam,kap,lbr):
         c = M - x
         uc = A*c**(1-sig)/(1-sig)
         assert np.all(uc < 0)
-        ux = alp*(x**lam + kap*(1-lbr)**lam)**((1-xi)/lam)/(1-xi)
+        ux = alp*(x**lam + kap*(1+mt-lbr)**lam)**((1-xi)/lam)/(1-xi)
         #assert np.all(ux < 0)
         return uc + ux
     

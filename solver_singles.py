@@ -35,7 +35,7 @@ def v_iter_single(setup,dd,t,EV,female,ushift,force_f32=False):
     
     
     
-    ls = np.array([1.0],dtype=dtype) if female else np.array([1.0],dtype=dtype)
+    ls = np.array([setup.ls_levels[-1]],dtype=dtype) if female else np.array([setup.mlevel],dtype=dtype)
     money_t = (R*agrid_s,np.exp(zvals + ztrend),np.zeros_like(zvals))
     
     
