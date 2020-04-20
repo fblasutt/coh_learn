@@ -6,12 +6,13 @@ This contains things relevant for setting up the model
 
 import numpy as np
 
-from rw_approximations import rouw_nonst, normcdf_tr,tauchen_nonst
+from rw_approximations import rouw_nonst, normcdf_tr,tauchen_nonstm,tauchen_nonst
 from mc_tools import combine_matrices_two_lists, int_prob,cut_matrix
 from scipy.stats import norm
 from collections import namedtuple
 from gridvec import VecOnGrid
-
+from statutils import kalman
+from scipy import optimize
 from scipy import sparse
 
 
@@ -19,14 +20,14 @@ from scipy import sparse
 class ModelSetup(object):
     def __init__(self,nogrid=False,divorce_costs='Default',separation_costs='Default',**kwargs): 
         p = dict()       
-        period_year=6#this can be 1,2,3 or 6
-        transform=2#this tells how many periods to pull together for duration moments
+        period_year=1#this can be 1,2,3 or 6
+        transform=1#this tells how many periods to pull together for duration moments
         T = int(62/period_year)
         Tret = int(47/period_year) # first period when the agent is retired
         Tbef=int(2/period_year)
         Tren  = int(47/period_year)#int(42/period_year) # period starting which people do not renegotiate/divroce
         Tmeet = int(47/period_year)#int(42/period_year) # period starting which you do not meet anyone
-        dm=1
+        dm=4
         p['dm']=dm
         p['py']=period_year
         p['ty']=transform
@@ -41,6 +42,7 @@ class ModelSetup(object):
         p['sig_zm']    = .025014**(0.5)#0.0417483**(0.5)
         p['n_zm_t']      = [5]*Tret + [1]*(T-Tret)
         p['sigma_psi_mult'] = 0.28
+        p['sigma_psi_mu'] = 0.0#1.0#1.1
         p['sigma_psi']   = 0.11
         p['R_t'] = [1.02**period_year]*T
         p['n_psi_t']     = [11]*T
@@ -58,6 +60,7 @@ class ModelSetup(object):
         p['mean_partner_a_male'] = 0.0#-0.1
         p['m_bargaining_weight'] = 0.5
         p['pmeet'] = 0.5
+        p['pmeet1'] = 0.0
         
         p['z_drift'] = -0.09#-0.1
         
@@ -70,7 +73,7 @@ class ModelSetup(object):
         
         
         p['u_shift_mar'] = 0.0
-        p['u_shift_coh'] = -0.00
+        p['u_shift_coh'] = 0.00
         
          
         #Wages over time
@@ -98,19 +101,47 @@ class ModelSetup(object):
         p['util_kap_m']=p['util_kap']*p['rprice_durables']**p['util_lam']
             
             
-        # no replacements after this pint     
-        p['sigma_psi_init'] = p['sigma_psi_mult']*p['sigma_psi']
-        
+
         #Get the probability of meeting, adjusting for year-period
         p_meet=p['pmeet']
+        p_meet1=p['pmeet1']
         for j in range(period_year-1):
             p_meet=p_meet+(1-p_meet)*p['pmeet']
             
             
         # timing here    
-            
-        p['pmeet_t'] = [p_meet]*Tmeet + [0.0]*(T-Tmeet)
+        p['pmeet_t'] =[0.0*(t>=Tmeet)+(t<Tret)*(min(max(p_meet+p_meet1*t,0),1)) for t in range(T)]
         p['can divorce'] = [True]*Tren + [False]*(T-Tren)
+        
+
+        
+        
+        def f(x): 
+            return (x**(3/2) - (p['sigma_psi_mu']**2+x)*(p['sigma_psi_mult']*p['sigma_psi']))
+            #return (np.sqrt(x)*x)-(p['sigma_psi_mu']**2+x)*(p['sigma_psi_mult']*p['sigma_psi'])
+        
+  
+        def ff(x):
+            return np.sqrt((x**2+p['sigma_psi_mu']**2)*((x**2+p['sigma_psi_mu']**2)/(x**2+2*p['sigma_psi_mu']**2))**2)
+        root= optimize.brentq(f, 0.0001, 10)
+        sigma0=np.sqrt(root-p['sigma_psi_mu']**2)
+        #sigma0=np.sqrt(root)
+        p['sigma_psi_init'] =p['sigma_psi_mult']*p['sigma_psi']
+        
+        # no replacements after this pint     
+        #k0=((p['sigma_psi_mult']*p['sigma_psi'])**2+p['sigma_psi_mu']**2)/((p['sigma_psi_mult']*p['sigma_psi'])**2+2*p['sigma_psi_mu']**2)
+        #p['sigma_psi_init'] = np.sqrt(k0**2*((p['sigma_psi_mult']*p['sigma_psi'])**2+p['sigma_psi_mu']**2))
+        
+        
+        #Get Variance of Love shock by Duration using Kalman Filter
+        #K,sigma=kalman(1.0,p['sigma_psi']**2,p['sigma_psi_mu']**2,(p['sigma_psi_mult']*p['sigma_psi'])**2,p['dm'])
+        K,sigma=kalman(1.0,p['sigma_psi']**2,p['sigma_psi_mu']**2,(sigma0)**2,p['dm'])
+        #Get variance by duration
+        self.sigmad=-1*np.ones((p['dm']))
+        
+        
+        for i in range(p['dm']):
+            self.sigmad[i]=np.sqrt(K[i]**2*(sigma[i]**2+p['sigma_psi_mu']**2))
         
         
         self.pars = p
@@ -120,11 +151,11 @@ class ModelSetup(object):
        
         
         # relevant for integration
-        self.state_names = ['Female, single','Male, single','Couple, M', 'Couple, C']
+        self.state_names = ['Couple, M', 'Couple, C','Female, single','Male, single']
         
         # female labor supply
         self.ls_levels = np.array([0.0,0.8],dtype=self.dtype)
-        self.mlevel=1.0
+        self.mlevel=0.8
         #self.ls_utilities = np.array([p['uls'],0.0],dtype=self.dtype)
         self.ls_pdown = np.array([p['pls'],0.0],dtype=self.dtype)
         self.nls = len(self.ls_levels)
@@ -179,9 +210,7 @@ class ModelSetup(object):
             ################################
             #First mimic US pension system
             ###############################
-            
-
-            
+                      
             #function to compute pension
             def pens(value):
                 
@@ -195,9 +224,7 @@ class ModelSetup(object):
                 inc2=np.maximum(np.minimum(value-inc1,thresh2-inc1),0)
                 inc3=np.maximum(value-thresh2,0)
                 
-                return inc1*0.9+inc2*0.32+inc3*0.15
-                
-              
+                return inc1*0.9+inc2*0.32+inc3*0.15            
             
             for t in range(Tret,T):
                 exogrid['zf_t'][t] = np.array([np.log(p['wret'])])
@@ -217,8 +244,7 @@ class ModelSetup(object):
             
             #Comment out the following if you dont want retirment based on income
             for t in range(Tret,T):
-                #exogrid['zf_t'][t] = np.log(p['wret']*np.exp(p['f_wage_trend'][Tret-1]+exogrid['zf_t'][Tret-1]))#np.array([np.log(p['wret'])])
-                #exogrid['zm_t'][t] = np.log(p['wret']*np.exp(p['m_wage_trend'][Tret-1]+exogrid['zm_t'][Tret-1]))
+               
                 exogrid['zf_t'][t] = np.log(pens(np.exp(p['f_wage_trend'][Tret-1]+exogrid['zf_t'][Tret-1])))#np.array([np.log(p['wret'])])
                 exogrid['zm_t'][t] = np.log(pens(np.exp(p['m_wage_trend'][Tret-1]+exogrid['zm_t'][Tret-1])))               
                 exogrid['zf_t_mat'][t] = np.diag(np.ones(len(exogrid['zf_t'][t])))#p.atleast_2d(1.0)
@@ -228,31 +254,43 @@ class ModelSetup(object):
             exogrid['zf_t_mat'][Tret-1] = np.diag(np.ones(len(exogrid['zf_t'][Tret-1])))
             exogrid['zm_t_mat'][Tret-1] = np.diag(np.ones(len(exogrid['zm_t'][Tret-1])))
 
-
-    
+            ###########################
+            #Love shock grid
+            ###########################
+            
+            #Idea: first build grid with variance in dmax, then dmax-1 and so on are 
+            #created using the Fella routine backwards
+            
+            print('variances are {}, {}, {}, {}, {}'.format(self.pars['sigma_psi_init'],self.sigmad[0],self.sigmad[1],self.sigmad[2],self.sigmad[3]))
+            print(K[0],K[1],K[2],K[3])
+            #New way of getting transition matrix
+            psit, matri=list(np.ones((T))),list(np.ones((T)))
+            sigmabase=np.sqrt([2*p['sigma_psi_init']**2+(t+1)*self.sigmad[-1]**2 for t in range(T)])
+            sigmadp=np.concatenate((np.array([0.0]),self.sigmad))
+            for i in range(T):
+                
+                sigp=np.sqrt([sigmabase[min(i+p['dm'],T-1)]**2 - np.sum(self.sigmad[dd:]**2) for dd in range(p['dm']+1)])
+                psit[i],matri[i] = tauchen_nonstm(p['dm']+1,sigmadp*period_year**0.5,0.0,p['n_psi_t'][0],sd_z=sigp)
+                
 
             exogrid['psi_t'], exogrid['psi_t_mat']=list(np.ones((p['dm']))),list(np.ones((p['dm'])))
-           
             for dd in range(p['dm']):
-                exogrid['psi_t'][dd], exogrid['psi_t_mat'][dd] = tauchen_nonst(p['T'],p['sigma_psi']*period_year**0.5,p['sigma_psi_init'],p['n_psi_t'][0])
-                exogrid['psi_t_mat'][dd][Tret-1] = np.diag(np.ones(len(exogrid['psi_t_mat'][dd][Tret-1])))
-                exogrid['psi_t_mat'][dd][Tret] = np.diag(np.ones(len(exogrid['psi_t_mat'][dd][Tret-1])))
-                exogrid['psi_t_mat'][dd][Tret+1] = np.diag(np.ones(len(exogrid['psi_t_mat'][dd][Tret-1])))
-            
+                
+                exogrid['psi_t'][dd], exogrid['psi_t_mat'][dd] = tauchen_nonst(p['T'],self.sigmad[dd]*period_year**0.5,np.sqrt(p['sigma_psi_init']**2+self.sigmad[dd]**2)*period_year**0.5,p['n_psi_t'][0])
+                for i in range(T):
+                    
+                    if i<Tret:
+                        exogrid['psi_t'][dd][i], exogrid['psi_t_mat'][dd][i]=psit[max(i-dd,0)][dd],matri[min(i-dd,T-1)][dd]
+
             #Here I impose no change in psi from retirement till the end of time 
-           # for t in range(Tret,T-1):
+            for t in range(Tren,T-1):
+                for dd in range(p['dm']):
                
-             #   exogrid['psi_t'][t] = exogrid['psi_t'][Tret-1]#np.array([np.log(p['wret'])])             
-             #   exogrid['psi_t_mat'][t] = np.diag(np.ones(len(exogrid['psi_t'][t])))#p.atleast_2d(1.0)
+                    exogrid['psi_t'][dd][t] = exogrid['psi_t'][dd][Tren-1]#np.array([np.log(p['wret'])])             
+                    exogrid['psi_t_mat'][dd][t] = np.diag(np.ones(len(exogrid['psi_t'][dd][t])))
 
             
-            
-            
-            #Create a new bad version of transition matrix p(zf_t)
-                
-           
-            
-            #zfzm, zfzmmat = combine_matrices_two_lists(exogrid['zf_t'], exogrid['zm_t'], zf_t_mat_down, exogrid['zm_t_mat'])
+           # zfzm, zfzmmat = combine_matrices_two_lists(exogrid['zf_t'], exogrid['zm_t'], zf_t_mat_down, exogrid['zm_t_mat'])
             
             exogrid['all_t_mat_by_l'],  exogrid['all_t_mat_by_l_spt'],exogrid['all_t']=list(np.ones((p['dm']))),list(np.ones((p['dm']))),list(np.ones((p['dm'])))
             for dd in range(p['dm']):

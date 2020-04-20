@@ -79,6 +79,27 @@ def strata_sample(namevar,dsample,frac=0.1,weights=False,distr=False,tsample=Fal
     return pd.concat(stratified_sample) 
     
 
+def kalman(rho,sigmae,sigmamu,sigma0,dmax):
+    
+    import numpy as np
+          
+    #Initialize Variables
+    K=-1*np.ones((dmax))
+    sigmav=-1*np.ones((dmax))
+    
+    for i in range(dmax):     
+        if i<1:             
+            sigma_old=(sigma0+sigmamu)*(sigmamu/(sigma0+2*sigmamu))#sigma0*sigmamu/(sigma0+sigmamu)#
+            sigmav[i]=rho**2*sigma_old+sigmae
+            K[i]= sigmav[i]/(sigmav[i]+sigmamu)                
+        else:                               
+            sigma_old=(1.0-K[i-1])*sigmav[i-1]
+            sigmav[i]=sigmae+sigma_old
+            K[i]= sigmav[i]/(sigmav[i]+sigmamu)
+            
+    return K, np.sqrt(sigmav)
+
+             
 
 
 

@@ -55,7 +55,7 @@ def ev_single_meet(setup,V,sown,female,dd,t,skip_mar=False,trim_lvl=0.000001):
     ns = sown.size
     
     
-    p_mat = setup.part_mats['Female, single'][dd][t].T if female else setup.part_mats['Male, single'][dd][t].T
+    p_mat = setup.part_mats['Female, single'][0][t].T if female else setup.part_mats['Male, single'][0][t].T
     p_mat = p_mat.astype(setup.dtype,copy=False)
         
     V_next = np.ones((ns,nexo),dtype=setup.dtype)*(-1e10)
@@ -129,6 +129,8 @@ def ev_single_meet(setup,V,sown,female,dd,t,skip_mar=False,trim_lvl=0.000001):
     mout['Decision'] = dec
     mout['M or C'] = morc
     mout['theta'] = tht
+    mout['thetac']=thtc
+    mout['thetam']=thtm
     
     return EV, mout
 

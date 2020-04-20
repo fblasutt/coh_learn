@@ -11,6 +11,7 @@ plots some graphs
 import numpy as np    
 import matplotlib.pyplot as plt    
 import matplotlib.backends.backend_pdf   
+
   
 #Avoid error for having too many figures 
 plt.rcParams.update({'figure.max_open_warning': 0}) 
@@ -56,8 +57,10 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     consx=agents.x 
     labor=agents.ils_i 
     dur=agents.du
+    durf=agents.duf
     shks = agents.shocks_single_iexo  
     psi_check=np.zeros(state.shape) 
+    psim=-1000*np.ones(state.shape) 
     shift_check=np.array((state==2),dtype=np.float32) 
     single=np.array((state==0),dtype=bool) 
     betag=mdl.setup.pars['beta_t'][0]**(np.linspace(1,len(state[0,:]),len(state[0,:]))-1) 
@@ -68,10 +71,24 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     for i in range(len(state[0,:])): 
         for dd in range(setup.pars['dm']):
             duration=(dur[:,i]==dd)
-            psi_check[:,i]=((setup.exogrid.psi_t[dd][i][(setup.all_indices(i,iexo[:,i]))[3]]))  
+            pos=(agents.ipsim[:,i]>-500)
+            psi_check[:,i][duration]=((setup.exogrid.psi_t[dd][i][(setup.all_indices(i,iexo[:,i][duration]))[3]])) 
+            if np.any(pos):psim[:,i][pos]=((setup.exogrid.psi_t[0][i][(setup.all_indices(i,agents.ipsim[:,i][pos]))[3]])) 
      
      
-    psi_check[single]=0.0 
+    std1=np.std(psim[:,1])
+    mean1=np.mean(psim[:,1])
+    
+    
+    nextt=((psim[:,1:]>-50) & (psim[:,:-1]<-50))[:,1:]
+    psim1=psim[:,2:-1]
+    np.mean(psim1[nextt[:,:-1]])
+
+   
+    
+    psi_check[single]=psim[single]
+    psi_check1=psi_check[:,1:]
+    
     state_psid=agents_male.state 
     labor_psid=agents_male.ils_i 
     iexo_psid=agents_male.iexo 
@@ -177,73 +194,12 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     iexo=iexo[keep,] 
     assets_t=assets_t[keep,] 
     labor=labor[keep,] 
+    dur_work=dur[keep,]
+    duf_work=durf[keep,]
      
        
      
-    ################################################################### 
-    # Draw from simulated agents to match NSFH distribution 
-    # according to the following stratas: 
-    # 1) Age at unilateral divorce 
-    # 2) Gender 
-    #  
-    ################################################################### 
-     
-    #Import the distribution from the data 
-    with open('freq_nsfh.pkl', 'rb') as file:    
-        freq_nsfh_data=pickle.load(file)   
-     
-    #value=mdl.V[0]['Female, single']['V'][0,iexo_w[:,0]] 
-    #Make data compatible with current age 
-    freq_nsfh_data['age_unid']=freq_nsfh_data['age_unid']-18.0 
-    freq_nsfh_data.loc[freq_nsfh_data['age_unid']<=0.0,'age_unid']=0.0 
-    freq_nsfh_data.loc[freq_nsfh_data['age_unid']>=900.0,'age_unid']=1000 
-     
-    #Drop if no change in law! 
-    if np.all(changep==0): 
-        freq_nsfh_data.loc[freq_nsfh_data['age_unid']<1910.0,'age_unid']=1000 
-    
-  
-         
-    freq_nsfh=freq_nsfh_data.groupby(['M2DP01','age_unid'])['SAMWT'].count() 
-    #Create a Dataframe with simulated data to perform the draw 
-    age_unid=np.argmax(changep,axis=1) 
-    never=(changep[:,0]==0) & (age_unid[:]==0) 
-    age_unid[never]=1000 
-    age_unid[changep[:,-1]==0]=1000 
-     
-    fem=np.array(['FEMALE']*len(female)) 
-    fem[female[:,0]==0]='MALE' 
-     
-    inde=np.linspace(1,len(fem),len(fem),dtype=np.int32) 
-     
-    ddd=np.stack((inde,age_unid,fem),axis=0).T 
-    df=pd.DataFrame(data=ddd,columns=["Index","age","sex"],index=ddd[:,0]) 
-    df['age']=df['age'].astype(np.float) 
-    try:#if (len(df)>0) &  (setup.pars['py']==1):   
-        sampletemp=strata_sample(["'sex'", "'age'"],freq_nsfh,frac=0.2,tsample=df,distr=True) 
-        final2=df.merge(sampletemp,how='left',on='Index',indicator=True) 
-         
-        keep2=[False]*len(df) 
-        keep2=(np.array(final2['_merge'])=='both') 
-    except:#else: 
-        keep2=[True]*len(df) 
-     
-    #Keep again for all relevant variables    
-    state=state[keep2,]      
-    changep=changep[keep2,]  
-    female=female[keep2,] 
-    iexo=iexo[keep2,] 
-    assets_t=assets_t[keep2,] 
-    labor=labor[keep2,] 
-   
-     
-    #Initial distribution 
-    prima=freq_nsfh/np.sum(freq_nsfh) 
-     
-    #Final distribution 
-    final3=df[keep2] 
-    final4=final3.groupby(['sex','age'])['sex'].count() 
-    dopo=final4/np.sum(final4) 
+
      
     try: 
         print('The average deviation from actual to final ditribution is {:0.2f}%'.format(np.mean(abs(prima-dopo))*100)) 
@@ -278,7 +234,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     state_end = -1*np.ones((N,nspells),dtype=np.int8)    
     time_end = -1*np.ones((N,nspells),dtype=np.bool)    
     sp_length = -1*np.ones((N,nspells),dtype=np.int16)    
-    sp_person = -1*np.ones((N,nspells),dtype=np.int16)    
+    sp_dur = -1*np.ones((N,nspells),dtype=np.int16)    
     is_unid = -1*np.ones((N,nspells),dtype=np.int16)    
     is_unid_end = -1*np.ones((N,nspells),dtype=np.int16)    
     is_unid_lim = -1*np.ones((N,nspells),dtype=np.int16)    
@@ -294,7 +250,9 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
          
     for t in range(1,mdl.setup.pars['T']):    
         ichange = ((state[:,t-1] != state[:,t]))    
+        ifinish=(~ichange) & (t==mdl.setup.pars['T']-1) 
         sp_length[((~ichange)),ispell[((~ichange))]] += 1    
+        sp_dur[ifinish,ispell[ifinish]] = duf_work[ifinish,t] 
         #ichange = ((state[:,t-1] != state[:,t]) & (t<=aged[:,t]))    
         #sp_length[((~ichange) & (t<=aged[:,t])),ispell[((~ichange) & (t<=aged[:,t]))]] += 1    
              
@@ -305,8 +263,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         is_spell[ichange,ispell[ichange]+1] = True    
         sp_length[ichange,ispell[ichange]+1] = 1 # if change then 1 year right    
         state_end[ichange,ispell[ichange]] = state[ichange,t]    
-        sp_person[ichange,ispell[ichange]] = index[ichange]   
-        time_end[ichange,ispell[ichange]] = t-1    
+        sp_dur[ichange,ispell[ichange]] = duf_work[ichange,t-1] 
         state_beg[ichange,ispell[ichange]+1] = state[ichange,t]     
         time_beg[ichange,ispell[ichange]+1] = t    
         n_spell[ichange,ispell[ichange]+1]=ispell[ichange]+1   
@@ -325,27 +282,30 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     allspells_isunid=is_unid[is_spell]   
     allspells_isunidend=is_unid_end[is_spell]   
     allspells_isunidlim=is_unid_lim[is_spell]   
-    allspells_person=sp_person[is_spell]   
-    allspells_nspells=n_spell[is_spell]   
-       
-       
+    allspells_du=sp_dur[is_spell]   
+    allspells_nspells=n_spell[is_spell]  
+    
+
          
     # If the spell did not end mark it as ended with the state at its start    
     allspells_end[allspells_end==-1] = allspells_beg[allspells_end==-1]    
     allspells_isunidend[allspells_isunidend==-1] = allspells_isunidlim[allspells_isunidend==-1]   
     allspells_nspells[allspells_nspells==-1]=0   
-    allspells_nspells=allspells_nspells+1   
+    allspells_nspells=allspells_nspells+1  
+    allspells_prec=allspells_du+1-allspells_len
         
+    
     #Use this to construct hazards   
     spells = np.stack((allspells_beg,allspells_len,allspells_end),axis=1)    
        
     #Use this for empirical analysis   
-    spells_empirical=np.stack((allspells_beg,allspells_timeb,allspells_len,allspells_end,allspells_nspells,allspells_isunid,allspells_isunidend),axis=1)   
-    is_coh=((spells_empirical[:,0]==3) & (spells_empirical[:,5]==spells_empirical[:,6]))   
-    spells_empirical=spells_empirical[is_coh,1:6]   
+    spells_empiricalt=np.stack((allspells_beg,allspells_timeb,allspells_len,allspells_end,allspells_nspells,allspells_isunid,allspells_isunidend, allspells_prec),axis=1)   
+    is_coh=((spells_empiricalt[:,0]==3) & (spells_empiricalt[:,5]==spells_empiricalt[:,6]))   
+    spells_empirical=spells_empiricalt[is_coh,1:6]   
        
       
-         
+
+   
          
     #Now divide spells by relationship nature    
     all_spells=dict()    
@@ -452,7 +412,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
                    
                 #Cox where risk is separatio   
                 data_coh_panda['endd']=0.0   
-                data_coh_panda.loc[data_coh_panda['end']==0.0,'endd']=1.0   
+                data_coh_panda.loc[data_coh_panda['end']<2.0,'endd']=1.0   
                 data_coh_panda3=data_coh_panda.drop(['end'], axis=1)   
                 cox_sep=cph.fit(data_coh_panda3, duration_col='duration', event_col='endd')   
                 haz_sep=cox_sep.hazard_ratios_['uni']   
@@ -468,6 +428,56 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
             haz_join=1.0  
             haz_mar=1.0  
              
+        try:
+            
+            #Build the dataset for analysis on divorce risk
+            spells_empiricalm=spells_empiricalt[(spells_empiricalt[:,0]==2),1:8]   
+            data_m_panda=pd.DataFrame(data=spells_empiricalm,columns=['age','duration','end','rel','uni','drop','coh']) 
+            
+            from lifelines import CoxPHFitter   
+            cph = CoxPHFitter()   
+            data_m_panda.drop(data_m_panda[data_m_panda['age']>=15].index, inplace=True)
+            data_m_panda['ecoh']=0.0
+            data_m_panda.loc[data_m_panda['coh']>0.0,'ecoh']=1.0   
+            data_m_panda['lcoh']=np.log(data_m_panda['coh']+0.001)
+            dummy=pd.get_dummies(data_m_panda['age'])
+            data_m_panda=pd.concat([data_m_panda,dummy],axis=1)
+            #data_m_panda['age2']=data_m_panda['age']**2   
+            #data_m_panda['age3']=data_m_panda['age']**3   
+            #data_m_panda['rel2']=data_m_panda['rel']**2   
+            #data_m_panda['rel3']=data_m_panda['rel']**3   
+        
+            
+            
+        
+            #data_coh_panda=pd.get_dummies(data_coh_panda, columns=['age'])   
+               
+            #Standard Cox   
+            data_m_panda['endd']=1.0   
+            data_m_panda.loc[data_m_panda['end']==2.0,'endd']=0.0   
+            data_m_panda1=data_m_panda.drop(columns=['rel', 'uni','coh','end','drop','rel','age',1]) 
+            cox_join=cph.fit(data_m_panda1, duration_col='duration', event_col='endd')   
+            parm=cox_join.params_
+            
+            #Get premartial cohabitation
+            Tmax=int(15/mdl.setup.pars['py'])
+            
+            raw_dut=np.zeros((Tmax))
+            ref_dut=np.zeros((Tmax))
+              
+            for i in range(Tmax):
+                isp=(allspells_beg==2) & (allspells_prec==i) & (allspells_timeb<15)
+                raw_dut[i]=np.mean(allspells_end[isp]!=2)
+                ref_dut[i]=np.exp(np.log(i+0.001)*parm['lcoh']+parm['ecoh'])/np.exp(np.log(0.001)*parm['lcoh'])
+                
+            raw_dut=raw_dut/raw_dut[0]
+            ref_dut[0]=1.0
+            
+        except:
+            Tmax=int(15/mdl.setup.pars['py'])
+            raw_dut=np.zeros((Tmax))
+            ref_dut=np.zeros((Tmax))
+            
     ##################################    
     # Construct the Hazard functions    
     #################################    
@@ -1194,8 +1204,8 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
                     is_state=is_state1    
                 
                 ind1 = np.where(is_state1)[0]  
-                ind1f = np.where((is_state1) & (agents.is_female[:,0][keep][keep2]))[0] 
-                ind1m = np.where((is_state1) & ~(agents.is_female[:,0][keep][keep2]))[0] 
+                ind1f = np.where((is_state1) & (agents.is_female[:,0][keep]))[0] 
+                ind1m = np.where((is_state1) & ~(agents.is_female[:,0][keep]))[0] 
                          
                 if not (np.any(is_state) or np.any(is_state1)): continue    
                      
@@ -1228,130 +1238,25 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
                       
                 elif sname=="Couple, C" or sname=="Couple, M":  
                      
-                     if np.any(ind1f):inc_rel[ist,t,0]=np.mean(wage_f[:,t][keep][keep2][ind1f])+np.mean(wage_mp[:,t][keep][keep2][ind1f]) 
-                     if np.any(ind1m):inc_rel[ist,t,1]=np.mean(wage_m[:,t][keep][keep2][ind1m])+np.mean(wage_fp[:,t][keep][keep2][ind1m]) 
+                     if np.any(ind1f):inc_rel[ist,t,0]=np.mean(wage_f[:,t][keep][ind1f])+np.mean(wage_mp[:,t][keep][ind1f]) 
+                     if np.any(ind1m):inc_rel[ist,t,1]=np.mean(wage_m[:,t][keep][ind1m])+np.mean(wage_fp[:,t][keep][ind1m]) 
                       
                 else:   
                     
                    print('Error: No relationship chosen')   
                     
-                    
- 
-             
-         
-        ################################### 
-        #"Event Study" with simulated data 
-        ################################# 
-        
-        #Build the event matrix 
-        age_unid_e=np.argmax(changep_w,axis=1) 
-        never_e=(changep_w[:,0]==0) & (age_unid_e[:]==0) 
-        age_unid_e[never_e]=1000 
-        age_unid_e[changep_w[:,-1]==0]=1000 
-        age_unid_e1=np.repeat(np.expand_dims(age_unid_e,axis=1),len(changep_w[0,:]),axis=1) 
-         
-        agetemp_e=np.linspace(1,len(changep_w[0,:]),len(changep_w[0,:])) 
-        agegridtemp_e=np.reshape(np.repeat(agetemp_e,len(changep_w[:,0])),(len(changep_w[:,0]),len(agetemp_e)),order='F') 
-        #age_unid_e1[agegridtemp_e<=2]=1000 
-        age_unid_e1[agegridtemp_e>=mdl.setup.pars['Tret']-int(mdl.setup.pars['Tret']/6)]=1000 
-        event=agegridtemp_e-age_unid_e1-1 
-         
-        #Get beginning of the spell 
-        changem=np.zeros(state_w.shape,dtype=bool) 
-        changec=np.zeros(state_w.shape,dtype=bool) 
-        change=np.zeros(state_w.shape,dtype=bool) 
-        for t in range(1,mdl.setup.pars['Tret']-1):    
-                
-            irchangem = ((state_w[:,t]==2) & ((state_w[:,t-1]==0) | (state_w[:,t-1]==1)))  
-            irchangec = ((state_w[:,t]==3) & ((state_w[:,t-1]==0) | (state_w[:,t-1]==1)))  
-            irchange=((state_w[:,t]!=state_w[:,t-1]) & ((state_w[:,t-1]==0) | (state_w[:,t-1]==1)))  
-            changem[:,t]=irchangem 
-            changec[:,t]=irchangec 
+        #For some graphs
+        changem=np.zeros(state_w.shape,dtype=bool)  
+        changec=np.zeros(state_w.shape,dtype=bool)  
+        change=np.zeros(state_w.shape,dtype=bool)  
+        for t in range(1,mdl.setup.pars['Tret']-1):     
+                 
+            irchangem = ((state_w[:,t]==2) & ((state_w[:,t-1]==0) | (state_w[:,t-1]==1)))   
+            irchangec = ((state_w[:,t]==3) & ((state_w[:,t-1]==0) | (state_w[:,t-1]==1)))   
+            irchange=((state_w[:,t]!=state_w[:,t-1]) & ((state_w[:,t-1]==0) | (state_w[:,t-1]==1)))   
+            changem[:,t]=irchangem  
+            changec[:,t]=irchangec  
             change[:,t]=irchange 
-             
-        #get variables for ols event study later 
-        vage=agegridtemp_e[change] 
-        vgender=female_w[change] 
-        vtheta=theta_w[change] 
-        vpsi=psis[change] 
-        vmar=state_w[change] 
-        vass=assets_w[change] 
-        vwagef=wage_f2[change] 
-        vwagem=wage_m2[change] 
-             
-        #Grid of event Studies 
-        eventgrid=np.array(np.linspace(-10,10,21),dtype=np.int16) 
-        event_thetam=np.ones(len(eventgrid))*-1000 
-        event_thetac=np.ones(len(eventgrid))*-1000 
-        event_psim=np.ones(len(eventgrid))*-1000 
-        event_psic=np.ones(len(eventgrid))*-1000 
-        match=np.ones(state_w.shape,dtype=bool)*-1000 
-        
-     
-        i=0 
-        for e in eventgrid: 
-             
-            matchm=(event==e) & (changem) 
-            matchc=(event==e) & (changec) 
-            imatch=(event==e) & (change) 
-            match[imatch]=e 
-            if np.any(matchm):event_thetam[i]=np.mean(theta_w[matchm]) 
-            if np.any(matchc):event_thetac[i]=np.mean(theta_w[matchc]) 
-            if np.any(matchm):event_psim[i]=np.mean(psis[matchm]) 
-            if np.any(matchc):event_psic[i]=np.mean(psis[matchc]) 
-             
-            i+=1 
-             
-          
-        data_ev=np.array(np.stack((vage,vgender,match[change],vtheta,vpsi,vmar,vass,vwagef,vwagem),axis=0).T,dtype=np.float64)    
-        data_ev_panda=pd.DataFrame(data=data_ev,columns=['age','sex','event','theta','vpsi','vmar','vass','wagef','wagem'])   
-        #Eliminate if missing    
-        data_ev_panda.loc[data_ev_panda['event']>10,'event']=np.nan  
-        data_ev_panda.loc[data_ev_panda['event']<-10,'event']=np.nan  
-        data_ev_panda.loc[data_ev_panda['vmar']==3,'vmar']=0 
-        data_ev_panda.loc[data_ev_panda['vmar']==2,'vmar']=1 
-        data_ev_panda.dropna(subset=['event'])  
-         
-        #Regressions  
-        try:    
-            ols_mar = smf.ols(formula='vmar ~ C(age)+C(sex)+C(event, Treatment(reference=-1))', data = data_ev_panda ).fit() 
-            ols_mar_theta = smf.ols(formula='theta ~ C(age)+C(sex)+C(event, Treatment(reference=-1))', data = data_ev_panda[data_ev_panda['vmar']==1] ).fit() 
-            ols_coh_theta = smf.ols(formula='theta ~ C(age)+C(sex)+C(event, Treatment(reference=-1))', data = data_ev_panda[data_ev_panda['vmar']==0] ).fit() 
-            ols_mar_psi = smf.ols(formula='vpsi ~ C(age)+C(sex)+C(event, Treatment(reference=-1))', data = data_ev_panda[data_ev_panda['vmar']==1] ).fit() 
-            ols_coh_psi = smf.ols(formula='vpsi ~ C(age)+C(sex)+C(event, Treatment(reference=-1))', data = data_ev_panda[data_ev_panda['vmar']==0] ).fit() 
-           
-        except:    
-            print('No data for unilateral divorce regression...')    
-            beta_unid_s=0.0   
-        
-        #Create an Array for the results 
-        pevent_theta_mar=np.ones(len(eventgrid))*np.nan 
-        pevent_theta_coh=np.ones(len(eventgrid))*np.nan 
-        pevent_psi_mar=np.ones(len(eventgrid))*np.nan 
-        pevent_psi_coh=np.ones(len(eventgrid))*np.nan 
-        pevent_mar=np.ones(len(eventgrid))*np.nan 
-         
-        i=0 
-        for e in eventgrid: 
-             
-            try: 
-                pevent_mar[i]=ols_mar.params['C(event, Treatment(reference=-1))[T.'+str(e)+'.0]'] 
-                pevent_theta_mar[i]=ols_mar_theta.params['C(event, Treatment(reference=-1))[T.'+str(e)+'.0]'] 
-                pevent_theta_coh[i]=ols_coh_theta.params['C(event, Treatment(reference=-1))[T.'+str(e)+'.0]'] 
-                pevent_psi_mar[i]=ols_mar_psi.params['C(event, Treatment(reference=-1))[T.'+str(e)+'.0]'] 
-                pevent_psi_coh[i]=ols_coh_psi.params['C(event, Treatment(reference=-1))[T.'+str(e)+'.0]'] 
-                 
-            except: 
-                print('Skip event {}'.format(e))  
-            i+=1   
-                 
-                 
-        #Adjust for the reference point        
-        pevent_mar[9]=0 
-        pevent_theta_mar[9]=0 
-        pevent_theta_coh[9]=0 
-        pevent_psi_mar[9]=0 
-        pevent_psi_coh[9]=0 
                  
         #Check correlations 
         assets_ww=assets_w[:,:60]
@@ -1702,6 +1607,23 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         plt.xlabel('Age')    
         plt.ylabel('Correlation assets at breack up')  
          
+        
+        ##########################################
+        #Premarital Cohabitation and Divorce
+        #######################################
+        fig = plt.figure()    
+        f3=fig.add_subplot(2,1,1)    
+         
+        gridcd=np.linspace(1,Tmax,Tmax)
+        
+        plt.plot(gridcd, raw_dut,color='r',markersize=3, label='Raw Data') 
+        plt.plot(gridcd, ref_dut,color='b',markersize=3, label='Cox Prediction') 
+        plt.yticks(np.arange(0, 2, 0.2))
+        plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
+                  fancybox=True, shadow=True, ncol=len(state_codes), fontsize='x-small')    
+        plt.xlabel('Premarital Cohabitation Duration')    
+        plt.ylabel('Relative Hazard of Divorce')  
+        
          
          
         ##########################################    
@@ -1817,29 +1739,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         plt.ylabel('Probability')  
         plt.savefig('psidist.pgf', bbox_inches = 'tight',pad_inches = 0)  
          
-        ############################################################ 
-        # Distribution of Love - Cumulative - Before and After policy 
-        ################################################################### 
-         
-        fig = plt.figure()    
-        f1=fig.add_subplot(2,1,1) 
-         
-        # evaluate the histogram 
-        valuesc, basec = np.histogram(psis[(changec) & (event<0)], bins=1000) 
-        valuesm, basem = np.histogram(psis[(changec) & (event>=0)], bins=1000) 
  
-        #evaluate the cumulative 
-        cumulativec = np.cumsum(valuesc) 
-        cumulativem = np.cumsum(valuesm) 
-        cumulativect = np.cumsum(valuesct) 
-        cumulativemt = np.cumsum(valuesmt) 
-        # plot the cumulative function 
-        plt.plot(basec[:-1], cumulativec/max(cumulativec), c='red',label = 'Bilateral') 
-        plt.plot(basem[:-1], cumulativem/max(cumulativem), c='blue',label = 'Unilateral') 
-        plt.legend(loc='best', ncol=1, fontsize='x-small')    
-        plt.xlabel('Love Shock $\psi$')    
-        plt.ylabel('Probability')  
-        plt.savefig('psipol.pgf', bbox_inches = 'tight',pad_inches = 0)  
          
         ##########################################    
         # Distribution of Pareto Weight  
@@ -1859,84 +1759,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
          
          
          
-        ##########################################    
-        # Event Study Love Shock 
-        ##########################################   
-        fig = plt.figure()    
-        f6=fig.add_subplot(2,1,1) 
-         
-        plt.plot(eventgrid, event_psic,color='r', label='Cohabitation') 
-        plt.plot(eventgrid, event_psim,color='b', label='Marriage') 
-        plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
-                  fancybox=True, shadow=True, ncol=len(state_codes), fontsize='x-small')    
-        plt.xlabel('Time Event Unilateral Divorce')    
-        plt.ylabel('Love Shock')  
-        plt.savefig('psiuni.pgf', bbox_inches = 'tight',pad_inches = 0)  
-         
-        fig = plt.figure()    
-        f6=fig.add_subplot(2,1,1) 
-         
-        plt.plot(eventgrid, pevent_psi_coh,color='r', label='Cohabitation') 
-        plt.plot(eventgrid, pevent_psi_mar,color='b', label='Marriage') 
-        plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
-                  fancybox=True, shadow=True, ncol=len(state_codes), fontsize='x-small')    
-        plt.xlabel('Time Event Unilateral Divorce')    
-        plt.ylabel('Love Shock-Coefficient') 
-         
-        ##########################################    
-        # Event Study Pareto Weight 
-        ##########################################   
-        fig = plt.figure()    
-        f6=fig.add_subplot(2,1,1) 
-         
-        plt.plot(eventgrid, event_thetac,color='r', label='Cohabitation') 
-        plt.plot(eventgrid, event_thetam,color='b', label='Marriage') 
-        plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
-                  fancybox=True, shadow=True, ncol=len(state_codes), fontsize='x-small')    
-        plt.xlabel('Time Event Unilateral Divorce')    
-        plt.ylabel('Female Pareto weight')  
-        plt.savefig('weight.pgf', bbox_inches = 'tight',pad_inches = 0)  
-         
-        fig = plt.figure()    
-        f6=fig.add_subplot(2,1,1) 
-         
-        plt.plot(eventgrid, pevent_theta_coh,color='r', label='Cohabitation') 
-        plt.plot(eventgrid, pevent_theta_mar,color='b', label='Marriage') 
-        plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
-                  fancybox=True, shadow=True, ncol=len(state_codes), fontsize='x-small')    
-        plt.xlabel('Time Event Unilateral Divorce')    
-        plt.ylabel('Female Pareto weight-Coefficient')  
-   
-        ##########################################    
-        # DID of unilateral fivorce on part choice    
-        ##########################################    
-        fig = plt.figure()    
-        f6=fig.add_subplot(2,1,1)    
-             
-            
-        # create plot    
-        x=np.array([0.25,0.75])   
-        y=np.array([beta_unid_d,beta_unid_s])    
-        yerr=np.array([(beta_unid_i[1]-beta_unid_i[0])/2.0,0.0])    
-        plt.axhline(linewidth=0.1, color='r')    
-        plt.errorbar(x, y, yerr=yerr, fmt='o', elinewidth=0.03)    
-        plt.ylabel('OLS Coefficient - UniD')    
-        plt.xticks(x, ["Data","Simulation"] )   
-        plt.ylim(ymax=0.1)    
-        plt.xlim(xmax=1.0,xmin=0.0)    
-         
-        ########################################## 
-        #Event Study Marriage 
-        ########################################## 
-        fig = plt.figure()    
-        f6=fig.add_subplot(2,1,1) 
-         
- 
-        plt.plot(eventgrid, pevent_mar,color='b', label='Event Study Unid') 
-        plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
-                  fancybox=True, shadow=True, ncol=len(state_codes), fontsize='x-small')    
-        plt.xlabel('Time Event')    
-        plt.ylabel('Marriage-Coefficient')  
+
           
         ##########################################    
         # FLS: Marriage vs. cohabitation  

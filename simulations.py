@@ -109,9 +109,11 @@ class Agents:
         self.c = np.zeros((N,T),np.float32)
         self.x = np.zeros((N,T),np.float32)
         self.s = np.zeros((N,T),np.float32)
+        self.ipsim=np.ones((N,T),np.int16)*-1000
         
         #Initialize relationship duration
         self.du=np.zeros((N,T),np.int16)
+        self.duf=np.zeros((N,T),np.int16) 
         
 
         
@@ -260,6 +262,8 @@ class Agents:
                     
                     #Update couple duration
                     dur=self.du[ind,t]
+                    durf=self.duf[ind,t]
+                    
                     
                     ls_val = self.ils_i[ind,t] 
                     
@@ -282,18 +286,20 @@ class Agents:
                         iexo_next_this_ls = mc_simulate(iexo_now[this_ls],mat,shocks=shks)
                         self.iexo[ind[this_ls],t+1] = iexo_next_this_ls
                         self.iexos[ind[this_ls],t+1] = iexo_next_this_ls
-                        maxx=(dur[this_ls]==self.setup.pars['dm']-1)
-                        minn=(self.setup.pars['dm']==1)
-                        self.du[ind[this_ls],t+1] = dur[this_ls]+1
-                        self.du[ind[this_ls][maxx],t+1] = dur[this_ls][maxx]-1
-                        self.du[ind[this_ls][minn],t+1] = dur[this_ls][minn]
+                        self.duf[ind[this_ls],t+1] = durf[this_ls]+1
+                        self.du[ind[this_ls],t+1] = self.duf[ind[this_ls],t+1].copy()
+                        big=(self.du[ind[this_ls],t+1]>=self.setup.pars['dm']-1)
+                        self.du[ind[this_ls][big],t+1] =self.setup.pars['dm']-1
                         
                 else:
+                    
                     mat = self.Mlist[ipol].setup.exo_mats[sname][t]
                     shks = self.shocks_single_iexo[ind,t]                    
                     iexo_next = mc_simulate(iexo_now,mat,shocks=shks) # import + add shocks     
                     self.iexo[ind,t+1] = iexo_next
                     self.iexos[ind,t+1] = iexo_next
+                    self.du[ind,t+1]= 0
+                    self.duf[ind,t+1]= 0
             
     
     def statenext(self,dd,t):
@@ -325,7 +331,7 @@ class Agents:
                     
                     # meet a partner
                     
-                    pmeet = self.Mlist[ipol].setup.pars['pmeet_t'][t] # TODO: check timing
+                    pmeet = self.Mlist[ipol].setup.pars['pmeet_t'][t] #timing checked
                     
                     
                     matches = self.Mlist[ipol].decisions[t][dd][ss]
@@ -335,13 +341,13 @@ class Agents:
                     # we use iexo from t and savings from t+1
                     # TODO: fix the seed
                     #TODO having iexo in t inconsistent with couple ones, which lool t+1
-                    iznow = self.iexo[ind,t]
+                    iznow = self.iexo[ind,t+1]
                     
                     pmat = matches['p'][ia,iznow,:]
                     pmat_cum = pmat.cumsum(axis=1)
                     
                     
-                    v = self.shocks_single_iexo2[ind,t] #np.random.random_sample(ind.size) # draw uniform dist
+                    v = self.shocks_single_iexo2[ind,t+1] #np.random.random_sample(ind.size) # draw uniform dist
                     #This guy below (unitl it_out) account for 50% of single timem
                     pmat_cum[:,-1]=1.0
                     i_pmat = (v[:,None] > pmat_cum).sum(axis=1)  # index of the position in pmat
@@ -354,13 +360,14 @@ class Agents:
                     
                     iall, izf, izm, ipsi = self.Mlist[ipol].setup.all_indices(t,ic_out)
                     
+                    self.ipsim[ind,t+1]=iall
                     iz = izf if self.female else izm
                     
                     
                     # compute for everyone
                     
                     
-                    vmeet = self.shocks_single_meet[ind,t]
+                    vmeet = self.shocks_single_meet[ind,t+1]
                     i_nomeet =  np.array( vmeet > pmeet )
                     
                     
@@ -496,8 +503,8 @@ class Agents:
                     
                     
                     
-                    zf_grid = self.setup.exo_grids['Female, single'][t]
-                    zm_grid = self.setup.exo_grids['Male, single'][t]
+                    zf_grid = self.setup.exo_grids['Female, single'][t+1]
+                    zm_grid = self.setup.exo_grids['Male, single'][t+1]
                     
                     
                     
@@ -505,8 +512,8 @@ class Agents:
                     if np.any(i_div):
                         
                         if len(self.setup.agrid_s)>1  :
-                            income_fem = np.exp(zf_grid[izf[i_div]]+self.setup.pars['f_wage_trend'][t])
-                            income_mal = np.exp(zm_grid[izm[i_div]]+self.setup.pars['m_wage_trend'][t])
+                            income_fem = np.exp(zf_grid[izf[i_div]]+self.setup.pars['f_wage_trend'][t+1])
+                            income_mal = np.exp(zm_grid[izm[i_div]]+self.setup.pars['m_wage_trend'][t+1])
                             
                             income_share_fem = (income_fem) / (income_fem + income_mal)
                             
@@ -529,7 +536,7 @@ class Agents:
                             sm = share_m*sc[i_div]
                             
                             s = sf if self.female else sm
-                            shks = 1-self.shocks_div_a[ind[i_div],t]
+                            shks = 1-self.shocks_div_a[ind[i_div],t+1]
     
                             # if bribing happens we overwrite this
                             self.iassets[ind[i_div],t+1] = VecOnGrid(self.Mlist[ipol].setup.agrid_s,s).roll(shocks=shks)
@@ -561,8 +568,12 @@ class Agents:
                                     
                             
                         self.itheta[ind[i_div],t+1] = -1
+                        self.ipsim[ind[i_div],t+1]=self.iexo[ind[i_div],t+1].copy()
                         self.iexo[ind[i_div],t+1] = iz[i_div]
                         self.state[ind[i_div],t+1] = self.state_codes[ss]
+                        self.du[ind[i_div],t+1]= 0
+                        self.duf[ind[i_div],t+1]= 0
+                        
                         if sname == "Couple, M":self.divorces[ind[i_div],t+1]=True
                        
 
@@ -663,10 +674,12 @@ class AgentsPooled:
         self.iassets = combine([a.iassets for a in AgentsList])
         self.iassetss = combine([a.iassetss for a in AgentsList])
         self.divorces = combine([a.divorces for a in AgentsList])
+        self.ipsim = combine([a.ipsim for a in AgentsList])
         self.c = combine([a.c for a in AgentsList])
         self.s = combine([a.s for a in AgentsList])
         self.x = combine([a.x for a in AgentsList])
         self.du = combine([a. du for a in AgentsList])
+        self.duf = combine([a. duf for a in AgentsList])
         self.shocks_single_iexo=combine([a.shocks_single_iexo for a in AgentsList])
         self.shocks_couple_a=combine([a.shocks_couple_a for a in AgentsList])
         self.shocks_single_a=combine([a.shocks_single_a for a in AgentsList])
