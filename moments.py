@@ -72,23 +72,12 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         for dd in range(setup.pars['dm']):
             duration=(dur[:,i]==dd)
             pos=(agents.ipsim[:,i]>-500)
-            psi_check[:,i][duration]=((setup.exogrid.psi_t[dd][i][(setup.all_indices(i,iexo[:,i][duration]))[3]])) 
+            psi_check[:,i]=((setup.exogrid.psi_t[dd][i][(setup.all_indices(i,iexo[:,i]))[3]])) 
             if np.any(pos):psim[:,i][pos]=((setup.exogrid.psi_t[0][i][(setup.all_indices(i,agents.ipsim[:,i][pos]))[3]])) 
      
      
     std1=np.std(psim[:,1])
-    mean1=np.mean(psim[:,1])
-    
-    
-    nextt=((psim[:,1:]>-50) & (psim[:,:-1]<-50))[:,1:]
-    psim1=psim[:,2:-1]
-    np.mean(psim1[nextt[:,:-1]])
-
-   
-    
-    psi_check[single]=psim[single]
-    psi_check1=psi_check[:,1:]
-    
+    psi_check[single]=0.0 
     state_psid=agents_male.state 
     labor_psid=agents_male.ils_i 
     iexo_psid=agents_male.iexo 

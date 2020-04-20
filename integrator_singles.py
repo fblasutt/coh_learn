@@ -14,7 +14,7 @@ from marriage import v_mar_igrid, v_no_mar
 
 
 
-def ev_single(setup,V,sown,female,dd,t,trim_lvl=0.001):
+def ev_single(setup,V,sown,female,dd,t,trim_lvl=0.001,decc=None):
     # expected value of single person meeting a partner with a chance pmeet
     pmeet = setup.dtype( setup.pars['pmeet_t'][t] )
     
@@ -26,7 +26,7 @@ def ev_single(setup,V,sown,female,dd,t,trim_lvl=0.001):
      #                                 skip_mar=skip_mar,trim_lvl=trim_lvl)
     
     EV_meet, dec = ev_single_meet(setup,V,sown,female,dd,t,
-                                      skip_mar=skip_mar,trim_lvl=trim_lvl)
+                                      skip_mar=skip_mar,trim_lvl=trim_lvl,dec_c=decc)
     
     
     
@@ -44,7 +44,7 @@ def ev_single(setup,V,sown,female,dd,t,trim_lvl=0.001):
     return (1-pmeet)*EV_nomeet + pmeet*EV_meet, dec
     
 
-def ev_single_meet(setup,V,sown,female,dd,t,skip_mar=False,trim_lvl=0.000001):
+def ev_single_meet(setup,V,sown,female,dd,t,skip_mar=False,trim_lvl=0.000001,dec_c=None):
     # computes expected value of single person meeting a partner
     
     # this creates potential partners and integrates over them
@@ -112,12 +112,37 @@ def ev_single_meet(setup,V,sown,female,dd,t,skip_mar=False,trim_lvl=0.000001):
             vout = i_mar*vmoutm + (~i_mar)*vmoutc
             
             
+        #check whether person would marry right away
+      #   if decc not None: 
+            
+#             #Checks
+#    thtm=mdl[0].decisions[0][3]['Female, single']['thetam'][0,:]
+#    thtc=mdl[0].decisions[0][3]['Female, single']['thetac'][0,:]
+#    iexo=mdl[0].decisions[0][3]['Female, single']['iexo'][0,2,:]
+#    moc=mdl[0].decisions[0][3]['Female, single']['M or C'][0,2,:]
+#    dec=mdl[0].decisions[0][3]['Female, single']['Decision'][0,2,:]
+#    coh=((moc==False) & (dec==True))
+#    
+#    mocc=mdl[0].decisions[0][3]['Couple, C']['Cohabitation preferred to Marriage']
+#    
+#    mocc[0,iexo[coh],thtm[coh]]
+      
+
         
         assert vout.dtype == setup.dtype
-            
-        dec[:,:,iconv[:,i]] = (i_mar*decm + (~i_mar)*decc)[:,None,:]
+        
+#       # if dec_c is not None:
+#        coh=((i_mar==False) & ((i_mar*decm + (~i_mar)*decc)==True))
+#        if np.any(coh):
+#            indsi=inds[coh[0,:]]
+#            thtci=thtc[coh]
+#            ass=np.ones(i_mar[coh].shape,dtype=np.int32)*0
+#            i_mar[coh]=(~dec_c['Cohabitation preferred to Marriage'][ass,indsi,thtci])
+#            
+        dec[:,:,iconv[:,i]] = (i_mar*decm + (~i_mar)*decc)[:,None,:]        
         tht[:,:,iconv[:,i]] = (i_mar*thtm + (~i_mar)*thtc)[:,None,:]
         morc[:,:,iconv[:,i]] = i_mar[:,None,:]
+
             
         V_next[:,inds] = vout
         
@@ -129,8 +154,8 @@ def ev_single_meet(setup,V,sown,female,dd,t,skip_mar=False,trim_lvl=0.000001):
     mout['Decision'] = dec
     mout['M or C'] = morc
     mout['theta'] = tht
-    mout['thetac']=thtc
-    mout['thetam']=thtm
+    #mout['thetac']=thtc
+    #mout['thetam']=thtm
     
     return EV, mout
 

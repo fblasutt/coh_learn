@@ -568,7 +568,7 @@ class Agents:
                                     
                             
                         self.itheta[ind[i_div],t+1] = -1
-                        self.ipsim[ind[i_div],t+1]=self.iexo[ind[i_div],t+1].copy()
+                        #self.ipsim[ind[i_div],t+1]=self.iexo[ind[i_div],t+1].copy()
                         self.iexo[ind[i_div],t+1] = iz[i_div]
                         self.state[ind[i_div],t+1] = self.state_codes[ss]
                         self.du[ind[i_div],t+1]= 0

@@ -138,11 +138,11 @@ class Model(object):
             
         # and the integrator   
         
-        def v_integrator(setup,desc,dd,t,V_next):
+        def v_integrator(setup,desc,dd,t,V_next,decc=None):
             
             if desc == 'Female, single' or desc == 'Male, single':
                 female = (desc == 'Female, single')
-                EV, dec = ev_single(setup,V_next,setup.agrid_s,female,dd,t)
+                EV, dec = ev_single(setup,V_next,setup.agrid_s,female,dd,t,decc=decc)
             elif desc == 'Couple, M':
                 EV, dec = ev_couple_m_c(setup,V_next,dd,t,True)
             elif desc == 'Couple, C':
@@ -164,8 +164,8 @@ class Model(object):
         
         if name == 'default' or name == 'default-timed':
             timed = (name == 'default-timed')
-            def iterate(desc,dd,t,Vnext):
-                EV, dec = v_integrator(self.setup,desc,dd,t,Vnext)
+            def iterate(desc,dd,t,Vnext,decc=None):
+                EV, dec = v_integrator(self.setup,desc,dd,t,Vnext,decc=decc)
                 if timed: self.time('Integration for {}'.format(desc))
                 vout = v_iterator(self.setup,desc,dd,t,EV)
                 if timed: self.time('Optimization for {}'.format(desc))
@@ -244,7 +244,10 @@ class Model(object):
                     if t == T-1:
                         V_d, dec = self.initializer(desc,dd,t)
                     else:
-                        V_d, dec = self.iterator(desc,dd,t,Vnext)   
+                        if desc == 'Female, single' or desc == 'Male, single':
+                            V_d, dec = self.iterator(desc,dd,t,Vnext,decnowd['Couple, C'])   
+                        else:
+                            V_d, dec = self.iterator(desc,dd,t,Vnext) 
                        
                     Vnowd.update(V_d)
                     decnowd.update({desc:dec})
