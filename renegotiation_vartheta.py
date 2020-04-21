@@ -23,7 +23,7 @@ from renegotiation_vartheta_gpu import v_ren_gpu_oneopt, v_ren_gpu_twoopt
         
 
 def v_ren_vt(setup,V,marriage,dd,t,return_extra=False,return_vdiv_only=False,rescale=True,
-             thetafun=None, mixed_rescale=False):
+             thetafun=None, mixed_rescale=True):
     # this returns value functions for couple that entered the period with
     # (s,Z,theta) from the grid and is allowed to renegotiate them or breakup
     # 
@@ -291,7 +291,7 @@ def v_ren_core_two_opts_with_int(v_y_ni, vf_y_ni, vm_y_ni, vf_n_ni, vm_n_ni, ith
                 
                 if not nochoice:
                     v_y_1 = wsum(v_y_ni_1)                
-                    pick_1 = (v_y_1 > v_y_0)
+                    pick_1 = (v_y_1 >= v_y_0)
                     
                     ichoice_out[ia,ie,it] = pick_1 
                     

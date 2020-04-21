@@ -42,10 +42,10 @@ class ModelSetup(object):
         p['sig_zm']    = .025014**(0.5)#0.0417483**(0.5)
         p['n_zm_t']      = [5]*Tret + [1]*(T-Tret)
         p['sigma_psi_mult'] = 0.28
-        p['sigma_psi_mu'] = 0.0#1.0#1.1
+        p['sigma_psi_mu'] = 0.5#1.0#1.1
         p['sigma_psi']   = 0.11
         p['R_t'] = [1.02**period_year]*T
-        p['n_psi_t']     = [11]*T
+        p['n_psi_t']     = [31]*T
         p['beta_t'] = [0.98**period_year]*T
         p['A'] = 1.0 # consumption in couple: c = (1/A)*[c_f^(1+rho) + c_m^(1+rho)]^(1/(1+rho))
         p['crra_power'] = 1.5
@@ -73,7 +73,7 @@ class ModelSetup(object):
         
         
         p['u_shift_mar'] = 0.0
-        p['u_shift_coh'] = 0.00
+        p['u_shift_coh'] =0.00
         
          
         #Wages over time
@@ -151,7 +151,7 @@ class ModelSetup(object):
        
         
         # relevant for integration
-        self.state_names = ['Couple, M', 'Couple, C','Female, single','Male, single']
+        self.state_names = ['Female, single','Male, single','Couple, M', 'Couple, C']
         
         # female labor supply
         self.ls_levels = np.array([0.0,0.8],dtype=self.dtype)
@@ -276,12 +276,17 @@ class ModelSetup(object):
             exogrid['psi_t'], exogrid['psi_t_mat']=list(np.ones((p['dm']))),list(np.ones((p['dm'])))
             for dd in range(p['dm']):
                 
-                exogrid['psi_t'][dd], exogrid['psi_t_mat'][dd] = tauchen_nonst(p['T'],self.sigmad[dd]*period_year**0.5,np.sqrt(p['sigma_psi_init']**2+self.sigmad[dd]**2)*period_year**0.5,p['n_psi_t'][0])
+                
+                #exogrid['psi_t'][dd], exogrid['psi_t_mat'][dd] = tauchen_nonst(p['T'],self.sigmad[dd],self.sigmad[dd],p['n_psi_t'][0])
+                exogrid['psi_t'][dd], exogrid['psi_t_mat'][dd] = tauchen_nonst(p['T'],self.sigmad[dd],np.sqrt(2*p['sigma_psi_init']**2+self.sigmad[dd]**2)*period_year**0.5,p['n_psi_t'][0])
                 for i in range(T):
                     
                     if i<Tret:
                         exogrid['psi_t'][dd][i], exogrid['psi_t_mat'][dd][i]=psit[max(i-dd,0)][dd],matri[min(i-dd,T-1)][dd]
+                        #exogrid['psi_t'][dd][i], exogrid['psi_t_mat'][dd][i]=psit[i][dd],matri[i][dd]
 
+
+            aa,bb=exogrid['psi_t'][dd], exogrid['psi_t_mat'][dd] = tauchen_nonst(p['T'],self.sigmad[dd],np.sqrt(2*p['sigma_psi_init']**2+self.sigmad[dd]**2)*period_year**0.5,p['n_psi_t'][0])
             #Here I impose no change in psi from retirement till the end of time 
             for t in range(Tren,T-1):
                 for dd in range(p['dm']):
@@ -388,7 +393,7 @@ class ModelSetup(object):
 #        
         
         # grid for theta
-        self.ntheta = 21
+        self.ntheta = 41
         self.thetamin = 0.02
         self.thetamax = 0.98
         self.thetagrid = np.linspace(self.thetamin,self.thetamax,self.ntheta,dtype=self.dtype)

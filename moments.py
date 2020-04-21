@@ -82,6 +82,37 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     labor_psid=agents_male.ils_i 
     iexo_psid=agents_male.iexo 
     change_psid=agents_male.policy_ind 
+    
+    for i in range(1,mdl.setup.pars['Tret']-1):
+        
+        couples0=(dur[:,i]==0) & (dur[:,i-1]==0) & (state[:,i]>1)
+        std0=0
+        mean0=0
+        if np.any(couples0):std1=np.std(psim[couples0,i]-psim[couples0,i-1]) 
+        if np.any(couples0):mean1=np.mean(psim[couples0,i]-psim[couples0,i-1]) 
+        
+        couples1=(dur[:,i]==1) & (dur[:,i-1]==0) & (state[:,i-1]>1)
+        std1=0
+        mean1=0
+        if np.any(couples1):std1=np.std(psi_check[couples1,i]-psi_check[couples1,i-1]) 
+        if np.any(couples1):mean1=np.mean(psi_check[couples1,i]-psi_check[couples1,i-1]) 
+        
+        couples2=(dur[:,i]==2) & (dur[:,i-1]==1) & (state[:,i-1]>1)
+        std2=0
+        mean2=0
+        if np.any(couples2):std2=np.std(psi_check[couples2,i]-psi_check[couples2,i-1])
+        if np.any(couples2):mean2=np.mean(psi_check[couples2,i]-psi_check[couples2,i-1])
+        
+        couples3=(dur[:,i]==3) & (dur[:,i-1]==2) & (state[:,i-1]>1)
+        std3=0
+        mean3=0
+        if np.any(couples3):std3=np.std(psi_check[couples3,i]-psi_check[couples3,i-1]) 
+        if np.any(couples3):mean3=np.mean(psi_check[couples3,i]-psi_check[couples3,i-1]) 
+        
+
+        
+        print('Variance of innovation in t={} is {},{},{},{}'.format(i,std0,std1,std2,std3))
+        print('Mean of innovation in t={} is {},{},{},{}'.format(i,mean0,mean1,mean2,mean3))
      
     if draw: 
         #Import values for female labor supply (simulated men only) 

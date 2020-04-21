@@ -486,7 +486,8 @@ class Agents:
                          
                     bil_bribing = ('Bribing' in decision)
                     
-                    
+                    #i_stay2=np.ones(i_stay.shape,dtype=bool)
+                    #i_stay=i_stay2.copy()
                     i_div = ~i_stay    
                     
                     #ifem=decision['Divorce'][0][isc,iall][...,None]<self.Mlist[ipol].V[t]['Couple, M']['VF'][isc,iall,:]

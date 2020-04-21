@@ -366,7 +366,7 @@ def v_ren_core_two_opts_with_int(v_y_ni, vf_y_ni, vm_y_ni, vf_no, vm_no, itht, w
                 
                 if not nochoice:
                     v_y_1 = wsum(v_y_ni_1)                
-                    pick_1 = (v_y_1 > v_y_0)
+                    pick_1 = (v_y_1 >= v_y_0)
                     
                     ichoice_out[ia,ie,it] = pick_1 
                     

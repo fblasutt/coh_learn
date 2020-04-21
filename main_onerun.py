@@ -46,7 +46,7 @@ if __name__ == '__main__':
     #For graphs later
     graphs=True
     #Build  data moments and pickle them
-    #dat_moments(period=1,sampling_number=4,transform=1)
+    dat_moments(period=1,sampling_number=4,transform=1)
     
          
     #Initialize the file with parameters
@@ -59,7 +59,7 @@ if __name__ == '__main__':
     x0 = np.array([1.4,0.3110307,2.11501,0.343047,0.7550264,0.015,-0.09])
     x0 = np.array([0.5535,0.599,1.84,0.246,0.7639,0.0168,-0.100])
     x0 = np.array([0.919368,0.479426,2.05565,0.299191,0.730532,0.0232399,-0.0794582,1.07])
-    x0 = np.array([0.5155269,   0.23565744,  2.50,  0.4604853,   0.17371481,  0.02159483, -0.05831977,  1.10505955])
+    x0 = np.array([2.05155269,   0.23565744,  2.50,  0.4604853,   0.17371481,  0.09159483, -0.05831977,  1.10505955])
     #x0 = np.array([ 0.866640625, 0.857421875,3.1042187500000002,0.297265625,0.6507343750000001,0.01860078125,-0.0893671875,1.07])
     # 0.50371334  0.27677831  2.9702419   0.48783594  0.67964845  0.01472046-0.11059054  1.10997993
 
@@ -74,7 +74,7 @@ if __name__ == '__main__':
     out, mdl, agents, res = mdl_resid(x0,return_format=['distance','models','agents','scaled residuals'],
                                       #load_from=['mdl_save_uni.pkl'],#'mdl_save_uni.pkl'],
                                       solve_transition=False,                                    
-                                      save_to=['mdl_save_uni.pkl'],#'mdl_save_uni.pkl'],
+                                      #save_to=['mdl_save_uni.pkl'],#'mdl_save_uni.pkl'],
                                       store_path=path,
                                       verbose=True,calibration_report=False,draw=graphs,graphs=graphs,
                                       welf=True) #Switch to true for decomposition of welfare analysis
@@ -86,11 +86,11 @@ if __name__ == '__main__':
     #Indexes for the graphs
     if graphs:
         ai=0
-        zfi=3
+        zfi=4
         zmi=4
-        psii=1
-        ti=4
-        thi=5
+        psii=4
+        ti=24
+        thi=11
         dd=0
          
         #Actual Graphs
@@ -100,17 +100,7 @@ if __name__ == '__main__':
         #os.remove('name_model.pkl')
      
      
-    #Checks
-    thtm=mdl[0].decisions[0][3]['Female, single']['thetam'][0,:]
-    thtc=mdl[0].decisions[0][3]['Female, single']['thetac'][0,:]
-    iexo=mdl[0].decisions[0][3]['Female, single']['iexo'][0,2,:]
-    moc=mdl[0].decisions[0][3]['Female, single']['M or C'][0,2,:]
-    dec=mdl[0].decisions[0][3]['Female, single']['Decision'][0,2,:]
-    coh=((moc==False) & (dec==True))
-    
-    mocc=mdl[0].decisions[0][3]['Couple, C']['Cohabitation preferred to Marriage']
-    
-    mocc[0,iexo[coh],thtm[coh]]
+  
     
     
         

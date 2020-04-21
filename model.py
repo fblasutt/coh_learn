@@ -240,7 +240,7 @@ class Model(object):
                 else:
                     Vnext = self.V[0][dd]  if t<T-1 else None
 
-                for desc in self.setup.state_names:
+                for desc in reversed(self.setup.state_names):
                     if t == T-1:
                         V_d, dec = self.initializer(desc,dd,t)
                     else:
