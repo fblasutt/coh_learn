@@ -42,7 +42,7 @@ class ModelSetup(object):
         p['sig_zm']    = .025014**(0.5)#0.0417483**(0.5)
         p['n_zm_t']      = [5]*Tret + [1]*(T-Tret)
         p['sigma_psi_mult'] = 0.28
-        p['sigma_psi_mu'] = 0.5#1.0#1.1
+        p['sigma_psi_mu'] = 0.6#1.0#nthe1.1
         p['sigma_psi']   = 0.11
         p['R_t'] = [1.02**period_year]*T
         p['n_psi_t']     = [31]*T
@@ -267,9 +267,11 @@ class ModelSetup(object):
             psit, matri=list(np.ones((T))),list(np.ones((T)))
             sigmabase=np.sqrt([2*p['sigma_psi_init']**2+(t+1)*self.sigmad[-1]**2 for t in range(T)])
             sigmadp=np.concatenate((np.array([0.0]),self.sigmad))
+            sigmadi=self.sigmad[::-1]
             for i in range(T):
                 
-                sigp=np.sqrt([sigmabase[min(i+p['dm'],T-1)]**2 - np.sum(self.sigmad[dd:]**2) for dd in range(p['dm']+1)])
+                base=sigmabase[min(i+p['dm'],T-1)]**2-np.sum(self.sigmad**2)
+                sigp=np.sqrt([base+np.sum(self.sigmad[p['dm']-dd:]**2) for dd in range(p['dm']+1)])
                 psit[i],matri[i] = tauchen_nonstm(p['dm']+1,sigmadp*period_year**0.5,0.0,p['n_psi_t'][0],sd_z=sigp)
                 
 
@@ -282,7 +284,8 @@ class ModelSetup(object):
                 for i in range(T):
                     
                     if i<Tret:
-                        exogrid['psi_t'][dd][i], exogrid['psi_t_mat'][dd][i]=psit[max(i-dd,0)][dd],matri[min(i-dd,T-1)][dd]
+                        exogrid['psi_t'][dd][i], exogrid['psi_t_mat'][dd][i]=psit[max(i+dd,0)][dd],matri[min(i+dd,T-1)][dd]
+                        #exogrid['psi_t'][dd][i], exogrid['psi_t_mat'][dd][i]=psit[max(i+dd-p['dm'],0)][dd],matri[min(i+dd-p['dm'],T-1)][dd]
                         #exogrid['psi_t'][dd][i], exogrid['psi_t_mat'][dd][i]=psit[i][dd],matri[i][dd]
 
 

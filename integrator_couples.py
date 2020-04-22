@@ -30,7 +30,7 @@ def ev_couple_m_c(setup,Vpostren,dd,t,marriage,use_sparse=True):
             out = v_ren_bil(setup,Vpostren,marriage,dd,t)
     else:
         out = v_no_ren(setup,Vpostren,marriage,dd,t)
-    _Vren2 = out.pop('Values') 
+    _Vren2 = out['Values']#out.pop('Values') 
     #_Vren2=out['Values']
     dec = out
     

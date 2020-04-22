@@ -131,13 +131,14 @@ def ev_single_meet(setup,V,sown,female,dd,t,skip_mar=False,trim_lvl=0.000001,dec
         
         assert vout.dtype == setup.dtype
         
-#       # if dec_c is not None:
-#        coh=((i_mar==False) & ((i_mar*decm + (~i_mar)*decc)==True))
-#        if np.any(coh):
-#            indsi=inds[coh[0,:]]
-#            thtci=thtc[coh]
-#            ass=np.ones(i_mar[coh].shape,dtype=np.int32)*0
-#            i_mar[coh]=(~dec_c['Cohabitation preferred to Marriage'][ass,indsi,thtci])
+       # if dec_c is not None:
+        #coh=((i_mar==False) & ((i_mar*decm + (~i_mar)*decc)==True))
+        coh=((i_mar*decm + (~i_mar)*decc)==True)
+        if np.any(coh):
+            indsi=inds[coh[0,:]]
+            thtci=thtc[coh]
+            ass=np.ones(i_mar[coh].shape,dtype=np.int32)*0
+            i_mar[coh]=(~dec_c['Cohabitation preferred to Marriage'][ass,indsi,thtci])
 #           
         dec[:,:,iconv[:,i]] = (i_mar*decm + (~i_mar)*decc)[:,None,:]        
         tht[:,:,iconv[:,i]] = (i_mar*thtm + (~i_mar)*thtc)[:,None,:]

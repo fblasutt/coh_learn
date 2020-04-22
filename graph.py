@@ -19,26 +19,50 @@ from renegotiation_vartheta import v_ren_vt as v_ren_uni
 from renegotiation_bilateral import v_ren_bil
 
  
-def v_reshape(setup,desc,field,V_by_t,Tmax,dd): 
+def v_reshape(setup,desc,field,V_by_t,Tmax,dd,tu=None): 
     # this reshapes V into many-dimensional object 
-    if desc == "Couple, C" or desc == "Couple, M": 
-         
-        v0 = V_by_t[0][dd][desc][field] if dd>=0 else V_by_t[0][desc][field]
-        shp_v0 = v0.shape 
-         
-        tht_shape = (v0.ndim>2)*(shp_v0[-1],) # can be empty if no theta dimension 
-         
-        shape = (shp_v0[0],setup.pars['n_zf_t'][0],setup.pars['n_zm_t'][0],setup.pars['n_psi_t'][0]) + tht_shape + (Tmax,) 
-        out = np.empty(shape,v0.dtype)         
-        for t in range(Tmax): 
-            vin = V_by_t[t][dd][desc][field] if dd>=0 else V_by_t[t][desc][field]
-            out[...,t] = vin.reshape(shape[:-1]) 
-    else: 
-        shape = V_by_t[0][dd][desc][field].shape + (Tmax,) if dd>=0 else V_by_t[0][desc][field].shape + (Tmax,)
-        out = np.empty(shape,V_by_t[0][dd][desc][field].dtype) if dd>=0 else np.empty(shape,V_by_t[0][desc][field].dtype)
-        for t in range(Tmax): 
-            vin = V_by_t[t][dd][desc][field] if dd>=0 else  V_by_t[t][desc][field]
-            out[...,t] = vin 
+    if tu is None:
+        if desc == "Couple, C" or desc == "Couple, M": 
+                
+            v0 = V_by_t[0][dd][desc][field] if dd>=0 else V_by_t[0][desc][field]
+    
+    
+            shp_v0 = v0.shape 
+             
+            tht_shape = (v0.ndim>2)*(shp_v0[-1],) # can be empty if no theta dimension 
+             
+            shape = (shp_v0[0],setup.pars['n_zf_t'][0],setup.pars['n_zm_t'][0],setup.pars['n_psi_t'][0]) + tht_shape + (Tmax,) 
+            out = np.empty(shape,v0.dtype)         
+            for t in range(Tmax): 
+                vin = V_by_t[t][dd][desc][field] if dd>=0 else V_by_t[t][desc][field]
+                out[...,t] = vin.reshape(shape[:-1]) 
+        else: 
+            shape = V_by_t[0][dd][desc][field].shape + (Tmax,) if dd>=0 else V_by_t[0][desc][field].shape + (Tmax,)
+            out = np.empty(shape,V_by_t[0][dd][desc][field].dtype) if dd>=0 else np.empty(shape,V_by_t[0][desc][field].dtype)
+            for t in range(Tmax): 
+                vin = V_by_t[t][dd][desc][field] if dd>=0 else  V_by_t[t][desc][field]
+                out[...,t] = vin 
+    else:
+        if desc == "Couple, C" or desc == "Couple, M": 
+            
+            v0 = V_by_t[0][dd][desc][field][tu] if dd>=0 else V_by_t[0][desc][field][tu]
+    
+    
+            shp_v0 = v0.shape 
+             
+            tht_shape = (v0.ndim>2)*(shp_v0[-1],) # can be empty if no theta dimension 
+             
+            shape = (shp_v0[0],setup.pars['n_zf_t'][0],setup.pars['n_zm_t'][0],setup.pars['n_psi_t'][0]) + tht_shape + (Tmax,) 
+            out = np.empty(shape,v0.dtype)         
+            for t in range(Tmax): 
+                vin = V_by_t[t][dd][desc][field][tu] if dd>=0 else V_by_t[t][desc][field][tu]
+                out[...,t] = vin.reshape(shape[:-1]) 
+        else: 
+            shape = V_by_t[0][dd][desc][field][tu].shape + (Tmax,) if dd>=0 else V_by_t[0][desc][field][tu].shape + (Tmax,)
+            out = np.empty(shape,V_by_t[0][dd][desc][field][tu].dtype) if dd>=0 else np.empty(shape,V_by_t[0][desc][field][tu].dtype)
+            for t in range(Tmax): 
+                vin = V_by_t[t][dd][desc][field] if dd>=0 else  V_by_t[t][desc][field]
+                out[...,t] = vin 
      
     return out 
              
@@ -117,7 +141,8 @@ def graphs(mdl,ai,zfi,zmi,psii,ti,thi,dd):
          
     #Renegotiated Value 
          
-    nex = setup.all_indices(max(ti-1,0),(zfi,zmi,psii))[0] 
+    nex = setup.all_indices(max(ti+1,0),(zfi,zmi,psii))[0] 
+    
     inde=setup.theta_orig_on_fine[thi] 
      
     # if ti = 0 it creates an object that was not used for the solutions,  
@@ -127,7 +152,7 @@ def graphs(mdl,ai,zfi,zmi,psii,ti,thi,dd):
         
         v_ren_mar = v_ren_uni if setup.div_costs.unilateral_divorce else v_ren_bil
         
-        V_ren_m = v_ren_mar(setup,Packed[ti][dd],True,dd,ti-1,return_extra=True)[1]['Values'][0][np.arange(agrid.size),nex,inde] 
+        V_ren_m = v_ren_mar(setup,Packed[ti][dd],True,dd,ti-1,return_extra=True)[1]['Values'][0]#[np.arange(agrid.size),nex,inde] 
     else:
         V_ren_c = v_ren_uni(setup,Packed[ti][dd],False,dd,ti-1,return_extra=True)[1]['Values'][0][np.arange(agrid.size),nex,inde] 
         
@@ -176,7 +201,27 @@ def graphs(mdl,ai,zfi,zmi,psii,ti,thi,dd):
     thetac_R = setup.thetagrid_fine[ithetac_R] 
     thetac_R[ithetac_R==-1] = None 
      
-     
+    #Decisions to marry/cohabit/divorcce
+    aaa=dec[0][0]['Couple, C']['Decision']
+    entry=  (i_mar*decm + (~i_mar)*decc)
+    m_over_c0= v_reshape(setup,'Couple, C','Cohabitation preferred to Marriage',dec,T-1,0)
+    m_over_c1= v_reshape(setup,'Couple, C','Cohabitation preferred to Marriage',dec,T-1,1)
+    m_over_c2= v_reshape(setup,'Couple, C','Cohabitation preferred to Marriage',dec,T-1,2)
+    m_over_c3= v_reshape(setup,'Couple, C','Cohabitation preferred to Marriage',dec,T-1,3)
+    nodiv0= v_reshape(setup,'Couple, C','Decision',dec,T-1,0)
+    nodiv1= v_reshape(setup,'Couple, C','Decision',dec,T-1,1)
+    nodiv2= v_reshape(setup,'Couple, C','Decision',dec,T-1,2)
+    nodiv3= v_reshape(setup,'Couple, C','Decision',dec,T-1,3)
+    val0= v_reshape(setup,'Couple, M','Values',dec,T-1,0,tu=1)
+    val1= v_reshape(setup,'Couple, M','Values',dec,T-1,1,1)
+    val2= v_reshape(setup,'Couple, M','Values',dec,T-1,2,1)
+    val3= v_reshape(setup,'Couple, M','Values',dec,T-1,3,1)
+    valc0= v_reshape(setup,'Couple, C','Values',dec,T-1,0,tu=1)
+    valc1= v_reshape(setup,'Couple, C','Values',dec,T-1,1,1)
+    valc2= v_reshape(setup,'Couple, C','Values',dec,T-1,2,1)
+    valc3= v_reshape(setup,'Couple, C','Values',dec,T-1,3,1)
+    
+    #Value Functions
     Vm0, Vmm0, Vfm0, cm, sm, flsm = [v_reshape(setup,'Couple, M',f,Packed,T,0) 
                                     for f in ['V','VM','VF','c','s','fls']] 
     Vc0, Vmc0, Vfc0, cc, sc, flsc = [v_reshape(setup,'Couple, C',f,Packed,T,0)
@@ -261,13 +306,71 @@ def graphs(mdl,ai,zfi,zmi,psii,ti,thi,dd):
     fig = plt.figure() 
     f1=fig.add_subplot(2,1,1) 
     plt.plot(psig, Vm0[ai,zfi,zmi,0:len(psig),thi,ti]-Vc0[ai,zfi,zmi,0:len(psig),thi,ti],'k',linewidth=0.2, label='Couple Marriage0') 
-    plt.plot(psig, Vm1[ai,zfi,zmi,0:len(psig),thi,ti+1]-Vc1[ai,zfi,zmi,0:len(psig),thi,ti+1],'b',linewidth=0.2, label='Couple Marriage1') 
-    plt.plot(psig, Vm2[ai,zfi,zmi,0:len(psig),thi,ti+2]-Vc2[ai,zfi,zmi,0:len(psig),thi,ti+2],'r',linewidth=0.2, label='Couple Marriage2') 
-    plt.plot(psig, Vm3[ai,zfi,zmi,0:len(psig),thi,ti+3]-Vc3[ai,zfi,zmi,0:len(psig),thi,ti+3],'y',linewidth=0.2, label='Couple Marriage3') 
-#    plt.plot(psig, Vc0[ai,zfi,zmi,0:len(psig),thi,ti],'k',linewidth=0.2, label='Couple Cohab0') 
-#    plt.plot(psig, Vc1[ai,zfi,zmi,0:len(psig),thi,ti],'b',linewidth=0.2, label='Couple Cohab1') 
-#    plt.plot(psig, Vc2[ai,zfi,zmi,0:len(psig),thi,ti],'r',linewidth=0.2, label='Couple Cohab2') 
-#    plt.plot(psig, Vc3[ai,zfi,zmi,0:len(psig),thi,ti],'y',linewidth=0.2, label='Couple Cohab3') 
+    plt.plot(psig, Vm1[ai,zfi,zmi,0:len(psig),thi,ti]-Vc1[ai,zfi,zmi,0:len(psig),thi,ti],'b',linewidth=0.2, label='Couple Marriage1') 
+    plt.plot(psig, Vm2[ai,zfi,zmi,0:len(psig),thi,ti]-Vc2[ai,zfi,zmi,0:len(psig),thi,ti],'r',linewidth=0.2, label='Couple Marriage2') 
+    plt.plot(psig, Vm3[ai,zfi,zmi,0:len(psig),thi,ti]-Vc3[ai,zfi,zmi,0:len(psig),thi,ti],'y',linewidth=0.2, label='Couple Marriage3') 
+
+
+    plt.xlabel('Love') 
+    plt.ylabel('Utility') 
+    #plt.title('Utility  Divorce costs: men=0.5, women=0.5') 
+    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3), 
+                  fancybox=True, shadow=True, ncol=3, fontsize='x-small') 
+    
+    ########################################## 
+    # Value Functions wrt Love 
+    ##########################################  
+    fig = plt.figure() 
+    f1=fig.add_subplot(2,1,1) 
+    nex1 = setup.all_indices(min(ti+1,T),(zfi,zmi,psig))[0] 
+
+    plt.plot(psig, entry[ai,0:len(nex1)]*-1,'k',linewidth=0.2, label='Couple formed') 
+    plt.plot(psig, m_over_c0[ai,zfi,zmi,0:len(psig),thi,ti+1]*1,'k*',linewidth=0.2, label='Couple Marriage0') 
+    plt.plot(psig, m_over_c1[ai,zfi,zmi,0:len(psig),thi,ti+1]*2,'b*',linewidth=0.2, label='Couple Marriage1') 
+    plt.plot(psig, m_over_c2[ai,zfi,zmi,0:len(psig),thi,ti+1]*3,'r*',linewidth=0.2, label='Couple Marriage2') 
+    plt.plot(psig, m_over_c3[ai,zfi,zmi,0:len(psig),thi,ti+1]*4,'y*',linewidth=0.2, label='Couple Marriage3') 
+    plt.plot(psig, nodiv0[ai,zfi,zmi,0:len(psig),thi,ti+1]*-2,'ko',linewidth=0.2, label='nodiv0') 
+    plt.plot(psig, nodiv1[ai,zfi,zmi,0:len(psig),thi,ti+1]*-3,'bo',linewidth=0.2, label='nodiv1') 
+    plt.plot(psig, nodiv2[ai,zfi,zmi,0:len(psig),thi,ti+1]*-4,'ro',linewidth=0.2, label='nodiv2') 
+    plt.plot(psig, nodiv3[ai,zfi,zmi,0:len(psig),thi,ti+1]*-5,'yo',linewidth=0.2, label='nodiv3') 
+
+
+    plt.xlabel('Love') 
+    plt.ylabel('Utility') 
+    #plt.title('Utility  Divorce costs: men=0.5, women=0.5') 
+    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3), 
+                  fancybox=True, shadow=True, ncol=3, fontsize='x-small') 
+    
+        
+    ########################################## 
+    # Value Functions wrt Love -ren
+    ##########################################  
+    fig = plt.figure() 
+    f1=fig.add_subplot(2,1,1) 
+    nex1 = setup.all_indices(min(ti+1,T),(zfi,zmi,psig))[0] 
+    #plt.plot(psig, entry[ai,0:len(nex1)],'k',linewidth=0.2, label='Couple formed') 
+    plt.plot(psig, val0[ai,zfi,zmi,0:len(psig),inde,ti+1]-valc0[ai,zfi,zmi,0:len(psig),inde,ti+1],'k',linewidth=0.2, label='vm0') 
+    plt.plot(psig, val1[ai,zfi,zmi,0:len(psig),inde,ti+1]-valc1[ai,zfi,zmi,0:len(psig),inde,ti+1],'b',linewidth=0.2, label='vm1') 
+    plt.plot(psig, val2[ai,zfi,zmi,0:len(psig),inde,ti+1]-valc2[ai,zfi,zmi,0:len(psig),inde,ti+1],'r',linewidth=0.2, label='vm2') 
+    plt.plot(psig, val3[ai,zfi,zmi,0:len(psig),inde,ti+1]-valc3[ai,zfi,zmi,0:len(psig),inde,ti+1],'y',linewidth=0.2, label='vm3') 
+
+    plt.xlabel('Love') 
+    plt.ylabel('Utility') 
+    #plt.title('Utility  Divorce costs: men=0.5, women=0.5') 
+    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3), 
+                  fancybox=True, shadow=True, ncol=3, fontsize='x-small') 
+    
+    ########################################## 
+    # Value Functions wrt Divorce -ren
+    ##########################################  
+    fig = plt.figure() 
+    f1=fig.add_subplot(2,1,1) 
+    nex1 = setup.all_indices(min(ti+1,T),(zfi,zmi,psig))[0] 
+    #plt.plot(psig, entry[ai,0:len(nex1)],'k',linewidth=0.2, label='Couple formed') 
+    plt.plot(psig, val0[ai,zfi,zmi,0:len(psig),inde,ti+1]-val0[ai,zfi,zmi,0:len(psig),inde,ti+1][0],'k',linewidth=0.2, label='vm0') 
+    plt.plot(psig, val1[ai,zfi,zmi,0:len(psig),inde,ti+1]-val1[ai,zfi,zmi,0:len(psig),inde,ti+1][0],'b',linewidth=0.2, label='vm1') 
+    plt.plot(psig, val2[ai,zfi,zmi,0:len(psig),inde,ti+1]-val2[ai,zfi,zmi,0:len(psig),inde,ti+1][0],'r',linewidth=0.2, label='vm2') 
+    plt.plot(psig, val3[ai,zfi,zmi,0:len(psig),inde,ti+1]-val3[ai,zfi,zmi,0:len(psig),inde,ti+1][0],'y',linewidth=0.2, label='vm3') 
 
     plt.xlabel('Love') 
     plt.ylabel('Utility') 
@@ -301,7 +404,8 @@ def graphs(mdl,ai,zfi,zmi,psii,ti,thi,dd):
     ##########################################  
     fig = plt.figure() 
     f1=fig.add_subplot(2,1,1) 
-    plt.plot(psig, Vfm0[ai,zfi,zmi,0:len(psig),thi,ti]-Vfc0[ai,zfi,zmi,0:len(psig),thi,ti],'k',linewidth=0.2, label='F Marriage0') 
+  
+    #plt.plot(psig, V_ren_m[ai,0:len(nex1),inde]-Vfc0[ai,zfi,zmi,0:len(psig),thi,ti],'k',linewidth=0.2, label='F Marriage0') 
     plt.plot(psig, Vfm1[ai,zfi,zmi,0:len(psig),thi,ti]-Vfc1[ai,zfi,zmi,0:len(psig),thi,ti],'b',linewidth=0.2, label='F Marriage1') 
     plt.plot(psig, Vfm2[ai,zfi,zmi,0:len(psig),thi,ti]-Vfc2[ai,zfi,zmi,0:len(psig),thi,ti],'r',linewidth=0.2, label='F Marriage2') 
     plt.plot(psig, Vfm3[ai,zfi,zmi,0:len(psig),thi,ti]-Vfc3[ai,zfi,zmi,0:len(psig),thi,ti],'y',linewidth=0.2, label='F Marriage3') 
@@ -554,8 +658,8 @@ def graphs(mdl,ai,zfi,zmi,psii,ti,thi,dd):
     surpW = [None] * len(psig) 
     
     for i in range(len(psig)): 
-        surpM[i]=vtoutm[ti,ai,i]-vtoutm_c[ti,ai,i] 
-        surpW[i]=vtoutf[ti,ai,i]-vtoutf_c[ti,ai,i] 
+        surpM[i]=vtoutm[ti,ai,i]#-vtoutm_c[ti,ai,i] 
+        surpW[i]=vtoutf[ti,ai,i]#-vtoutf_c[ti,ai,i] 
  
      
     #Graph for the Surplus 

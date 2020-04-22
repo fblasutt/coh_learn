@@ -46,7 +46,7 @@ if __name__ == '__main__':
     #For graphs later
     graphs=True
     #Build  data moments and pickle them
-    dat_moments(period=1,sampling_number=4,transform=1)
+    #dat_moments(period=1,sampling_number=4,transform=1)
     
          
     #Initialize the file with parameters
@@ -86,10 +86,10 @@ if __name__ == '__main__':
     #Indexes for the graphs
     if graphs:
         ai=0
-        zfi=4
-        zmi=4
+        zfi=3
+        zmi=3
         psii=4
-        ti=24
+        ti=4
         thi=11
         dd=0
          
