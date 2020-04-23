@@ -238,7 +238,7 @@ def int_prob_standard(vec,trim=True,trim_level=0.001,n_points=None):
     try:
         assert np.all(np.diff(vec)>0), "vec must be ordered and increasing!"
     except:
-        print(vec)
+        
         assert False
     
     vm = np.concatenate( ([-np.inf],vec[:-1]) )

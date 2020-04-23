@@ -387,6 +387,14 @@ class Agents:
                     
                     assert np.all(~i_nomeet[i_agree])
                     
+#                    i_agree_mar1=(np.ones(i_agree_mar.shape,dtype=np.int32)==1)
+#                    i_agree_mar=i_agree_mar1.copy()
+#                    i_agree_coh=(np.ones(i_agree_mar.shape,dtype=np.int32)==0)
+#                    i_disagree_or_nomeet=(np.ones(i_agree_mar.shape,dtype=np.int32)==0)
+#                    i_nomeet=(np.ones(i_agree_mar.shape,dtype=np.int32)==0)
+#                    i_disagree_and_meet=(np.ones(i_agree_mar.shape,dtype=np.int32)==0)
+#                    
+                    
                     
                     nmar, ncoh, ndis, nnom = np.sum(i_agree_mar),np.sum(i_agree_coh),np.sum(i_disagree_and_meet),np.sum(i_nomeet)
                     ntot = sum((nmar, ncoh, ndis, nnom))
@@ -486,8 +494,8 @@ class Agents:
                          
                     bil_bribing = ('Bribing' in decision)
                     
-                    #i_stay2=np.ones(i_stay.shape,dtype=bool)
-                    #i_stay=i_stay2.copy()
+#                    i_stay2=np.ones(i_stay.shape,dtype=bool)
+#                    i_stay=i_stay2.copy()
                     i_div = ~i_stay    
                     
                     #ifem=decision['Divorce'][0][isc,iall][...,None]<self.Mlist[ipol].V[t]['Couple, M']['VF'][isc,iall,:]

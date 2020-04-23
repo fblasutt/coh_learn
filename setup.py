@@ -42,7 +42,7 @@ class ModelSetup(object):
         p['sig_zm']    = .025014**(0.5)#0.0417483**(0.5)
         p['n_zm_t']      = [5]*Tret + [1]*(T-Tret)
         p['sigma_psi_mult'] = 0.28
-        p['sigma_psi_mu'] = 0.6#1.0#nthe1.1
+        p['sigma_psi_mu'] = 0.8#1.0#nthe1.1
         p['sigma_psi']   = 0.11
         p['R_t'] = [1.02**period_year]*T
         p['n_psi_t']     = [31]*T
@@ -123,25 +123,21 @@ class ModelSetup(object):
   
         def ff(x):
             return np.sqrt((x**2+p['sigma_psi_mu']**2)*((x**2+p['sigma_psi_mu']**2)/(x**2+2*p['sigma_psi_mu']**2))**2)
-        root= optimize.brentq(f, 0.0001, 10)
-        sigma0=np.sqrt(root-p['sigma_psi_mu']**2)
+        #root= optimize.brentq(f, 0.0001, 10)
+        #sigma0=np.sqrt(root-p['sigma_psi_mu']**2)
         #sigma0=np.sqrt(root)
         p['sigma_psi_init'] =p['sigma_psi_mult']*p['sigma_psi']
-        
-        # no replacements after this pint     
-        #k0=((p['sigma_psi_mult']*p['sigma_psi'])**2+p['sigma_psi_mu']**2)/((p['sigma_psi_mult']*p['sigma_psi'])**2+2*p['sigma_psi_mu']**2)
-        #p['sigma_psi_init'] = np.sqrt(k0**2*((p['sigma_psi_mult']*p['sigma_psi'])**2+p['sigma_psi_mu']**2))
-        
+  
         
         #Get Variance of Love shock by Duration using Kalman Filter
-        #K,sigma=kalman(1.0,p['sigma_psi']**2,p['sigma_psi_mu']**2,(p['sigma_psi_mult']*p['sigma_psi'])**2,p['dm'])
-        K,sigma=kalman(1.0,p['sigma_psi']**2,p['sigma_psi_mu']**2,(sigma0)**2,p['dm'])
+        K,sigma=kalman(1.0,p['sigma_psi']**2,p['sigma_psi_mu']**2,(p['sigma_psi_mult']*p['sigma_psi'])**2,p['dm']+1)
+        #K,sigma=kalman(1.0,p['sigma_psi']**2,p['sigma_psi_mu']**2,(sigma0)**2,p['dm'])
         #Get variance by duration
         self.sigmad=-1*np.ones((p['dm']))
         
-        
+        p['sigma_psi_init']=np.sqrt(K[0]**2*(sigma[0]**2+p['sigma_psi_mu']**2))
         for i in range(p['dm']):
-            self.sigmad[i]=np.sqrt(K[i]**2*(sigma[i]**2+p['sigma_psi_mu']**2))
+            self.sigmad[i]=np.sqrt(K[i+1]**2*(sigma[i+1]**2+p['sigma_psi_mu']**2))
         
         
         self.pars = p
@@ -265,13 +261,13 @@ class ModelSetup(object):
             print(K[0],K[1],K[2],K[3])
             #New way of getting transition matrix
             psit, matri=list(np.ones((T))),list(np.ones((T)))
-            sigmabase=np.sqrt([2*p['sigma_psi_init']**2+(t+1)*self.sigmad[-1]**2 for t in range(T)])
+            sigmabase=np.sqrt([self.sigmad[0]**2+(t+1)*self.sigmad[-1]**2 for t in range(T)])
             sigmadp=np.concatenate((np.array([0.0]),self.sigmad))
             sigmadi=self.sigmad[::-1]
             for i in range(T):
                 
                 base=sigmabase[min(i+p['dm'],T-1)]**2-np.sum(self.sigmad**2)
-                sigp=np.sqrt([base+np.sum(self.sigmad[p['dm']-dd:]**2) for dd in range(p['dm']+1)])
+                sigp=np.sqrt([base+np.sum(sigmadi[p['dm']-dd:]**2) for dd in range(p['dm']+1)])
                 psit[i],matri[i] = tauchen_nonstm(p['dm']+1,sigmadp*period_year**0.5,0.0,p['n_psi_t'][0],sd_z=sigp)
                 
 
@@ -280,11 +276,11 @@ class ModelSetup(object):
                 
                 
                 #exogrid['psi_t'][dd], exogrid['psi_t_mat'][dd] = tauchen_nonst(p['T'],self.sigmad[dd],self.sigmad[dd],p['n_psi_t'][0])
-                exogrid['psi_t'][dd], exogrid['psi_t_mat'][dd] = tauchen_nonst(p['T'],self.sigmad[dd],np.sqrt(2*p['sigma_psi_init']**2+self.sigmad[dd]**2)*period_year**0.5,p['n_psi_t'][0])
+                exogrid['psi_t'][dd], exogrid['psi_t_mat'][dd] = tauchen_nonst(p['T'],self.sigmad[dd],np.sqrt(self.sigmad[0]**2+self.sigmad[dd]**2)*period_year**0.5,p['n_psi_t'][0])
                 for i in range(T):
                     
                     if i<Tret:
-                        exogrid['psi_t'][dd][i], exogrid['psi_t_mat'][dd][i]=psit[max(i+dd,0)][dd],matri[min(i+dd,T-1)][dd]
+                        exogrid['psi_t'][dd][i], exogrid['psi_t_mat'][dd][i]=psit[max(i-dd,0)][dd],matri[min(i-dd,T-1)][dd]
                         #exogrid['psi_t'][dd][i], exogrid['psi_t_mat'][dd][i]=psit[max(i+dd-p['dm'],0)][dd],matri[min(i+dd-p['dm'],T-1)][dd]
                         #exogrid['psi_t'][dd][i], exogrid['psi_t_mat'][dd][i]=psit[i][dd],matri[i][dd]
 

@@ -89,13 +89,18 @@ def kalman(rho,sigmae,sigmamu,sigma0,dmax):
     
     for i in range(dmax):     
         if i<1:             
-            sigma_old=(sigma0+sigmamu)*(sigmamu/(sigma0+2*sigmamu))#sigma0*sigmamu/(sigma0+sigmamu)#
-            sigmav[i]=rho**2*sigma_old+sigmae
-            K[i]= sigmav[i]/(sigmav[i]+sigmamu)                
+            #sigma_old=0
+            #sigmav[i]=rho**2*sigma_old+sigma0
+            #K[i]= sigmav[i]/max(sigmav[i]+sigmamu,0.0001)      
+            
+            sigma_old=0
+            sigmav[i]=sigma0
+            K[i]= sigmav[i]/max(sigmav[i]+sigmamu,0.0001)  
+            
         else:                               
             sigma_old=(1.0-K[i-1])*sigmav[i-1]
             sigmav[i]=sigmae+sigma_old
-            K[i]= sigmav[i]/(sigmav[i]+sigmamu)
+            K[i]= sigmav[i]/max(sigmav[i]+sigmamu,0.0001)
             
     return K, np.sqrt(sigmav)
 

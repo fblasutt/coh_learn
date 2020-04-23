@@ -77,6 +77,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
      
      
     std1=np.std(psim[:,1])
+    psi_check[:,0]=psim[:,1]
     psi_check[single]=0.0 
     state_psid=agents_male.state 
     labor_psid=agents_male.ils_i 
@@ -109,10 +110,16 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         if np.any(couples3):std3=np.std(psi_check[couples3,i]-psi_check[couples3,i-1]) 
         if np.any(couples3):mean3=np.mean(psi_check[couples3,i]-psi_check[couples3,i-1]) 
         
+        couples4=(dur[:,i]==3) & (dur[:,i-1]==3) & (state[:,i-1]>1)
+        std4=0
+        mean4=0
+        if np.any(couples4):std4=np.std(psi_check[couples4,i]-psi_check[couples4,i-1]) 
+        if np.any(couples4):mean4=np.mean(psi_check[couples4,i]-psi_check[couples4,i-1]) 
+        
 
         
-        print('Variance of innovation in t={} is {},{},{},{}'.format(i,std0,std1,std2,std3))
-        print('Mean of innovation in t={} is {},{},{},{}'.format(i,mean0,mean1,mean2,mean3))
+        print('Variance of innovation in t={} is {},{},{},{},{}'.format(i,std0,std1,std2,std3,std4))
+        print('Mean of innovation in t={} is {},{},{},{},{}'.format(i,mean0,mean1,mean2,mean3,mean4))
      
     if draw: 
         #Import values for female labor supply (simulated men only) 

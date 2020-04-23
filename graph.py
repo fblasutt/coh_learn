@@ -87,6 +87,10 @@ def graphs(mdl,ai,zfi,zmi,psii,ti,thi,dd):
     agrid = setup.agrid_c 
     agrids = setup.agrid_s 
     psig = setup.exogrid.psi_t[dd][ti] 
+    psig0 = setup.exogrid.psi_t[0][ti] 
+    psig1 = setup.exogrid.psi_t[1][ti] 
+    psig2 = setup.exogrid.psi_t[2][ti] 
+    psig3 = setup.exogrid.psi_t[3][ti] 
     vtoutf=np.zeros([T,len(agrids),len(psig)]) 
     thetf=np.zeros([T,len(agrids),len(psig)]) 
     thetf_c=np.zeros([T,len(agrids),len(psig)]) 
@@ -305,10 +309,10 @@ def graphs(mdl,ai,zfi,zmi,psii,ti,thi,dd):
     ##########################################  
     fig = plt.figure() 
     f1=fig.add_subplot(2,1,1) 
-    plt.plot(psig, Vm0[ai,zfi,zmi,0:len(psig),thi,ti]-Vc0[ai,zfi,zmi,0:len(psig),thi,ti],'k',linewidth=0.2, label='Couple Marriage0') 
-    plt.plot(psig, Vm1[ai,zfi,zmi,0:len(psig),thi,ti]-Vc1[ai,zfi,zmi,0:len(psig),thi,ti],'b',linewidth=0.2, label='Couple Marriage1') 
-    plt.plot(psig, Vm2[ai,zfi,zmi,0:len(psig),thi,ti]-Vc2[ai,zfi,zmi,0:len(psig),thi,ti],'r',linewidth=0.2, label='Couple Marriage2') 
-    plt.plot(psig, Vm3[ai,zfi,zmi,0:len(psig),thi,ti]-Vc3[ai,zfi,zmi,0:len(psig),thi,ti],'y',linewidth=0.2, label='Couple Marriage3') 
+    plt.plot(psig0, Vm0[ai,zfi,zmi,0:len(psig),thi,ti]-Vc0[ai,zfi,zmi,0:len(psig),thi,ti],'k',linewidth=0.2, label='Couple Marriage0') 
+    plt.plot(psig1, Vm1[ai,zfi,zmi,0:len(psig),thi,ti]-Vc1[ai,zfi,zmi,0:len(psig),thi,ti],'b',linewidth=0.2, label='Couple Marriage1') 
+    plt.plot(psig2, Vm2[ai,zfi,zmi,0:len(psig),thi,ti]-Vc2[ai,zfi,zmi,0:len(psig),thi,ti],'r',linewidth=0.2, label='Couple Marriage2') 
+    plt.plot(psig3, Vm3[ai,zfi,zmi,0:len(psig),thi,ti]-Vc3[ai,zfi,zmi,0:len(psig),thi,ti],'y',linewidth=0.2, label='Couple Marriage3') 
 
 
     plt.xlabel('Love') 
@@ -324,15 +328,15 @@ def graphs(mdl,ai,zfi,zmi,psii,ti,thi,dd):
     f1=fig.add_subplot(2,1,1) 
     nex1 = setup.all_indices(min(ti+1,T),(zfi,zmi,psig))[0] 
 
-    plt.plot(psig, entry[ai,0:len(nex1)]*-1,'k',linewidth=0.2, label='Couple formed') 
-    plt.plot(psig, m_over_c0[ai,zfi,zmi,0:len(psig),thi,ti+1]*1,'k*',linewidth=0.2, label='Couple Marriage0') 
-    plt.plot(psig, m_over_c1[ai,zfi,zmi,0:len(psig),thi,ti+1]*2,'b*',linewidth=0.2, label='Couple Marriage1') 
-    plt.plot(psig, m_over_c2[ai,zfi,zmi,0:len(psig),thi,ti+1]*3,'r*',linewidth=0.2, label='Couple Marriage2') 
-    plt.plot(psig, m_over_c3[ai,zfi,zmi,0:len(psig),thi,ti+1]*4,'y*',linewidth=0.2, label='Couple Marriage3') 
-    plt.plot(psig, nodiv0[ai,zfi,zmi,0:len(psig),thi,ti+1]*-2,'ko',linewidth=0.2, label='nodiv0') 
-    plt.plot(psig, nodiv1[ai,zfi,zmi,0:len(psig),thi,ti+1]*-3,'bo',linewidth=0.2, label='nodiv1') 
-    plt.plot(psig, nodiv2[ai,zfi,zmi,0:len(psig),thi,ti+1]*-4,'ro',linewidth=0.2, label='nodiv2') 
-    plt.plot(psig, nodiv3[ai,zfi,zmi,0:len(psig),thi,ti+1]*-5,'yo',linewidth=0.2, label='nodiv3') 
+    plt.plot(psig0, entry[ai,0:len(nex1)]*-1,'k',linewidth=0.2, label='Couple formed') 
+    plt.plot(psig0, m_over_c0[ai,zfi,zmi,0:len(psig),thi,ti+1]*1,'k*',linewidth=0.2, label='Couple Marriage0') 
+    plt.plot(psig1, m_over_c1[ai,zfi,zmi,0:len(psig),thi,ti+1]*2,'b*',linewidth=0.2, label='Couple Marriage1') 
+    plt.plot(psig2, m_over_c2[ai,zfi,zmi,0:len(psig),thi,ti+1]*3,'r*',linewidth=0.2, label='Couple Marriage2') 
+    plt.plot(psig3, m_over_c3[ai,zfi,zmi,0:len(psig),thi,ti+1]*4,'y*',linewidth=0.2, label='Couple Marriage3') 
+    plt.plot(psig0, nodiv0[ai,zfi,zmi,0:len(psig),thi,ti+1]*-2,'ko',linewidth=0.2, label='nodiv0') 
+    plt.plot(psig1, nodiv1[ai,zfi,zmi,0:len(psig),thi,ti+1]*-3,'bo',linewidth=0.2, label='nodiv1') 
+    plt.plot(psig2, nodiv2[ai,zfi,zmi,0:len(psig),thi,ti+1]*-4,'ro',linewidth=0.2, label='nodiv2') 
+    plt.plot(psig3, nodiv3[ai,zfi,zmi,0:len(psig),thi,ti+1]*-5,'yo',linewidth=0.2, label='nodiv3') 
 
 
     plt.xlabel('Love') 
@@ -349,10 +353,10 @@ def graphs(mdl,ai,zfi,zmi,psii,ti,thi,dd):
     f1=fig.add_subplot(2,1,1) 
     nex1 = setup.all_indices(min(ti+1,T),(zfi,zmi,psig))[0] 
     #plt.plot(psig, entry[ai,0:len(nex1)],'k',linewidth=0.2, label='Couple formed') 
-    plt.plot(psig, val0[ai,zfi,zmi,0:len(psig),inde,ti+1]-valc0[ai,zfi,zmi,0:len(psig),inde,ti+1],'k',linewidth=0.2, label='vm0') 
-    plt.plot(psig, val1[ai,zfi,zmi,0:len(psig),inde,ti+1]-valc1[ai,zfi,zmi,0:len(psig),inde,ti+1],'b',linewidth=0.2, label='vm1') 
-    plt.plot(psig, val2[ai,zfi,zmi,0:len(psig),inde,ti+1]-valc2[ai,zfi,zmi,0:len(psig),inde,ti+1],'r',linewidth=0.2, label='vm2') 
-    plt.plot(psig, val3[ai,zfi,zmi,0:len(psig),inde,ti+1]-valc3[ai,zfi,zmi,0:len(psig),inde,ti+1],'y',linewidth=0.2, label='vm3') 
+    plt.plot(psig0, val0[ai,zfi,zmi,0:len(psig),inde,ti+1]-valc0[ai,zfi,zmi,0:len(psig),inde,ti+1],'k',linewidth=0.2, label='vm0') 
+    plt.plot(psig1, val1[ai,zfi,zmi,0:len(psig),inde,ti+1]-valc1[ai,zfi,zmi,0:len(psig),inde,ti+1],'b',linewidth=0.2, label='vm1') 
+    plt.plot(psig2, val2[ai,zfi,zmi,0:len(psig),inde,ti+1]-valc2[ai,zfi,zmi,0:len(psig),inde,ti+1],'r',linewidth=0.2, label='vm2') 
+    plt.plot(psig3, val3[ai,zfi,zmi,0:len(psig),inde,ti+1]-valc3[ai,zfi,zmi,0:len(psig),inde,ti+1],'y',linewidth=0.2, label='vm3') 
 
     plt.xlabel('Love') 
     plt.ylabel('Utility') 
@@ -367,10 +371,10 @@ def graphs(mdl,ai,zfi,zmi,psii,ti,thi,dd):
     f1=fig.add_subplot(2,1,1) 
     nex1 = setup.all_indices(min(ti+1,T),(zfi,zmi,psig))[0] 
     #plt.plot(psig, entry[ai,0:len(nex1)],'k',linewidth=0.2, label='Couple formed') 
-    plt.plot(psig, val0[ai,zfi,zmi,0:len(psig),inde,ti+1]-val0[ai,zfi,zmi,0:len(psig),inde,ti+1][0],'k',linewidth=0.2, label='vm0') 
-    plt.plot(psig, val1[ai,zfi,zmi,0:len(psig),inde,ti+1]-val1[ai,zfi,zmi,0:len(psig),inde,ti+1][0],'b',linewidth=0.2, label='vm1') 
-    plt.plot(psig, val2[ai,zfi,zmi,0:len(psig),inde,ti+1]-val2[ai,zfi,zmi,0:len(psig),inde,ti+1][0],'r',linewidth=0.2, label='vm2') 
-    plt.plot(psig, val3[ai,zfi,zmi,0:len(psig),inde,ti+1]-val3[ai,zfi,zmi,0:len(psig),inde,ti+1][0],'y',linewidth=0.2, label='vm3') 
+    plt.plot(psig0, val0[ai,zfi,zmi,0:len(psig),inde,ti+1]-val0[ai,zfi,zmi,0:len(psig),inde,ti+1][0],'k',linewidth=0.2, label='vm0') 
+    plt.plot(psig1, val1[ai,zfi,zmi,0:len(psig),inde,ti+1]-val1[ai,zfi,zmi,0:len(psig),inde,ti+1][0],'b',linewidth=0.2, label='vm1') 
+    plt.plot(psig2, val2[ai,zfi,zmi,0:len(psig),inde,ti+1]-val2[ai,zfi,zmi,0:len(psig),inde,ti+1][0],'r',linewidth=0.2, label='vm2') 
+    plt.plot(psig3, val3[ai,zfi,zmi,0:len(psig),inde,ti+1]-val3[ai,zfi,zmi,0:len(psig),inde,ti+1][0],'y',linewidth=0.2, label='vm3') 
 
     plt.xlabel('Love') 
     plt.ylabel('Utility') 
@@ -383,10 +387,10 @@ def graphs(mdl,ai,zfi,zmi,psii,ti,thi,dd):
     ##########################################  
     fig = plt.figure() 
     f1=fig.add_subplot(2,1,1) 
-    plt.plot(psig, Vmm0[ai,zfi,zmi,0:len(psig),thi,ti]-Vmc0[ai,zfi,zmi,0:len(psig),thi,ti],'k',linewidth=0.2, label='M Marriage0') 
-    plt.plot(psig, Vmm1[ai,zfi,zmi,0:len(psig),thi,ti]-Vmc1[ai,zfi,zmi,0:len(psig),thi,ti],'b',linewidth=0.2, label='M Marriage1') 
-    plt.plot(psig, Vmm2[ai,zfi,zmi,0:len(psig),thi,ti]-Vmc2[ai,zfi,zmi,0:len(psig),thi,ti],'r',linewidth=0.2, label='M Marriage2') 
-    plt.plot(psig, Vmm3[ai,zfi,zmi,0:len(psig),thi,ti]-Vmc3[ai,zfi,zmi,0:len(psig),thi,ti],'y',linewidth=0.2, label='M Marriage3') 
+    plt.plot(psig0, Vmm0[ai,zfi,zmi,0:len(psig),thi,ti]-Vmc0[ai,zfi,zmi,0:len(psig),thi,ti],'k',linewidth=0.2, label='M Marriage0') 
+    plt.plot(psig1, Vmm1[ai,zfi,zmi,0:len(psig),thi,ti]-Vmc1[ai,zfi,zmi,0:len(psig),thi,ti],'b',linewidth=0.2, label='M Marriage1') 
+    plt.plot(psig2, Vmm2[ai,zfi,zmi,0:len(psig),thi,ti]-Vmc2[ai,zfi,zmi,0:len(psig),thi,ti],'r',linewidth=0.2, label='M Marriage2') 
+    plt.plot(psig3, Vmm3[ai,zfi,zmi,0:len(psig),thi,ti]-Vmc3[ai,zfi,zmi,0:len(psig),thi,ti],'y',linewidth=0.2, label='M Marriage3') 
 #    plt.plot(psig, Vmc0[ai,zfi,zmi,0:len(psig),thi,ti],'k',linewidth=0.2, label='M Cohab0') 
 #    plt.plot(psig, Vmc1[ai,zfi,zmi,0:len(psig),thi,ti],'b',linewidth=0.2, label='M Cohab1') 
 #    plt.plot(psig, Vmc2[ai,zfi,zmi,0:len(psig),thi,ti],'r',linewidth=0.2, label='M Cohab2') 
@@ -406,9 +410,9 @@ def graphs(mdl,ai,zfi,zmi,psii,ti,thi,dd):
     f1=fig.add_subplot(2,1,1) 
   
     #plt.plot(psig, V_ren_m[ai,0:len(nex1),inde]-Vfc0[ai,zfi,zmi,0:len(psig),thi,ti],'k',linewidth=0.2, label='F Marriage0') 
-    plt.plot(psig, Vfm1[ai,zfi,zmi,0:len(psig),thi,ti]-Vfc1[ai,zfi,zmi,0:len(psig),thi,ti],'b',linewidth=0.2, label='F Marriage1') 
-    plt.plot(psig, Vfm2[ai,zfi,zmi,0:len(psig),thi,ti]-Vfc2[ai,zfi,zmi,0:len(psig),thi,ti],'r',linewidth=0.2, label='F Marriage2') 
-    plt.plot(psig, Vfm3[ai,zfi,zmi,0:len(psig),thi,ti]-Vfc3[ai,zfi,zmi,0:len(psig),thi,ti],'y',linewidth=0.2, label='F Marriage3') 
+    plt.plot(psig1, Vfm1[ai,zfi,zmi,0:len(psig),thi,ti]-Vfc1[ai,zfi,zmi,0:len(psig),thi,ti],'b',linewidth=0.2, label='F Marriage1') 
+    plt.plot(psig2, Vfm2[ai,zfi,zmi,0:len(psig),thi,ti]-Vfc2[ai,zfi,zmi,0:len(psig),thi,ti],'r',linewidth=0.2, label='F Marriage2') 
+    plt.plot(psig3, Vfm3[ai,zfi,zmi,0:len(psig),thi,ti]-Vfc3[ai,zfi,zmi,0:len(psig),thi,ti],'y',linewidth=0.2, label='F Marriage3') 
 
 
     plt.xlabel('Love') 
