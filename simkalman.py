@@ -15,7 +15,7 @@ if __name__ == '__main__':
     
     
     import numpy as np
-    from mc_tools import mc_simulate, int_prob
+    from mc_tools import mc_simulate, int_prob,int_proba
     from gridvec import VecOnGrid
     from statutils import kalman
     import matplotlib.pyplot as plt
@@ -69,4 +69,4 @@ if __name__ == '__main__':
     pose2=(shocke[:,2]>=0.0)
     innov=(noise-pred>=0.0)
     
-    
+

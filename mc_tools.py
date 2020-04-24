@@ -9,13 +9,13 @@ def mc_simulate(statein,Piin,shocks=None):
     import numpy as np
     assert(np.max(statein) < Piin.shape[0] )
     assert statein.ndim == 1
+    
     n_in = statein.size
     Picum = np.cumsum(Piin,axis=1)
     Pi_state = Picum[statein,:]
     
     assert np.all( np.abs(1 - Picum[:,-1]) < 1e-5) 
     
-    #print(Pi_state)
     
     if shocks is None:
         rand = np.random.rand(n_in)[:,np.newaxis]
@@ -29,6 +29,12 @@ def mc_simulate(statein,Piin,shocks=None):
     assert stateout.shape == statein.shape
     
     return stateout 
+
+
+
+        
+        
+    
 
 # yet another    
     
@@ -48,7 +54,44 @@ def mc_init_normal(sigma,X,N=1000,shocks=None):
     
     return abs(ran[:,np.newaxis]-X).argmin(axis=1)
 
+
+def mc_init_normal_corr(mu,sigma,X,N=1000,shocks=None):
     
+    import numpy as np
+    
+    sigmat=sigma.copy()
+    initial= mc_init_normal_array(mu,sigma,X,N=N,shocks=shocks)
+    
+    ratio=np.abs(np.std(X[initial])-np.std(mu))/sigma
+    
+    for i in range(10):
+        if (np.var(X[initial])-np.var(mu))/sigma**2>1.05 or (np.var(X[initial])-np.var(mu))/sigma**2<0.95:
+            ratio=(np.var(X[initial])-np.var(mu))/sigma**2
+            if (np.var(X[initial])-np.var(mu))/sigma**2<0.9:
+                sigmat=sigmat/np.sqrt(ratio)
+            else:
+                sigmat=sigmat/np.sqrt(ratio)
+            initial=mc_init_normal_array(mu,sigmat,X,N=N,shocks=shocks)
+            
+        else:
+            return initial
+        
+    return initial
+
+def mc_init_normal_array(mu,sigma,X,N=1000,shocks=None):
+    # this generates N draws from N(0,sigma^2)
+    # then it looks at points at X that are the closest to 
+    # these draws points and for each draw it returns its index
+    import numpy as np
+
+    ran = np.random.normal(mu,sigma)
+
+    
+    #X = x.reshape([x.size,1]).repeat(y.size,axis=1)
+    #Y = y.reshape([1,y.size]).repeat(x.size,axis=0)
+    
+    
+    return abs(ran[:,np.newaxis]-X).argmin(axis=1)  
 
 def trim_matrix(M,level=0.001):
     # this eliminates transition probabilities that are lower than level, 
@@ -278,6 +321,51 @@ def int_prob(vec,mu=0,sig=1,trim=True,trim_level=0.001,n_points=None):
     vec_adj = (np.array(vec)-mu)/sig
     return int_prob_standard(vec_adj,trim,trim_level,n_points)
 
+def int_prob_standarda(vec,trim=True,trim_level=0.001,n_points=None):
+    # given ordered vector vec [x_0,...,x_{n-1}] this returns probabilities
+    # [p0,...,p_{n-1}] such that p_i = P[d(Z,x_i) is minimal among i], where
+    # Z is standard normal ranodm variable
+    
+    vm=np.zeros(vec.shape)
+    vp=np.zeros(vec.shape)
+    
+    vm[:,1:]=vec[:,:-1]
+    vp[:,:-1]=vec[:,1:]
+    vm[:,0]=[-np.inf]
+    vp[:,-1]=[np.inf]
+    
+    
+    v_up   = 0.5*(vec + vp)
+    v_down = 0.5*(vec+vm)
+   
+    p = norm.cdf(v_up) - norm.cdf(v_down)
+    
+    
+    
+    if n_points is not None:
+        trim = False # npoints overrides trim
+        i_keep = ((-p).argsort())[0:n_points]
+        pold = p.copy()
+        p = np.zeros(p.shape)
+        p[i_keep] = pold[i_keep]
+        assert np.any(p>0)
+        p = p / np.sum(p)
+    
+  
+        
+        
+    
+    
+    #ap = np.argpartition(p,[-1,-2])
+    #assert(np.abs(np.sum(p) - 1) < 1e-8)
+    
+    return p#, ap, p[ap[-2]], p[ap[-1]]
+
+
+def int_proba(vec,mu=0,sig=1,trim=True,trim_level=0.00001,n_points=None):
+    # this works like int_prob_standard, but assumes that Z = mu + sig*N(0,1)
+    vec_adj = (np.array(vec)-mu.T[...,None])/sig.T[...,None]
+    return int_prob_standarda(vec_adj,trim,trim_level,n_points)
 
 
 

@@ -6,7 +6,8 @@ This contains things relevant for setting up the model
 
 import numpy as np
 
-from rw_approximations import rouw_nonst, normcdf_tr,tauchen_nonstm,tauchen_nonst
+from rw_approximations import rouw_nonst, normcdf_tr,tauchen_nonst#,tauchen_nonstm
+from rw_approximations import rouw_nonstm as tauchen_nonstm
 from mc_tools import combine_matrices_two_lists, int_prob,cut_matrix
 from scipy.stats import norm
 from collections import namedtuple
@@ -42,10 +43,10 @@ class ModelSetup(object):
         p['sig_zm']    = .025014**(0.5)#0.0417483**(0.5)
         p['n_zm_t']      = [5]*Tret + [1]*(T-Tret)
         p['sigma_psi_mult'] = 0.28
-        p['sigma_psi_mu'] = 0.8#1.0#nthe1.1
+        p['sigma_psi_mu'] = 0.2#1.0#nthe1.1
         p['sigma_psi']   = 0.11
         p['R_t'] = [1.02**period_year]*T
-        p['n_psi_t']     = [31]*T
+        p['n_psi_t']     = [11]*T
         p['beta_t'] = [0.98**period_year]*T
         p['A'] = 1.0 # consumption in couple: c = (1/A)*[c_f^(1+rho) + c_m^(1+rho)]^(1/(1+rho))
         p['crra_power'] = 1.5
@@ -130,14 +131,14 @@ class ModelSetup(object):
   
         
         #Get Variance of Love shock by Duration using Kalman Filter
-        K,sigma=kalman(1.0,p['sigma_psi']**2,p['sigma_psi_mu']**2,(p['sigma_psi_mult']*p['sigma_psi'])**2,p['dm']+1)
+        self.K,sigma=kalman(1.0,p['sigma_psi']**2,p['sigma_psi_mu']**2,(p['sigma_psi_mult']*p['sigma_psi'])**2,p['dm']+1)
         #K,sigma=kalman(1.0,p['sigma_psi']**2,p['sigma_psi_mu']**2,(sigma0)**2,p['dm'])
         #Get variance by duration
         self.sigmad=-1*np.ones((p['dm']))
         
-        p['sigma_psi_init']=np.sqrt(K[0]**2*(sigma[0]**2+p['sigma_psi_mu']**2))
+        p['sigma_psi_init']=np.sqrt(self.K[0]**2*(sigma[0]**2+p['sigma_psi_mu']**2))
         for i in range(p['dm']):
-            self.sigmad[i]=np.sqrt(K[i+1]**2*(sigma[i+1]**2+p['sigma_psi_mu']**2))
+            self.sigmad[i]=np.sqrt(self.K[i+1]**2*(sigma[i+1]**2+p['sigma_psi_mu']**2))
         
         
         self.pars = p
@@ -258,7 +259,7 @@ class ModelSetup(object):
             #created using the Fella routine backwards
             
             print('variances are {}, {}, {}, {}, {}'.format(self.pars['sigma_psi_init'],self.sigmad[0],self.sigmad[1],self.sigmad[2],self.sigmad[3]))
-            print(K[0],K[1],K[2],K[3])
+            print(self.K[0],self.K[1],self.K[2],self.K[3])
             #New way of getting transition matrix
             psit, matri=list(np.ones((T))),list(np.ones((T)))
             sigmabase=np.sqrt([self.sigmad[0]**2+(t+1)*self.sigmad[-1]**2 for t in range(T)])
@@ -285,7 +286,7 @@ class ModelSetup(object):
                         #exogrid['psi_t'][dd][i], exogrid['psi_t_mat'][dd][i]=psit[i][dd],matri[i][dd]
 
 
-            aa,bb=exogrid['psi_t'][dd], exogrid['psi_t_mat'][dd] = tauchen_nonst(p['T'],self.sigmad[dd],np.sqrt(2*p['sigma_psi_init']**2+self.sigmad[dd]**2)*period_year**0.5,p['n_psi_t'][0])
+            aa,bb= rouw_nonst(p['T'],self.sigmad[dd],np.sqrt(self.sigmad[0]**2+self.sigmad[dd]**2),p['n_psi_t'][0])
             #Here I impose no change in psi from retirement till the end of time 
             for t in range(Tren,T-1):
                 for dd in range(p['dm']):
@@ -294,6 +295,43 @@ class ModelSetup(object):
                     exogrid['psi_t_mat'][dd][t] = np.diag(np.ones(len(exogrid['psi_t'][dd][t])))
 
             
+           #Now the crazy matrix for "true process"
+            exogrid['noise_psi_mat'],exogrid['true_psi_mat']=exogrid['psi_t_mat'],exogrid['psi_t_mat']
+            
+            from mc_tools import mc_simulate
+            zero=np.ones((100000),dtype=np.int32)*5
+            s1=mc_simulate(zero,exogrid['psi_t_mat'][0][0])
+            s1e=exogrid['psi_t'][0][1][s1]
+            s2=mc_simulate(s1,exogrid['psi_t_mat'][0][1])
+            s2e=exogrid['psi_t'][1][2][s2]
+            diffe=s2e-s1e
+#            
+#            for dd in range(p['dm']):
+#                if p['sigma_psi_mu']>0:
+#                    for t in range(T-1):
+#                        if t<Tret:
+#                            
+#                            #True Process
+#                            mat=exogrid['psi_t_mat'][dd][t].copy()
+#                            for i in range(p['n_psi_t'][0]):
+#                                mat[i,:]=int_prob(exogrid['psi_t'][min(dd+1,p['dm']-1)][min(t+1,T-1)],
+#                                                           mu=exogrid['psi_t'][dd][t][i],
+#                                                           sig=p['sigma_psi'],
+#                                                           n_points=p['n_psi_t'][0])
+#                            exogrid['true_psi_mat'][dd][t]=mat
+#                            
+#                            #Noisy Update
+#                            mat=exogrid['psi_t_mat'][dd][t].copy()
+#                            for i in range(p['n_psi_t'][0]):
+#                                mat[i,:]=int_prob(exogrid['psi_t'][min(dd,p['dm']-1)][min(t,T-1)],
+#                                                           mu=exogrid['psi_t'][dd][t][i],
+#                                                           sig=p['sigma_psi_mu'],
+#                                                           n_points=p['n_psi_t'][0])
+#                            exogrid['noise_psi_mat'][dd][t]=mat
+#                else:
+#                    exogrid['noise_psi_mat'][dd][t]=np.diag(np.ones(len(exogrid['psi_t'][dd][t])))
+#                        
+                   
            # zfzm, zfzmmat = combine_matrices_two_lists(exogrid['zf_t'], exogrid['zm_t'], zf_t_mat_down, exogrid['zm_t_mat'])
             
             exogrid['all_t_mat_by_l'],  exogrid['all_t_mat_by_l_spt'],exogrid['all_t']=list(np.ones((p['dm']))),list(np.ones((p['dm']))),list(np.ones((p['dm'])))

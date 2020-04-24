@@ -7,7 +7,7 @@ This contains things relevant for simulations
 import numpy as np
 
 
-from mc_tools import mc_simulate, int_prob
+from mc_tools import mc_simulate, int_prob,mc_init_normal_array,int_proba,mc_init_normal_corr
 from gridvec import VecOnGrid
 
 
@@ -52,16 +52,23 @@ class Agents:
         self.divorces=np.zeros((N,T),bool)
         
         # all the randomness is here
-        shokko=np.random.random_sample((9,N,T))
+        shokko=np.random.random_sample((10,N,T))
         self.shocks_single_iexo2 =shokko[8,:,:]# np.random.random_sample((N,T))
         self.shocks_single_iexo =shokko[0,:,:]# np.random.random_sample((N,T))
         self.shocks_single_meet =shokko[1,:,:]# np.random.random_sample((N,T))
         self.shocks_couple_iexo =shokko[2,:,:]# np.random.random_sample((N,T))
         self.shocks_single_a =shokko[3,:,:]# np.random.random_sample((N,T))
         self.shocks_couple_a =shokko[4,:,:]# np.random.random_sample((N,T))
+        self.shocks_couples=shokko[9,:,:]
       
         self.shocks_div_a = shokko[5,:,:]#np.random.random_sample((N,T))
         
+        
+        #True love shock
+        self.shocke=np.reshape(np.random.normal(0.0, self.setup.pars['sigma_psi'], N*T),(N,T))
+        self.shockmu=np.reshape(np.random.normal(0.0, self.setup.pars['sigma_psi_mu'], N*T),(N,T))
+        self.shocke0=np.reshape(np.random.normal(0.0, self.setup.pars['sigma_psi']*self.setup.pars['sigma_psi_mult'], N*T),(N,T))
+  
         
         z_t = self.setup.exogrid.zf_t if female else self.setup.exogrid.zm_t
         sig = self.setup.pars['sig_zf_0'] if female else self.setup.pars['sig_zm_0']
@@ -94,6 +101,7 @@ class Agents:
         # initialize iexo
         self.iexo = np.zeros((N,T),np.int16)
         self.iexos = np.zeros((N,T),np.int16)
+        self.truel=np.ones((N,T),np.float32)*-100
         # TODO: look if we can/need fix the shocks here...
         
         
@@ -279,10 +287,12 @@ class Agents:
                         
                         
                         mat = self.Mlist[ipol].setup.exo_mats[sname][dd][ils][t]
+                       
                         
                         shks = self.shocks_couple_iexo[ind[this_ls],t]
                         
                         #Following line takes 94% of the time for this funciton
+                        self.truel[ind[this_ls],t+1]=self.truel[ind[this_ls],t]+self.shocke[ind[this_ls],t+1]
                         iexo_next_this_ls = mc_simulate(iexo_now[this_ls],mat,shocks=shks)
                         self.iexo[ind[this_ls],t+1] = iexo_next_this_ls
                         self.iexos[ind[this_ls],t+1] = iexo_next_this_ls
@@ -294,6 +304,7 @@ class Agents:
                 else:
                     
                     mat = self.Mlist[ipol].setup.exo_mats[sname][t]
+                    self.truel[ind,t+1]=self.shocke0[ind,t+1]
                     shks = self.shocks_single_iexo[ind,t]                    
                     iexo_next = mc_simulate(iexo_now,mat,shocks=shks) # import + add shocks     
                     self.iexo[ind,t+1] = iexo_next
@@ -360,11 +371,32 @@ class Agents:
                     
                     iall, izf, izm, ipsi = self.Mlist[ipol].setup.all_indices(t,ic_out)
                     
+                    #Modify grid according to the shock
+                    ipsi=mc_init_normal_corr(self.setup.K[0]*self.truel[ind,t+1],self.setup.K[0]*self.setup.pars['sigma_psi_mu'],self.setup.exogrid.psi_t[0][t+1])
+                    iall=self.Mlist[ipol].setup.all_indices(t,(izf,izm,ipsi))[0]
+                    self.iexo[ind,t+1]=iall
+                                      
+
+#                    mat_prob=int_prob(self.setup.exogrid.psi_t[0][t+1],0,self.setup.pars['sigma_psi_init'])
+#                    grid=self.setup.exogrid.psi_t[0][t+1]
+#                    i_pmat2 =  np.cumsum(mat_prob)
+#                    where=np.argmin(v>i_pmat2[...,None],axis=0)
+#                    
+#                    prova=self.setup.K[0]*self.truel[ind,t+1]
+#                    sigma=np.ones(prova.shape)*(self.setup.K[0]*self.setup.pars['sigma_psi_mu']+0.001)
+#                    mat_prob=int_proba(self.setup.exogrid.psi_t[0][t+1],prova,sigma)
+#                    pmat_cum = mat_prob.cumsum(axis=1)
+#                    i_pmat = (v[:,None] > pmat_cum).sum(axis=1)
+                    shk=self.setup.exogrid.psi_t[0][t+1][ipsi]
+                    print('The shock of predicted love is {}, true is {}, while theoricals are {} and {}'.format(np.std(shk),np.std(self.truel[ind,t+1]),self.setup.pars['sigma_psi_init'],self.setup.pars['sigma_psi']*self.setup.pars['sigma_psi_mult']))
+                    
+                    
+                    
                     self.ipsim[ind,t+1]=iall
                     iz = izf if self.female else izm
                     
                     
-                    # compute for everyone
+                    # compute for everyo
                     
                     
                     vmeet = self.shocks_single_meet[ind,t+1]
@@ -386,14 +418,14 @@ class Agents:
                     i_agree_coh = (i_agree) & (~i_m_preferred)
                     
                     assert np.all(~i_nomeet[i_agree])
-                    
+#                    
 #                    i_agree_mar1=(np.ones(i_agree_mar.shape,dtype=np.int32)==1)
 #                    i_agree_mar=i_agree_mar1.copy()
 #                    i_agree_coh=(np.ones(i_agree_mar.shape,dtype=np.int32)==0)
 #                    i_disagree_or_nomeet=(np.ones(i_agree_mar.shape,dtype=np.int32)==0)
 #                    i_nomeet=(np.ones(i_agree_mar.shape,dtype=np.int32)==0)
 #                    i_disagree_and_meet=(np.ones(i_agree_mar.shape,dtype=np.int32)==0)
-#                    
+                    
                     
                     
                     nmar, ncoh, ndis, nnom = np.sum(i_agree_mar),np.sum(i_agree_coh),np.sum(i_disagree_and_meet),np.sum(i_nomeet)
@@ -469,7 +501,39 @@ class Agents:
                     
                     # initiate renegotiation
                     isc = self.iassets[ind,t+1]
-                    iall, izf, izm, ipsi = self.Mlist[ipol].setup.all_indices(t+1,self.iexo[ind,t+1])
+                    iall, izf, izm, ipsi = self.Mlist[ipol].setup.all_indices(t,self.iexo[ind,t+1])
+                    
+                    #Modify grid according to the shock
+                    prev=dd-1 if dd<self.setup.pars['dm']-1 else dd
+                    iallo, izfo, izmo, ipsio = self.Mlist[ipol].setup.all_indices(t,self.iexo[ind,t])
+                    
+                    #matt=self.setup.exogrid.psi_t_mat[max(prev,0)][t]
+                    #ipsi=mc_simulate(ipsio,matt,shocks=self.shocks_couples[ind,t+1])
+                    
+                    ipsi=mc_init_normal_corr(self.setup.K[dd+1]*self.truel[ind,t+1]+  \
+                                              (1-self.setup.K[dd+1])*self.setup.exogrid.psi_t[max(prev,0)][t][ipsio],   \
+                                              self.setup.K[dd+1]*self.setup.pars['sigma_psi_mu'],   \
+                                                self.setup.exogrid.psi_t[dd][t+1])
+                 
+#                    prova=self.setup.K[dd+1]*self.truel[ind,t+1]+(1-self.setup.K[dd+1])*self.setup.exogrid.psi_t[max(prev,0)][t][ipsio]
+#                    sigma=np.ones(prova.shape)*(self.setup.K[dd+1]*self.setup.pars['sigma_psi_mu'])
+#                    mat_prob=int_proba(self.setup.exogrid.psi_t[dd][t+1],prova,sigma)
+#                    pmat_cum = mat_prob.cumsum(axis=1)
+#                    v=self.shocks_couples[ind,t+1]
+#                    i_pmat = (v[:,None] > pmat_cum).sum(axis=1)
+                   
+                   
+                    iall=self.Mlist[ipol].setup.all_indices(t,(izf,izm,ipsi))[0]
+                    self.iexo[ind,t+1]=iall
+                    
+                    bef=self.setup.exogrid.psi_t[max(prev,0)][t][ipsio]
+                    aft=self.setup.exogrid.psi_t[dd][t+1][ipsi]
+                    diffe=bef-aft
+                    
+                    print('The standard deviation of innovation in {} is {}, theorical is {}'.format(dd,np.std(diffe),self.setup.sigmad[dd]))
+                    
+
+                    
                     
                     iz = izf if self.female else izm
                     
@@ -494,8 +558,8 @@ class Agents:
                          
                     bil_bribing = ('Bribing' in decision)
                     
-#                    i_stay2=np.ones(i_stay.shape,dtype=bool)
-#                    i_stay=i_stay2.copy()
+                    #i_stay2=np.ones(i_stay.shape,dtype=bool)
+                    #i_stay=i_stay2.copy()
                     i_div = ~i_stay    
                     
                     #ifem=decision['Divorce'][0][isc,iall][...,None]<self.Mlist[ipol].V[t]['Couple, M']['VF'][isc,iall,:]
