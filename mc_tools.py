@@ -3,6 +3,7 @@
 import numpy as np
 from numba import jit
 from scipy.stats import norm
+from scipy import optimize
 
 def mc_simulate(statein,Piin,shocks=None):
     # this simulates transition one period ahead for a Markov chain
@@ -55,37 +56,53 @@ def mc_init_normal(sigma,X,N=1000,shocks=None):
     return abs(ran[:,np.newaxis]-X).argmin(axis=1)
 
 
-def mc_init_normal_corr(mu,sigma,X,N=1000,shocks=None):
+def mc_init_normal_corr(mean,X,shocks=None,target=None):
     
     import numpy as np
     
-    sigmat=sigma.copy()
-    initial= mc_init_normal_array(mu,sigma,X,N=N,shocks=shocks)
+    adjust=1.0
+    initial= mc_init_normal_array(mean,X,shocks=shocks,adjust=adjust)
+    #stdm=np.std(X[mean])
     
-    ratio=np.abs(np.std(X[initial])-np.std(mu))/sigma
+       
+    def f(x):
+        #print(x)
+        return np.std(X[mc_init_normal_array(mean,X,shocks=shocks,adjust=x)])-target
+       
     
-    for i in range(10):
-        if (np.var(X[initial])-np.var(mu))/sigma**2>1.05 or (np.var(X[initial])-np.var(mu))/sigma**2<0.95:
-            ratio=(np.var(X[initial])-np.var(mu))/sigma**2
-            if (np.var(X[initial])-np.var(mu))/sigma**2<0.9:
-                sigmat=sigmat/np.sqrt(ratio)
-            else:
-                sigmat=sigmat/np.sqrt(ratio)
-            initial=mc_init_normal_array(mu,sigmat,X,N=N,shocks=shocks)
+    if (np.std(X[initial])/target)>1.1 or (np.std(X[initial])/target)<0.9:
+        
+        #lb=adjust*0.5 if adjust<1 else 1/adjust*1.5
+        #ub=1/adjust*1.5 if adjust<1 else adjust*0.5
+        if (f(0)<0 and f(6)>0):
+            sol = optimize.root_scalar(f, x0=adjust,bracket=[0, 6], maxiter=200,xtol=0.0001,method='bisect')      
+            initial=mc_init_normal_array(mean,X,shocks=shocks,adjust=sol.root)
             
-        else:
-            return initial
+        
+        return initial,adjust
+    else:
+        return initial,adjust
+    return initial,adjust
+    
+#    for i in range(10):
+#        if (np.std(X[initial])/target)>1.05 or (np.std(X[initial])/target)<0.95:
+#            adjust=1.0/((np.std(X[initial])/target))
+#
+#            initial=mc_init_normal_array(mean,X,shocks=shocks,adjust=adjust)
+#            
+#        else:
+#            return initial
         
     return initial
 
-def mc_init_normal_array(mu,sigma,X,N=1000,shocks=None):
+def mc_init_normal_array(mean,X,shocks=None,adjust=None):
     # this generates N draws from N(0,sigma^2)
     # then it looks at points at X that are the closest to 
     # these draws points and for each draw it returns its index
     import numpy as np
 
-    ran = np.random.normal(mu,sigma)
 
+    ran = mean+shocks*adjust
     
     #X = x.reshape([x.size,1]).repeat(y.size,axis=1)
     #Y = y.reshape([1,y.size]).repeat(x.size,axis=0)
