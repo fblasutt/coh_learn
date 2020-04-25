@@ -43,7 +43,7 @@ class ModelSetup(object):
         p['sig_zm']    = .025014**(0.5)#0.0417483**(0.5)
         p['n_zm_t']      = [5]*Tret + [1]*(T-Tret)
         p['sigma_psi_mult'] = 0.28
-        p['sigma_psi_mu'] = 0.2#1.0#nthe1.1
+        p['sigma_psi_mu'] = 0.0#1.0#nthe1.1
         p['sigma_psi']   = 0.11
         p['R_t'] = [1.02**period_year]*T
         p['n_psi_t']     = [11]*T
@@ -430,7 +430,7 @@ class ModelSetup(object):
 #        
         
         # grid for theta
-        self.ntheta = 41
+        self.ntheta = 11
         self.thetamin = 0.02
         self.thetamax = 0.98
         self.thetagrid = np.linspace(self.thetamin,self.thetamax,self.ntheta,dtype=self.dtype)
@@ -586,7 +586,7 @@ class ModelSetup(object):
 
         
     
-    def mar_mats_iexo(self,t,dd,female=True,trim_lvl=0.001):
+    def mar_mats_iexo(self,t,dd,female=True,trim_lvl=0.00):
         # TODO: check timing
         # this returns transition matrix for single agents into possible couples
         # rows are single's states
@@ -686,7 +686,7 @@ class ModelSetup(object):
                 
                 nz = pmat_iexo.shape[0]
                 
-                inds = np.where( np.any(pmat_iexo>0,axis=0) )[0]
+                inds = np.where( np.any(pmat_iexo>-10,axis=0) )[0]
                 
                 npos_iexo = inds.size
                 npos_a = pmat_a.shape[1]

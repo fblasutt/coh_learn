@@ -22,9 +22,9 @@ def ev_single(setup,V,sown,female,dd,t,trim_lvl=0.001,decc=None):
     
     
     # do test here
-    #ev_single_meet_test(setup,V,sown,female,t,
-     #                                 skip_mar=skip_mar,trim_lvl=trim_lvl)
-    
+#    ev_single_meet_test(setup,V,sown,female,t,
+#                                      skip_mar=skip_mar,trim_lvl=trim_lvl)
+#    
     EV_meet, dec = ev_single_meet(setup,V,sown,female,dd,t,
                                       skip_mar=skip_mar,trim_lvl=trim_lvl,dec_c=decc)
     
@@ -59,7 +59,7 @@ def ev_single_meet(setup,V,sown,female,dd,t,skip_mar=False,trim_lvl=0.000001,dec
     p_mat = p_mat.astype(setup.dtype,copy=False)
         
     V_next = np.ones((ns,nexo),dtype=setup.dtype)*(-1e10)
-    inds = np.where( np.any(p_mat>0,axis=1 ) )[0]
+    inds = np.where( np.any(p_mat>-10,axis=1 ) )[0]
     
     
     
@@ -193,6 +193,9 @@ def ev_single_meet_test(setup,V,sown,female,t,skip_mar=False,trim_lvl=0.000001):
     (vfoutc, vmoutc), nprc, decc, thtc =  res_c['Values'], res_c['NBS'], res_c['Decision'], res_c['theta']
     
     i_mar =((nprm>=nprc) & (nprm>0)) # ((vfoutm>vfoutc) & (vmoutm>vfoutc) & (nprm>0))# 
+    
+ 
+            
    
     
     print('worked!')
