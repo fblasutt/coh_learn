@@ -244,22 +244,25 @@ def v_div_byshare(setup,dc,dd,t,sc,share_fem,share_mal,Vmale,Vfemale,izf,izm,
 
 
 
-def v_no_ren(setup,V,marriage,dd,t):
+def v_no_ren(setup,V,edu,desc,marriage,dd,t):
     
     # this works live v_ren_new but does not actually run renegotiation
     
     expnd = lambda x : setup.v_thetagrid_fine.apply(x,axis=2)
     
+    #Get description of cohabiting and married
+    descrc,descrm=setup.desc_i[edu[0]][edu[1]]['C'],setup.desc_i[edu[0]][edu[1]]['M']
+    
     if marriage:
         # if couple is married already
-        v_y = expnd(V['Couple, M']['V'])
-        vf_y = expnd(V['Couple, M']['VF'])
-        vm_y = expnd(V['Couple, M']['VM'])
+        v_y = expnd(V[descrm]['V'])
+        vf_y = expnd(V[descrm]['VF'])
+        vm_y = expnd(V[descrm]['VM'])
     else:
         # stay in cohabitation
-        v_y = expnd(V['Couple, C']['V'])
-        vf_y = expnd(V['Couple, C']['VF'])
-        vm_y = expnd(V['Couple, C']['VM'])
+        v_y = expnd(V[descrc]['V'])
+        vf_y = expnd(V[descrc]['VF'])
+        vm_y = expnd(V[descrc]['VM'])
         switch = np.full(vf_y.shape,False,dtype=np.bool)
      
         

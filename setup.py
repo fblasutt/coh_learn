@@ -23,11 +23,11 @@ class ModelSetup(object):
         p = dict()       
         period_year=1#this can be 1,2,3 or 6
         transform=1#this tells how many periods to pull together for duration moments
-        T = int(62/period_year)
-        Tret = int(47/period_year) # first period when the agent is retired
+        T = 10#int(62/period_year)
+        Tret =6# int(47/period_year) # first period when the agent is retired
         Tbef=int(2/period_year)
-        Tren  = int(47/period_year)#int(42/period_year) # period starting which people do not renegotiate/divroce
-        Tmeet = int(47/period_year)#int(42/period_year) # period starting which you do not meet anyone
+        Tren  =6# int(47/period_year)#int(42/period_year) # period starting which people do not renegotiate/divroce
+        Tmeet = 6#int(47/period_year)#int(42/period_year) # period starting which you do not meet anyone
         dm=4
         p['dm']=dm
         p['py']=period_year
@@ -46,7 +46,7 @@ class ModelSetup(object):
         p['sigma_psi_mu'] = 0.0#1.0#nthe1.1
         p['sigma_psi']   = 0.11
         p['R_t'] = [1.02**period_year]*T
-        p['n_psi_t']     = [11]*T
+        p['n_psi_t']     = [11]*T#[11]*T
         p['beta_t'] = [0.98**period_year]*T
         p['A'] = 1.0 # consumption in couple: c = (1/A)*[c_f^(1+rho) + c_m^(1+rho)]^(1/(1+rho))
         p['crra_power'] = 1.5
@@ -78,11 +78,16 @@ class ModelSetup(object):
         
          
         #Wages over time
-        p['f_wage_trend'] = [0.0*(t>=Tret)+(t<Tret)*(-.74491918 +.04258303*t -.0016542*t**2+.00001775*t**3) for t in range(T)]
-        p['f_wage_trend_single'] = [0.0*(t>=Tret)+(t<Tret)*(-.6805060 +.04629912*t -.00160467*t**2+.00001626*t**3) for t in range(T)]
-        p['m_wage_trend'] = [0.0*(t>=Tret)+(t<Tret)*(-0.5620125  +0.06767721*t -0.00192571*t**2+ 0.00001573*t**3) for t in range(T)]
-        p['m_wage_trend_single'] = [0.0*(t>=Tret)+(t<Tret)*(-.5960803  +.05829568*t -.00169143*t**2+ .00001446*t**3) for t in range(T)]
-   
+        p['wtrend']=dict()
+        p['wtrend']['f'],p['wtrend']['m']=dict(),dict()
+       
+        p['wtrend']['f']['e'] =[0.0*(t>=Tret)+(t<Tret)*(-.74491918 +.04258303*t -.0016542*t**2+.00001775*t**3) for t in range(T)]
+        p['wtrend']['f']['n'] =[0.0*(t>=Tret)+(t<Tret)*(-.74491918 +.04258303*t -.0016542*t**2+.00001775*t**3) for t in range(T)]
+        
+        p['wtrend']['m']['e'] = [0.0*(t>=Tret)+(t<Tret)*(-0.5620125  +0.06767721*t -0.00192571*t**2+ 0.00001573*t**3) for t in range(T)]
+        p['wtrend']['m']['n'] = [0.0*(t>=Tret)+(t<Tret)*(-0.5620125  +0.06767721*t -0.00192571*t**2+ 0.00001573*t**3) for t in range(T)]
+                
+
         
   
         p['util_lam'] = 0.19#0.4
@@ -148,7 +153,137 @@ class ModelSetup(object):
        
         
         # relevant for integration
-        self.state_names = ['Female, single','Male, single','Couple, M', 'Couple, C']
+        self.state_names = ['Female, single e','Male, single e','Female, single n','Male, single n',
+                            'Couple, M ee','Couple, M en','Couple, M ne','Couple, M nn',
+                            'Couple, C ee','Couple, C en','Couple, C ne','Couple, C nn']
+        
+        #Function that gives potential partners given state names
+        #def get_partners(self, female,educ):
+        
+        #From new to old decription
+        self.desc=dict()
+        self.desc['Female, single e']='Female, single'
+        self.desc['Female, single n']='Female, single'
+        self.desc['Male, single e']='Male, single'
+        self.desc['Male, single n']='Male, single'
+        self.desc['Couple, M ee']='Couple, M'
+        self.desc['Couple, M en']='Couple, M'
+        self.desc['Couple, M ne']='Couple, M'
+        self.desc['Couple, M nn']='Couple, M'
+        self.desc['Couple, C ee']='Couple, C'
+        self.desc['Couple, C en']='Couple, C'
+        self.desc['Couple, C ne']='Couple, C'
+        self.desc['Couple, C nn']='Couple, C'
+        
+        
+        #Education from description
+        self.edu=dict()
+        self.edu['Female, single e']='e'
+        self.edu['Female, single n']='n'
+        self.edu['Male, single e']='e'
+        self.edu['Male, single n']='n'
+        self.edu['Couple, M ee']=['e','e']
+        self.edu['Couple, M en']=['e','n']
+        self.edu['Couple, M ne']=['n','e']
+        self.edu['Couple, M nn']=['n','n']
+        self.edu['Couple, C ee']=['e','e']
+        self.edu['Couple, C en']=['e','n']
+        self.edu['Couple, C ne']=['n','e']
+        self.edu['Couple, C nn']=['n','n']
+            
+        
+        #Get relationships description from education and gender
+        self.desc_i=dict()
+        self.desc_i['f']={'e':'Female, single e','n':'Female, single n'}
+        self.desc_i['m']={'e':'Male, single e','n':'Male, single n'}
+        self.desc_i['e']={'e':{'M':'Couple, M ee','C':'Couple, C ee'},'n':{'M':'Couple, M en','C':'Couple, C en'}}
+        self.desc_i['n']={'e':{'M':'Couple, M ne','C':'Couple, C ne'},'n':{'M':'Couple, M nn','C':'Couple, C nn'}}
+        
+        
+        self.ppart,self.ppartc,self.prob,self.probp=dict(),dict(),dict(),dict()
+            
+        for sex in ['f','m']:
+            
+            if sex=='f' :
+                    
+                fr,f1,f2,f22=dict(),dict(),dict(),dict()
+                self.ppart[sex],self.ppartc[sex],self.prob[sex],self.probp[sex]=fr,f1,f2,f22
+                
+                for edu in ['e','n']:
+                    
+                    if edu=='e':
+                    
+                        f3,f4=dict(),dict()
+                        self.prob[sex][edu],self.probp[sex][edu]=f3,f4
+                    
+                        #Possible relationships
+                        self.ppart[sex][edu]=['Couple, M ee', 'Couple, M en','Couple, C ee', 'Couple, C en']
+                        self.ppartc[sex][edu]=['Couple, M ee', 'Couple, M en']
+                        
+                        #Probabilities of meeting
+                        self.prob[sex][edu]['e']=0.5
+                        self.prob[sex][edu]['n']=1-self.prob[sex][edu]['e']
+                        self.probp[sex][edu]['e']={'M':'Couple, M ee','C':'Couple, C ee'}
+                        self.probp[sex][edu]['n']={'M':'Couple, M en','C':'Couple, C en'}
+                    
+                    elif edu=='n':
+                    
+                        
+                        f3,f4=dict(),dict()
+                        self.prob[sex][edu],self.probp[sex][edu]=f3,f4
+                        
+                        #Possible relationships
+                        self.ppart[sex][edu]=['Couple, M ne', 'Couple, M nn','Couple, C ne', 'Couple, C nn']
+                        self.ppartc[sex][edu]=['Couple, M ne', 'Couple, M nn']
+                        
+                        #Probabilities of meeting
+                        self.prob[sex][edu]['e']=0.5
+                        self.prob[sex][edu]['n']=1-self.prob[sex][edu]['e']
+                        self.probp[sex][edu]['e']={'M':'Couple, M ne','C':'Couple, C ne'}
+                        self.probp[sex][edu]['n']={'M':'Couple, M nn','C':'Couple, C nn'}
+                        
+            elif sex=='m':
+                    
+                    
+                fr,f1,f2,f22=dict(),dict(),dict(),dict()
+                self.ppart[sex],self.ppartc[sex],self.prob[sex],self.probp[sex]=fr,f1,f2,f22
+                
+                for edu in ['e','n']:
+                    
+                    if edu=='e':
+                        
+                        f3,f4=dict(),dict()
+                        self.prob[sex][edu],self.probp[sex][edu]=f3,f4
+                        
+                        #Possible relationships
+                        self.ppart[sex][edu]=['Couple, M ee', 'Couple, M ne','Couple, C ee', 'Couple, C ne']
+                        self.ppartc[sex][edu]=['Couple, M ee', 'Couple, M ne']
+                        
+                        #Probabilities of meeting
+                        self.prob[sex][edu]['e']=0.5
+                        self.prob[sex][edu]['n']=1-self.prob[sex][edu]['e']
+                        self.probp[sex][edu]['e']={'M':'Couple, M ee','C':'Couple, C ee'}
+                        self.probp[sex][edu]['n']={'M':'Couple, M ne','C':'Couple, C ne'}
+                    
+                    elif edu=='n':
+                    
+                        f3,f4=dict(),dict()
+                        self.prob[sex][edu],self.probp[sex][edu]=f3,f4
+                        
+                        #Possible relationships
+                        self.ppart[sex][edu]=['Couple, M en', 'Couple, M nn','Couple, C en', 'Couple, C nn']
+                        self.ppartc[sex][edu]=['Couple, M en', 'Couple, M nn']
+                        
+                        
+                        #Probabilities of meeting
+                        self.prob[sex][edu]['e']=0.5
+                        self.prob[sex][edu]['n']=1-self.prob[sex][edu]['e']
+                        self.probp[sex][edu]['e']={'M':'Couple, M en','C':'Couple, C en'}
+                        self.probp[sex][edu]['n']={'M':'Couple, M nn','C':'Couple, C nn'}
+                    
+                    
+                
+        
         
         # female labor supply
         self.ls_levels = np.array([0.0,0.8],dtype=self.dtype)
@@ -201,8 +336,11 @@ class ModelSetup(object):
             
             p['n_zf_t']      = [5]*Tret + [5]*(T-Tret)
             p['n_zm_t']      = [5]*Tret + [5]*(T-Tret)
-            exogrid['zf_t'],  exogrid['zf_t_mat'] = rouw_nonst(p['T'],p['sig_zf']*period_year**0.5,p['sig_zf_0'],p['n_zf_t'][0])
-            exogrid['zm_t'],  exogrid['zm_t_mat'] = rouw_nonst(p['T'],p['sig_zm']*period_year**0.5,p['sig_zm_0'],p['n_zm_t'][0])
+            exogrid['zf_t'],  exogrid['zf_t_mat'],exogrid['zm_t'],  exogrid['zm_t_mat']=dict(),dict(),dict(),dict()
+            exogrid['zf_t']['e'],  exogrid['zf_t_mat']['e'] = rouw_nonst(p['T'],p['sig_zf']*period_year**0.5,p['sig_zf_0'],p['n_zf_t'][0])
+            exogrid['zf_t']['n'],  exogrid['zf_t_mat']['n'] = rouw_nonst(p['T'],p['sig_zf']*period_year**0.5,p['sig_zf_0'],p['n_zf_t'][0])
+            exogrid['zm_t']['e'],  exogrid['zm_t_mat']['e'] = rouw_nonst(p['T'],p['sig_zm']*period_year**0.5,p['sig_zm_0'],p['n_zm_t'][0])
+            exogrid['zm_t']['n'],  exogrid['zm_t_mat']['n'] = rouw_nonst(p['T'],p['sig_zm']*period_year**0.5,p['sig_zm_0'],p['n_zm_t'][0])
             
             ################################
             #First mimic US pension system
@@ -223,33 +361,35 @@ class ModelSetup(object):
                 
                 return inc1*0.9+inc2*0.32+inc3*0.15            
             
-            for t in range(Tret,T):
-                exogrid['zf_t'][t] = np.array([np.log(p['wret'])])
-                exogrid['zm_t'][t] = np.array([np.log(p['wret'])])
-                exogrid['zf_t_mat'][t] = np.atleast_2d(1.0)
-                exogrid['zm_t_mat'][t] = np.atleast_2d(1.0)
-                
-                
-            # fix transition from non-retired to retired    
-            exogrid['zf_t_mat'][Tret-1] = np.ones((p['n_zf_t'][Tret-1],1))
-            exogrid['zm_t_mat'][Tret-1] = np.ones((p['n_zm_t'][Tret-1],1))
             
-            #Tax system as in Wu and Kruger
-            for t in range(0,Tret):
-                exogrid['zf_t'][t] = exogrid['zf_t'][t]#*(1-0.1327)+np.log(1-0.1575)
-                exogrid['zm_t'][t] = exogrid['zm_t'][t]#*(1-0.1327)+np.log(1-0.1575)  
-            
-            #Comment out the following if you dont want retirment based on income
-            for t in range(Tret,T):
-               
-                exogrid['zf_t'][t] = np.log(pens(np.exp(p['f_wage_trend'][Tret-1]+exogrid['zf_t'][Tret-1])))#np.array([np.log(p['wret'])])
-                exogrid['zm_t'][t] = np.log(pens(np.exp(p['m_wage_trend'][Tret-1]+exogrid['zm_t'][Tret-1])))               
-                exogrid['zf_t_mat'][t] = np.diag(np.ones(len(exogrid['zf_t'][t])))#p.atleast_2d(1.0)
-                exogrid['zm_t_mat'][t] = np.diag(np.ones(len(exogrid['zm_t'][t])))
+            for e in ['e','n']:
+                for t in range(Tret,T):
+                    exogrid['zf_t'][e][t] = np.array([np.log(p['wret'])])
+                    exogrid['zm_t'][e][t] = np.array([np.log(p['wret'])])
+                    exogrid['zf_t_mat'][e][t] = np.atleast_2d(1.0)
+                    exogrid['zm_t_mat'][e][t] = np.atleast_2d(1.0)
                 
-            # fix transition from non-retired to retired    
-            exogrid['zf_t_mat'][Tret-1] = np.diag(np.ones(len(exogrid['zf_t'][Tret-1])))
-            exogrid['zm_t_mat'][Tret-1] = np.diag(np.ones(len(exogrid['zm_t'][Tret-1])))
+                
+                # fix transition from non-retired to retired    
+                exogrid['zf_t_mat'][Tret-1] = np.ones((p['n_zf_t'][Tret-1],1))
+                exogrid['zm_t_mat'][Tret-1] = np.ones((p['n_zm_t'][Tret-1],1))
+            
+                #Tax system as in Wu and Kruger
+                for t in range(0,Tret):
+                    exogrid['zf_t'][e][t] = exogrid['zf_t'][e][t]#*(1-0.1327)+np.log(1-0.1575)
+                    exogrid['zm_t'][e][t] = exogrid['zm_t'][e][t]#*(1-0.1327)+np.log(1-0.1575)  
+                
+                #Comment out the following if you dont want retirment based on income
+                for t in range(Tret,T):
+                   
+                    exogrid['zf_t'][e][t] = np.log(pens(np.exp(p['wtrend']['f'][e][Tret-1]+exogrid['zf_t'][e][Tret-1])))#np.array([np.log(p['wret'])])
+                    exogrid['zm_t'][e][t] = np.log(pens(np.exp(p['wtrend']['m'][e][Tret-1]+exogrid['zm_t'][e][Tret-1])))               
+                    exogrid['zf_t_mat'][e][t] = np.diag(np.ones(len(exogrid['zf_t'][e][t])))#p.atleast_2d(1.0)
+                    exogrid['zm_t_mat'][e][t] = np.diag(np.ones(len(exogrid['zm_t'][e][t])))
+                    
+                # fix transition from non-retired to retired    
+                exogrid['zf_t_mat'][e][Tret-1] = np.diag(np.ones(len(exogrid['zf_t'][e][Tret-1])))
+                exogrid['zm_t_mat'][e][Tret-1] = np.diag(np.ones(len(exogrid['zm_t'][e][Tret-1])))
 
             ###########################
             #Love shock grid
@@ -282,11 +422,8 @@ class ModelSetup(object):
                     
                     if i<Tret:
                         exogrid['psi_t'][dd][i], exogrid['psi_t_mat'][dd][i]=psit[max(i-dd,0)][dd],matri[min(i-dd,T-1)][dd]
-                        #exogrid['psi_t'][dd][i], exogrid['psi_t_mat'][dd][i]=psit[max(i+dd-p['dm'],0)][dd],matri[min(i+dd-p['dm'],T-1)][dd]
-                        #exogrid['psi_t'][dd][i], exogrid['psi_t_mat'][dd][i]=psit[i][dd],matri[i][dd]
 
-
-            aa,bb= rouw_nonst(p['T'],self.sigmad[dd],np.sqrt(self.sigmad[0]**2+self.sigmad[dd]**2),p['n_psi_t'][0])
+          
             #Here I impose no change in psi from retirement till the end of time 
             for t in range(Tren,T-1):
                 for dd in range(p['dm']):
@@ -305,82 +442,59 @@ class ModelSetup(object):
             s2=mc_simulate(s1,exogrid['psi_t_mat'][0][1])
             s2e=exogrid['psi_t'][1][2][s2]
             diffe=s2e-s1e
-#            
-#            for dd in range(p['dm']):
-#                if p['sigma_psi_mu']>0:
-#                    for t in range(T-1):
-#                        if t<Tret:
-#                            
-#                            #True Process
-#                            mat=exogrid['psi_t_mat'][dd][t].copy()
-#                            for i in range(p['n_psi_t'][0]):
-#                                mat[i,:]=int_prob(exogrid['psi_t'][min(dd+1,p['dm']-1)][min(t+1,T-1)],
-#                                                           mu=exogrid['psi_t'][dd][t][i],
-#                                                           sig=p['sigma_psi'],
-#                                                           n_points=p['n_psi_t'][0])
-#                            exogrid['true_psi_mat'][dd][t]=mat
-#                            
-#                            #Noisy Update
-#                            mat=exogrid['psi_t_mat'][dd][t].copy()
-#                            for i in range(p['n_psi_t'][0]):
-#                                mat[i,:]=int_prob(exogrid['psi_t'][min(dd,p['dm']-1)][min(t,T-1)],
-#                                                           mu=exogrid['psi_t'][dd][t][i],
-#                                                           sig=p['sigma_psi_mu'],
-#                                                           n_points=p['n_psi_t'][0])
-#                            exogrid['noise_psi_mat'][dd][t]=mat
-#                else:
-#                    exogrid['noise_psi_mat'][dd][t]=np.diag(np.ones(len(exogrid['psi_t'][dd][t])))
-#                        
-                   
-           # zfzm, zfzmmat = combine_matrices_two_lists(exogrid['zf_t'], exogrid['zm_t'], zf_t_mat_down, exogrid['zm_t_mat'])
+
+            exogrid['all_t_mat_by_l'], exogrid['all_t_mat_by_l_spt'],exogrid['all_t']=dict(),dict(),dict()
+            for e in ['e','n']:
+                exogrid['all_t_mat_by_l'][e], exogrid['all_t_mat_by_l_spt'][e],exogrid['all_t'][e]=dict(),dict(),dict()
+                for eo in ['e','n']:
+                    exogrid['all_t_mat_by_l'][e][eo],  exogrid['all_t_mat_by_l_spt'][e][eo],exogrid['all_t'][e][eo]=list(np.ones((p['dm']))),list(np.ones((p['dm']))),list(np.ones((p['dm'])))
             
-            exogrid['all_t_mat_by_l'],  exogrid['all_t_mat_by_l_spt'],exogrid['all_t']=list(np.ones((p['dm']))),list(np.ones((p['dm']))),list(np.ones((p['dm'])))
-            for dd in range(p['dm']):
+            for e in ['e','n']:
                 
-                zfzm, zfzmmat = combine_matrices_two_lists(exogrid['zf_t'], exogrid['zm_t'], exogrid['zf_t_mat'], exogrid['zm_t_mat'])
-                all_t, all_t_mat = combine_matrices_two_lists(zfzm,exogrid['psi_t'][dd],zfzmmat,exogrid['psi_t_mat'][dd])
-                all_t_mat_sparse_T = [sparse.csc_matrix(D.T) if D is not None else None for D in all_t_mat]
-                
-                
-                
-                
-                     
-                zf_bad = [tauchen_drift(exogrid['zf_t'][t], exogrid['zf_t'][t+1], 
-                                        1.0, p['sig_zf'], p['z_drift'])
-                            for t in range(self.pars['Tret']-1) ]
-                
+                #FBad shock women
+                zf_bad = [tauchen_drift(exogrid['zf_t'][e][t], exogrid['zf_t'][e][t+1], 
+                                                1.0, p['sig_zf'], p['z_drift'])
+                                    for t in range(self.pars['Tret']-1) ]
+                        
                 #Account for retirement here
-                zf_bad = zf_bad+[exogrid['zf_t_mat'][t] for t in range(self.pars['Tret']-1,self.pars['T']-1)]+ [None]
+                zf_bad = zf_bad+[exogrid['zf_t_mat'][e][t] for t in range(self.pars['Tret']-1,self.pars['T']-1)]+ [None]
                 
-                zf_t_mat_down = zf_bad
-                zfzm, zfzmmat = combine_matrices_two_lists(exogrid['zf_t'], exogrid['zm_t'], zf_t_mat_down, exogrid['zm_t_mat'])
-                all_t_down, all_t_mat_down = combine_matrices_two_lists(zfzm,exogrid['psi_t'][dd],zfzmmat,exogrid['psi_t_mat'][dd])
-                all_t_mat_down_sparse_T = [sparse.csc_matrix(D.T) if D is not None else None for D in all_t_mat_down]
-                
-                
-                
-                all_t_mat_by_l = [ [(1-p)*m + p*md if m is not None else None 
-                                    for m , md in zip(all_t_mat,all_t_mat_down)]
-                                   for p in self.ls_pdown ]
-                
-                all_t_mat_by_l_spt = [ [(1-p)*m + p*md if m is not None else None
-                                        for m, md in zip(all_t_mat_sparse_T,all_t_mat_down_sparse_T)]
-                                   for p in self.ls_pdown ]
-                
-                
-                
-                exogrid['all_t_mat_by_l'][dd] = all_t_mat_by_l
-                exogrid['all_t_mat_by_l_spt'][dd] = all_t_mat_by_l_spt
-                
-                exogrid['all_t'][dd] = all_t
+                for eo in ['e','n']:
+                    
+                    for dd in range(p['dm']):
+                        zfzm, zfzmmat = combine_matrices_two_lists(exogrid['zf_t'][e], exogrid['zm_t'][eo], exogrid['zf_t_mat'][e], exogrid['zm_t_mat'][eo])
+                        all_t, all_t_mat = combine_matrices_two_lists(zfzm,exogrid['psi_t'][dd],zfzmmat,exogrid['psi_t_mat'][dd])
+                        all_t_mat_sparse_T = [sparse.csc_matrix(D.T) if D is not None else None for D in all_t_mat]
+                    
+                        
+                        zf_t_mat_down = zf_bad
+                        zfzm, zfzmmat = combine_matrices_two_lists(exogrid['zf_t'][e], exogrid['zm_t'][eo], zf_t_mat_down, exogrid['zm_t_mat'][eo])
+                        all_t_down, all_t_mat_down = combine_matrices_two_lists(zfzm,exogrid['psi_t'][dd],zfzmmat,exogrid['psi_t_mat'][dd])
+                        all_t_mat_down_sparse_T = [sparse.csc_matrix(D.T) if D is not None else None for D in all_t_mat_down]
+                        
+                        
+                        
+                        all_t_mat_by_l = [ [(1-p)*m + p*md if m is not None else None 
+                                            for m , md in zip(all_t_mat,all_t_mat_down)]
+                                           for p in self.ls_pdown ]
+                        
+                        all_t_mat_by_l_spt = [ [(1-p)*m + p*md if m is not None else None
+                                                for m, md in zip(all_t_mat_sparse_T,all_t_mat_down_sparse_T)]
+                                           for p in self.ls_pdown ]
+                        
+                        
+                        
+                        exogrid['all_t_mat_by_l'][e][eo][dd] = all_t_mat_by_l
+                        exogrid['all_t_mat_by_l_spt'][e][eo][dd] = all_t_mat_by_l_spt
+                        
+                        exogrid['all_t'][e][eo][dd] = all_t
             
             Exogrid_nt = namedtuple('Exogrid_nt',exogrid.keys())
             
             self.exogrid = Exogrid_nt(**exogrid)
             self.pars['nexo_t'] = [v.shape[0] for v in all_t]
             
-            #assert False
-            
+
             
             
         #Grid Couple
@@ -430,15 +544,11 @@ class ModelSetup(object):
 #        
         
         # grid for theta
-        self.ntheta = 41
+        self.ntheta = 3#41
         self.thetamin = 0.02
         self.thetamax = 0.98
         self.thetagrid = np.linspace(self.thetamin,self.thetamax,self.ntheta,dtype=self.dtype)
-        
-        
-        
-        
-        
+
         
         # construct finer grid for bargaining
         ntheta_fine = 5*self.ntheta # actual number may be a bit bigger
@@ -467,33 +577,57 @@ class ModelSetup(object):
 
             
         
+        self.exo_grids = {'Female, single e':exogrid['zf_t']['e'],
+                          'Male, single e':exogrid['zm_t']['e'],
+                          'Female, single n':exogrid['zf_t']['n'],
+                          'Male, single n':exogrid['zm_t']['n'],
+                          'Couple, M ee':exogrid['all_t']['e']['e'],
+                          'Couple, C ee':exogrid['all_t']['e']['e'],
+                          'Couple, M en':exogrid['all_t']['e']['n'],
+                          'Couple, C en':exogrid['all_t']['e']['n'],
+                          'Couple, M ne':exogrid['all_t']['n']['e'],
+                          'Couple, C ne':exogrid['all_t']['n']['e'],
+                          'Couple, M nn':exogrid['all_t']['n']['n'],
+                          'Couple, C nn':exogrid['all_t']['n']['n']}
         
-        
+        self.exo_mats = {'Female, single e':exogrid['zf_t_mat']['e'],
+                  'Male, single e':exogrid['zm_t_mat']['e'],
+                  'Female, single n':exogrid['zf_t_mat']['n'],
+                  'Male, single n':exogrid['zm_t_mat']['n'],
+                  'Couple, M ee':exogrid['all_t_mat_by_l']['e']['e'],
+                  'Couple, C ee':exogrid['all_t_mat_by_l']['e']['e'],
+                  'Couple, M en':exogrid['all_t_mat_by_l']['e']['n'],
+                  'Couple, C en':exogrid['all_t_mat_by_l']['e']['n'],
+                  'Couple, M ne':exogrid['all_t_mat_by_l']['n']['e'],
+                  'Couple, C ne':exogrid['all_t_mat_by_l']['n']['e'],
+                  'Couple, M nn':exogrid['all_t_mat_by_l']['n']['n'],
+                  'Couple, C nn':exogrid['all_t_mat_by_l']['n']['n']}
+                          
+ 
+        self.utility_shifters = {'Female, single e':0.0,
+          'Male, single e':0.0,
+          'Female, single n':0.0,
+          'Male, single n':0.0,
+          'Couple, M ee':p['u_shift_mar'],
+          'Couple, C ee':p['u_shift_coh'],
+          'Couple, M en':p['u_shift_mar'],
+          'Couple, C en':p['u_shift_coh'],
+          'Couple, M ne':p['u_shift_mar'],
+          'Couple, C ne':p['u_shift_coh'],
+          'Couple, M nn':p['u_shift_mar'],
+          'Couple, C nn':p['u_shift_coh']}
 
-
-        self.exo_grids = {'Female, single':exogrid['zf_t'],
-                          'Male, single':exogrid['zm_t'],
-                          'Couple, M':exogrid['all_t'],
-                          'Couple, C':exogrid['all_t']}
-        self.exo_mats = {'Female, single':exogrid['zf_t_mat'],
-                          'Male, single':exogrid['zm_t_mat'],
-                          'Couple, M':exogrid['all_t_mat_by_l'],
-                          'Couple, C':exogrid['all_t_mat_by_l']} # sparse version?
-        
-        
-        self.utility_shifters = {'Female, single':0.0,
-                                 'Male, single':0.0,
-                                 'Couple, M':p['u_shift_mar'],
-                                 'Couple, C':p['u_shift_coh']}
-        
         
         # this pre-computes transition matrices for meeting a partner
-        zf_t_partmat,zm_t_partmat=list(np.ones((self.pars['dm']))),list(np.ones((self.pars['dm'])))
-        for dd in range(self.pars['dm']):
-            zf_t_partmat[dd] = [self.mar_mats_iexo(t,dd,female=True) if t < p['T'] - 1 else None 
-                            for t in range(p['T'])]
-            zm_t_partmat[dd] = [self.mar_mats_iexo(t,dd,female=False) if t < p['T'] - 1 else None 
-                            for t in range(p['T'])]
+        zf_t_partmat,zm_t_partmat=dict(),dict()
+
+        for e in ['e','n']:
+            zf_t_partmat[e],zm_t_partmat[e]=dict(),dict()
+            for e in ['e','n']:
+                zf_t_partmat[e] = [self.mar_mats_iexo(t,e,eo,female=True) if t < p['T'] - 1 else None 
+                        for t in range(p['T'])]
+                zm_t_partmat[e] = [self.mar_mats_iexo(t,eo,e,female=False) if t < p['T'] - 1 else None 
+                        for t in range(p['T'])]
         
         self.part_mats = {'Female, single':zf_t_partmat,
                           'Male, single':  zm_t_partmat,
@@ -506,10 +640,10 @@ class ModelSetup(object):
         
         
         # building m grid
-        ezfmin = min([np.min(self.ls_levels[-1]*np.exp(g+t)) for g,t in zip(exogrid['zf_t'],p['f_wage_trend'])])
-        ezmmin = min([np.min(self.mlevel*np.exp(g+t)) for g,t in zip(exogrid['zm_t'],p['m_wage_trend'])])
-        ezfmax = max([np.max(self.ls_levels[-1]*np.exp(g+t)) for g,t in zip(exogrid['zf_t'],p['f_wage_trend'])])
-        ezmmax = max([np.max(self.mlevel*np.exp(g+t)) for g,t in zip(exogrid['zm_t'],p['m_wage_trend'])])
+        ezfmin = min([np.min(self.ls_levels[-1]*np.exp(g+t)) for g,t in zip(exogrid['zf_t']['e'],p['wtrend']['f']['e'])])
+        ezmmin = min([np.min(self.mlevel*np.exp(g+t)) for g,t in zip(exogrid['zm_t']['e'],p['wtrend']['m']['e'])])
+        ezfmax = max([np.max(self.ls_levels[-1]*np.exp(g+t)) for g,t in zip(exogrid['zf_t']['e'],p['wtrend']['f']['e'])])
+        ezmmax = max([np.max(self.mlevel*np.exp(g+t)) for g,t in zip(exogrid['zm_t']['e'],p['wtrend']['m']['e'])])
         
         
         
@@ -586,7 +720,7 @@ class ModelSetup(object):
 
         
     
-    def mar_mats_iexo(self,t,dd,female=True,trim_lvl=0.00):
+    def mar_mats_iexo(self,t,e,eo,female=True,trim_lvl=0.00):
         # TODO: check timing
         # this returns transition matrix for single agents into possible couples
         # rows are single's states
@@ -597,28 +731,30 @@ class ModelSetup(object):
         nexo = setup.pars['nexo_t'][t]
         sigma_psi_init = setup.pars['sigma_psi_init']
         #sig_z_partner = setup.pars['sig_partner_z']
-        psi_couple = setup.exogrid.psi_t[dd][t+1]
+        psi_couple = setup.exogrid.psi_t[0][t+1]
         
+        g='f' if female else 'm'
+        go='m' if female else 'f'
         
         if female:
-            nz_single = setup.exogrid.zf_t[t].shape[0]
+            nz_single = setup.exogrid.zf_t[e][t].shape[0]
             p_mat = np.empty((nexo,nz_single))
-            z_own = setup.exogrid.zf_t[t]
+            z_own = setup.exogrid.zf_t[e][t]
             n_zown = z_own.shape[0]
-            z_partner = setup.exogrid.zm_t[t]
-            zmat_own = setup.exogrid.zf_t_mat[t]
-            trend=setup.pars['m_wage_trend_single'][t]
-            mean=setup.pars['mean_partner_z_female']-setup.pars['m_wage_trend'][t]+setup.pars['m_wage_trend_single'][t]
+            z_partner = setup.exogrid.zm_t[e][t]
+            zmat_own = setup.exogrid.zf_t_mat[e][t]
+            trend=setup.pars['wtrend'][g][e][t]
+            mean=setup.pars['wtrend'][g][e][t]
             sig_z_partner=(setup.pars['sig_zm_0']**2+(t+1)*setup.pars['sig_zm']**2)**0.5
         else:
-            nz_single = setup.exogrid.zm_t[t].shape[0]
+            nz_single = setup.exogrid.zm_t[eo][t].shape[0]
             p_mat = np.empty((nexo,nz_single))
-            z_own = setup.exogrid.zm_t[t]
+            z_own = setup.exogrid.zm_t[eo][t]
             n_zown = z_own.shape[0]
-            z_partner = setup.exogrid.zf_t[t]
-            zmat_own = setup.exogrid.zm_t_mat[t]    
-            trend=setup.pars['f_wage_trend_single'][t]
-            mean=setup.pars['mean_partner_z_male']-setup.pars['f_wage_trend'][t]+setup.pars['f_wage_trend_single'][t]
+            z_partner = setup.exogrid.zf_t[eo][t]
+            zmat_own = setup.exogrid.zm_t_mat[eo][t]    
+            trend=setup.pars['wtrend'][g][e][t]
+            mean=setup.pars['wtrend'][go][eo][t]
             sig_z_partner=(setup.pars['sig_zf_0']**2+(t+1)*setup.pars['sig_zf']**2)**0.5
             
         def ind_conv(a,b,c): return setup.all_indices(t,(a,b,c))[0]
@@ -670,55 +806,61 @@ class ModelSetup(object):
         self.matches = dict()
         
         for female in [True,False]:
+            
             desc = 'Female, single' if female else 'Male, single'
+            g='f' if female else 'm'
             
-            pmat_a = self.prob_a_mat[female]
-            imat_a = self.i_a_mat[female]
+            self.matches[desc]=dict()
             
-            pmats = self.part_mats[desc] 
-            
-            
-            match_matrix = list()
-            
-            for t in range(self.pars['T']-1):
-                pmat_iexo = pmats[0][t] # nz X nexo
-                # note that here we do not use transpose
+            for e in ['e','n']:
+
+                pmat_a = self.prob_a_mat[female]
+                imat_a = self.i_a_mat[female]
                 
-                nz = pmat_iexo.shape[0]
+                pmats = self.part_mats[desc][e]
                 
-                inds = np.where( np.any(pmat_iexo>-10,axis=0) )[0]
                 
-                npos_iexo = inds.size
-                npos_a = pmat_a.shape[1]
-                npos = npos_iexo*npos_a
-                pmatch = np.zeros((self.na,nz,npos),dtype=self.dtype)
-                iamatch = np.zeros((self.na,nz,npos),dtype=np.int32)
-                iexomatch = np.zeros((self.na,nz,npos),dtype=np.int32)
+                match_matrix = list()
                 
-                i_conv = np.zeros((npos_iexo,npos_a),dtype=np.int32)
-                
-                for ia in range(npos_a):
-                    i_conv[:,ia] = np.arange(npos_iexo*ia,npos_iexo*(ia+1))
-                 
-                
-                for iz in range(nz):
-                    probs = pmat_iexo[iz,inds]
+                for t in range(self.pars['T']-1):
+                    pmat_iexo = pmats[t] # nz X nexo
+                    # note that here we do not use transpose
+                    
+                    nz = pmat_iexo.shape[0]
+                    
+                    inds = np.where( np.any(pmat_iexo>-10,axis=0) )[0]
+                    
+                    npos_iexo = inds.size
+                    npos_a = pmat_a.shape[1]
+                    npos = npos_iexo*npos_a
+                    pmatch = np.zeros((self.na,nz,npos),dtype=self.dtype)
+                    iamatch = np.zeros((self.na,nz,npos),dtype=np.int32)
+                    iexomatch = np.zeros((self.na,nz,npos),dtype=np.int32)
+                    
+                    i_conv = np.zeros((npos_iexo,npos_a),dtype=np.int32)
                     
                     for ia in range(npos_a):
-                        
-                        pmatch[:,iz,(npos_iexo*ia):(npos_iexo*(ia+1))] = \
-                            (pmat_a[:,ia][:,None])*(probs[None,:])
-                        iamatch[:,iz,(npos_iexo*ia):(npos_iexo*(ia+1))] = \
-                            imat_a[:,ia][:,None]
-                        iexomatch[:,iz,(npos_iexo*ia):(npos_iexo*(ia+1))] = \
-                            inds[None,:]
-                            
-                        
-                assert np.allclose(np.sum(pmatch,axis=2),1.0)
-                match_matrix.append({'p':pmatch,'ia':iamatch,'iexo':iexomatch,'iconv':i_conv})
+                        i_conv[:,ia] = np.arange(npos_iexo*ia,npos_iexo*(ia+1))
+                     
                     
-            self.matches[desc] = match_matrix
-         
+                    for iz in range(nz):
+                        probs = pmat_iexo[iz,inds]
+                        
+                        for ia in range(npos_a):
+                            
+                            pmatch[:,iz,(npos_iexo*ia):(npos_iexo*(ia+1))] = \
+                                (pmat_a[:,ia][:,None])*(probs[None,:])
+                            iamatch[:,iz,(npos_iexo*ia):(npos_iexo*(ia+1))] = \
+                                imat_a[:,ia][:,None]
+                            iexomatch[:,iz,(npos_iexo*ia):(npos_iexo*(ia+1))] = \
+                                inds[None,:]
+                                
+                            
+                    assert np.allclose(np.sum(pmatch,axis=2),1.0)
+                    match_matrix.append({'p':pmatch,'ia':iamatch,'iexo':iexomatch,'iconv':i_conv})
+                        
+                self.matches[desc][e] = match_matrix
+             
         
     
     

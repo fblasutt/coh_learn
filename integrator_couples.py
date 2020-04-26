@@ -15,7 +15,7 @@ from renegotiation_bilateral import v_ren_bil
 from renegotiation_vartheta import v_ren_vt
 #from ren_mar_pareto import v_ren_new as ren_pareto
 
-def ev_couple_m_c(setup,Vpostren,dd,t,marriage,use_sparse=True):
+def ev_couple_m_c(setup,Vpostren,edu,desc,dd,t,marriage,use_sparse=True):
     # computes expected value of couple entering the next period with an option
     # to renegotiate or to break up
     
@@ -25,11 +25,10 @@ def ev_couple_m_c(setup,Vpostren,dd,t,marriage,use_sparse=True):
         if uni_div:
             # choose your fighter
             #out = v_ren_uni(setup,Vpostren,marriage,t)
-            out = v_ren_vt(setup,Vpostren,marriage,dd,t)            
-        else:
-            out = v_ren_bil(setup,Vpostren,marriage,dd,t)
+            out = v_ren_vt(setup,Vpostren,marriage,dd,edu,desc,t)            
+        
     else:
-        out = v_no_ren(setup,Vpostren,marriage,dd,t)
+        out = v_no_ren(setup,Vpostren,edu,desc,marriage,dd,t)
     _Vren2 = out['Values']#out.pop('Values') 
     #_Vren2=out['Values']
     dec = out
@@ -40,13 +39,13 @@ def ev_couple_m_c(setup,Vpostren,dd,t,marriage,use_sparse=True):
         tk = lambda x : x[:,setup.theta_orig_on_fine]
     
     Vren = {'M':{'VR':tk(_Vren2[0]),'VC':tk(_Vren2[1]), 'VF':tk(_Vren2[2]),'VM':tk(_Vren2[3])},
-            'SF':Vpostren['Female, single'],
-            'SM':Vpostren['Male, single']}
+            'SF':Vpostren[setup.desc_i['f'][edu[0]]],
+            'SM':Vpostren[setup.desc_i['m'][edu[1]]]}
 
     
     # accounts for exogenous transitions
     
-    EVr, EVc, EVf, EVm = ev_couple_exo(setup,Vren['M'],dd,t,use_sparse,down=False)
+    EVr, EVc, EVf, EVm = ev_couple_exo(setup,Vren['M'],edu,desc,dd,t,use_sparse,down=False)
     
     
     assert EVr.dtype == setup.dtype
@@ -54,7 +53,7 @@ def ev_couple_m_c(setup,Vpostren,dd,t,marriage,use_sparse=True):
     return (EVr, EVc, EVf, EVm), dec
 
 
-def ev_couple_exo(setup,Vren,dd,t,use_sparse=True,down=False):
+def ev_couple_exo(setup,Vren,edu,desc,dd,t,use_sparse=True,down=False):
     
  
     # this does dot product along 3rd dimension
@@ -69,7 +68,7 @@ def ev_couple_exo(setup,Vren,dd,t,use_sparse=True,down=False):
             return np.dot(a,b.T).astype(a.dtype,copy=False)
         
     
-    nl = len(setup.exogrid.all_t_mat_by_l_spt[dd])
+    nl = len(setup.exogrid.all_t_mat_by_l_spt[edu[0]][edu[1]][dd])
     
     na, nexo, ntheta = setup.na, setup.pars['nexo_t'][t], setup.ntheta 
     
@@ -81,7 +80,7 @@ def ev_couple_exo(setup,Vren,dd,t,use_sparse=True,down=False):
     
     for il in range(nl):
         
-        M = setup.exogrid.all_t_mat_by_l_spt[dd][il][t] if use_sparse else setup.exogrid.all_t_mat_by_l[dd][il][t]
+        M = setup.exogrid.all_t_mat_by_l_spt[edu[0]][edu[1]][dd][il][t] if use_sparse else setup.exogrid.all_t_mat_by_l[edu[0]][edu[1]][dd][il][t]
         
         
         

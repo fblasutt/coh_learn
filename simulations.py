@@ -13,7 +13,7 @@ from gridvec import VecOnGrid
 
 class Agents:
 
-    def __init__(self,Mlist,age_uni,female=False,pswitchlist=None,N=15000,T=None,verbose=True,nosim=False):
+    def __init__(self,Mlist,age_uni,female=False,edu=None,pswitchlist=None,N=15000,T=None,verbose=True,nosim=False):
             
             
         np.random.seed(8)
@@ -45,14 +45,17 @@ class Agents:
         self.verbose = verbose
         self.timer = self.Mlist[0].time
         
+        #get single state
+        self.edu=edu
         self.female = female
-        self.single_state = 'Female, single' if female else 'Male, single'        
+        self.sex='f' if female else 'm'
+        self.single_state = self.setup.desc_i[self.sex][self.edu]
         
         #Divorces
-        self.divorces=np.zeros((N,T),bool)
+        self.divorces=np.zeros((N,T),dtype=bool)
         
         # all the randomness is here
-        shokko=np.random.random_sample((10,N,T))
+        shokko=np.random.random_sample((11,N,T))
         self.shocks_single_iexo2 =shokko[8,:,:]# np.random.random_sample((N,T))
         self.shocks_single_iexo =shokko[0,:,:]# np.random.random_sample((N,T))
         self.shocks_single_meet =shokko[1,:,:]# np.random.random_sample((N,T))
@@ -63,6 +66,8 @@ class Agents:
       
         self.shocks_div_a = shokko[5,:,:]#np.random.random_sample((N,T))
         
+        #Shock type of partner you meet
+        self.partnert=shokko[10,:,:]
         
         #True love shock
         self.shocke=np.reshape(np.random.normal(0.0, self.setup.pars['sigma_psi'], N*T),(N,T))
@@ -70,7 +75,7 @@ class Agents:
         self.shocke0=np.reshape(np.random.normal(0.0, self.setup.pars['sigma_psi']*self.setup.pars['sigma_psi_mult'], N*T),(N,T))
           
         
-        z_t = self.setup.exogrid.zf_t if female else self.setup.exogrid.zm_t
+        z_t = self.setup.exogrid.zf_t[self.edu] if female else self.setup.exogrid.zm_t[self.edu]
         sig = self.setup.pars['sig_zf_0'] if female else self.setup.pars['sig_zm_0']
         z_prob = int_prob(z_t[0], sig = sig )
         shocks_init = shokko[6,:,0]#np.random.random_sample((N,))        
@@ -87,6 +92,13 @@ class Agents:
         self.iassetss = np.zeros((N,T),np.int16)
         if len(self.setup.agrid_s)>1  :
             self.tempo=VecOnGrid(self.setup.agrid_s,self.iassets[:,0])
+        
+        
+        #Initialize partner education
+        self.partneredu = np.asarray([['single' for i in range(T)] for j in range(N)])
+        
+        #OWn education
+        self.education = np.asarray([[self.edu for i in range(T)] for j in range(N)])
         
         # initialize FLS
         #self.ils=np.ones((N,T),np.float64)
@@ -132,7 +144,7 @@ class Agents:
         self.has_theta = list()
         for i, name in enumerate(self.setup.state_names):
             self.state_codes[name] = i
-            self.has_theta.append((name=='Couple, C' or name=='Couple, M'))
+            self.has_theta.append((self.setup.desc[name]=='Couple, C' or self.setup.desc[name]=='Couple, M'))
         
         
         # initialize state
@@ -266,7 +278,7 @@ class Agents:
                 iexo_now = self.iexo[ind,t].reshape(nst)
                 
                 
-                if sname == 'Couple, C' or sname == 'Couple, M':
+                if self.setup.desc[sname] == 'Couple, C' or self.setup.desc[sname] == 'Couple, M':
                     
                     
                     #Update couple duration
@@ -323,182 +335,205 @@ class Agents:
                 is_pol = (self.policy_ind[:,t+1]==ipol)
                 is_state = (is_state_any_pol) & (is_pol) & (self.du[:,t]==dd)
                 
+          
+                
                 if self.verbose: print('At t = {} count of {} is {}'.format(t,sname,np.sum(is_state)))
                 
                 if not np.any(is_state):
                     continue
                 
-                ind = np.where(is_state)[0] 
+                ind_raw = np.where(is_state)[0] 
                 
-                nind = ind.size
+       
                 
                 
                 
                 #if sname == self.single_state:
                 
                 def single():
-                    # !!! You can either simulate males or females but not both
-                    
-                    ss = self.single_state
-                    
-                    # meet a partner
-                    
-                    pmeet = self.Mlist[ipol].setup.pars['pmeet_t'][t] #timing checked
-                    
-                    
-                    matches = self.Mlist[ipol].decisions[t][dd][ss]
-                    
-                    ia = self.iassets[ind,t+1] # note that timing is slightly inconsistent  
-                    
-                    # we use iexo from t and savings from t+1
-                    # TODO: fix the seed
-                    #TODO having iexo in t inconsistent with couple ones, which lool t+1
-                    iznow = self.iexo[ind,t+1]
-                    
-                    pmat = matches['p'][ia,iznow,:]
-                    pmat_cum = pmat.cumsum(axis=1)
-                    
-                    
-                    v = self.shocks_single_iexo2[ind,t+1] #np.random.random_sample(ind.size) # draw uniform dist
-                    #This guy below (unitl it_out) account for 50% of single timem
-                    pmat_cum[:,-1]=1.0
-                    i_pmat = (v[:,None] > pmat_cum).sum(axis=1)  # index of the position in pmat
-                    
-                    ic_out = matches['iexo'][ia,iznow,i_pmat]
-                    ia_out = matches['ia'][ia,iznow,i_pmat]
-                    it_out = matches['theta'][ia,iznow,i_pmat]
-                    
-                    # potential assets position of couple
-                    
-                    iall, izf, izm, ipsi = self.Mlist[ipol].setup.all_indices(t,ic_out)
-                    
-                    #Modify grid according to the shock
-                    mean=np.zeros(ind.shape,dtype=np.float32)
-                    grid=self.setup.exogrid.psi_t[0][t+1]
-                    shocks=self.setup.K[0]*(self.shocke0[ind,t+1]+self.shockmu[ind,t+1])
-                    target=self.setup.pars['sigma_psi_init']
-                    ipsi,adjust=mc_init_normal_corr(mean,grid,shocks=shocks,target=target)
-                    mean1=adjust*shocks
-                    self.predl[ind,t+1]=grid[abs(mean1[:,np.newaxis]-grid).argmin(axis=1)] 
-                   
-                    iall=self.Mlist[ipol].setup.all_indices(t,(izf,izm,ipsi))[0]
-                    self.iexo[ind,t+1]=iall
-                    i_pmat=iall
-#                                      
 
-#                    mat_prob=int_prob(self.setup.exogrid.psi_t[0][t+1],0,self.setup.pars['sigma_psi_init'])
-#                    grid=self.setup.exogrid.psi_t[0][t+1]
-#                    i_pmat2 =  np.cumsum(mat_prob)
-#                    where=np.argmin(v>i_pmat2[...,None],axis=0)
-#                    
-#                    prova=self.setup.K[0]*self.truel[ind,t+1]
-#                    sigma=np.ones(prova.shape)*(self.setup.K[0]*self.setup.pars['sigma_psi_mu']+0.001)
-#                    mat_prob=int_proba(self.setup.exogrid.psi_t[0][t+1],prova,sigma)
-#                    pmat_cum = mat_prob.cumsum(axis=1)
-#                    i_pmat = (v[:,None] > pmat_cum).sum(axis=1)
-                    shk=self.setup.exogrid.psi_t[0][t+1][ipsi]
-                    print('The shock of predicted love is {}, true is {}, while theoricals are {} and {}'.format(np.std(shk),np.std(self.truel[ind,t+1]),self.setup.pars['sigma_psi_init'],self.setup.pars['sigma_psi']*self.setup.pars['sigma_psi_mult']))
-                    
-                    
-                    
-                    self.ipsim[ind,t+1]=iall
-                    iz = izf if self.female else izm
-                    
-                    
-                    # compute for everyo
-                    
-                    
-                    vmeet = self.shocks_single_meet[ind,t+1]
-                    i_nomeet =  np.array( vmeet > pmeet )
-                    
-                    
-                    #those two below account for 20% of the time
-                    i_pot_agree = matches['Decision'][ia,iznow,i_pmat]
-                    i_m_preferred = matches['M or C'][ia,iznow,i_pmat]
-                    
-                    i_disagree = (~i_pot_agree)
-                    i_disagree_or_nomeet = (i_disagree) | (i_nomeet)
-                    i_disagree_and_meet = (i_disagree) & ~(i_nomeet)
-                    
-                    i_agree = ~i_disagree_or_nomeet
+                         
+                    for eo in ['e','n']:
+                        
+                                            
+                        #Get the potential partner first+iterate to check when it matche
+                        ind=ind_raw.copy()
+                        isedu=(self.partnert[ind_raw,t]<self.setup.prob[self.sex][self.edu]['e']) 
+                        keepthis=isedu if eo=='e' else ~isedu 
+                        ind=ind_raw[keepthis].copy()
+                        
+                        ef=self.edu if self.female else eo
+                        em=eo if self.female else self.edu
+                       
+                        
+                       
+                        ss = self.single_state
+                        
+                        # meet a partner
+                        
+                        pmeet = self.Mlist[ipol].setup.pars['pmeet_t'][t] #timing checked
+                        
+                        
+                        matches = self.Mlist[ipol].decisions[t][dd][ss][self.edu]
+                        
+                        ia = self.iassets[ind,t+1] # note that timing is slightly inconsistent  
+                        
+                        # we use iexo from t and savings from t+1
+                        # TODO: fix the seed
+                        #TODO having iexo in t inconsistent with couple ones, which lool t+1
+                        iznow = self.iexo[ind,t+1]
+                        
+                        pmat = matches['p'][ia,iznow,:]#TODO strange the initial zero
+                        pmat_cum = pmat.cumsum(axis=1)
+                        
+                        
+                        v = self.shocks_single_iexo2[ind,t+1] #np.random.random_sample(ind.size) # draw uniform dist
+                        #This guy below (unitl it_out) account for 50% of single timem
+                        pmat_cum[:,-1]=1.0
+                        i_pmat = (v[:,None] > pmat_cum).sum(axis=1)  # index of the position in pmat
+                        
+                        ic_out = matches['iexo'][ia,iznow,i_pmat]
+                        ia_out = matches['ia'][ia,iznow,i_pmat]
+                        it_out = matches['theta'][ia,iznow,i_pmat]
+                        
+                        # potential assets position of couple
+                        
+                        iall, izf, izm, ipsi = self.Mlist[ipol].setup.all_indices(t,ic_out)
+                        
+                        #Modify grid according to the shock
+                        mean=np.zeros(ind.shape,dtype=np.float32)
+                        grid=self.setup.exogrid.psi_t[0][t+1]
+                        shocks=self.setup.K[0]*(self.shocke0[ind,t+1]+self.shockmu[ind,t+1])
+                        target=self.setup.pars['sigma_psi_init']
+                        ipsi,adjust=mc_init_normal_corr(mean,grid,shocks=shocks,target=target)
+                        mean1=adjust*shocks
+                        self.predl[ind,t+1]=grid[abs(mean1[:,np.newaxis]-grid).argmin(axis=1)] 
+                       
+                        iall=self.Mlist[ipol].setup.all_indices(t,(izf,izm,ipsi))[0]
+                        self.iexo[ind,t+1]=iall
+                        i_pmat=iall
+    #                                      
     
-                    
-                    i_agree_mar = (i_agree) & (i_m_preferred)
-                    i_agree_coh = (i_agree) & (~i_m_preferred)
-                    
-                    assert np.all(~i_nomeet[i_agree])
-#                    
-#                    i_agree_mar1=(np.ones(i_agree_mar.shape,dtype=np.int32)==1)
-#                    i_agree_mar=i_agree_mar1.copy()
-#                    i_agree_coh=(np.ones(i_agree_mar.shape,dtype=np.int32)==0)
-#                    i_disagree_or_nomeet=(np.ones(i_agree_mar.shape,dtype=np.int32)==0)
-#                    i_nomeet=(np.ones(i_agree_mar.shape,dtype=np.int32)==0)
-#                    i_disagree_and_meet=(np.ones(i_agree_mar.shape,dtype=np.int32)==0)
-                    
-                    
-                    
-                    nmar, ncoh, ndis, nnom = np.sum(i_agree_mar),np.sum(i_agree_coh),np.sum(i_disagree_and_meet),np.sum(i_nomeet)
-                    ntot = sum((nmar, ncoh, ndis, nnom))
-                    
-                    if self.verbose: print('{} mar, {} coh,  {} disagreed, {} did not meet ({} total)'.format(nmar,ncoh,ndis,nnom,ntot))
-                    #assert np.all(ismar==(i_agree )
-                    
-                    if np.any(i_agree_mar):
+    #                    mat_prob=int_prob(self.setup.exogrid.psi_t[0][t+1],0,self.setup.pars['sigma_psi_init'])
+    #                    grid=self.setup.exogrid.psi_t[0][t+1]
+    #                    i_pmat2 =  np.cumsum(mat_prob)
+    #                    where=np.argmin(v>i_pmat2[...,None],axis=0)
+    #                    
+    #                    prova=self.setup.K[0]*self.truel[ind,t+1]
+    #                    sigma=np.ones(prova.shape)*(self.setup.K[0]*self.setup.pars['sigma_psi_mu']+0.001)
+    #                    mat_prob=int_proba(self.setup.exogrid.psi_t[0][t+1],prova,sigma)
+    #                    pmat_cum = mat_prob.cumsum(axis=1)
+    #                    i_pmat = (v[:,None] > pmat_cum).sum(axis=1)
+                        shk=self.setup.exogrid.psi_t[0][t+1][ipsi]
+                        print('The shock of predicted love is {}, true is {}, while theoricals are {} and {}'.format(np.std(shk),np.std(self.truel[ind,t+1]),self.setup.pars['sigma_psi_init'],self.setup.pars['sigma_psi']*self.setup.pars['sigma_psi_mult']))
                         
-                        self.itheta[ind[i_agree_mar],t+1] = it_out[i_agree_mar]
-                        self.iexo[ind[i_agree_mar],t+1] = iall[i_agree_mar]#*0+199
-                        self.iexos[ind[i_agree_mar],t+1] = iall[i_agree_mar]#*0+199
-                        self.state[ind[i_agree_mar],t+1] = self.state_codes['Couple, M']
-                        self.iassets[ind[i_agree_mar],t+1] = ia_out[i_agree_mar]
                         
-                        # FLS decision
-                        #self.ils_i[ind[i_ren],t+1] = 
-                        tg = self.Mlist[ipol].setup.v_thetagrid_fine                    
-                        fls_policy = self.Mlist[ipol].decisions[t+1][dd]['Couple, M']['fls']
-                        if len(self.setup.agrid_s)>1  :
-                            self.ils_i[ind[i_agree_mar],t+1] = \
-                                fls_policy[self.iassets[ind[i_agree_mar],t+1],self.iexo[ind[i_agree_mar],t+1],self.itheta[ind[i_agree_mar],t+1]] 
+                        
+                        self.ipsim[ind,t+1]=iall
+                        iz = izf if self.female else izm
+                        
+                        
+                        # compute for everyo
+                        
+                        
+                        vmeet = self.shocks_single_meet[ind,t+1]
+                        i_nomeet =  np.array( vmeet > pmeet )
+                        
+                        
+                        #those two below account for 20% of the time
+                        i_pot_agree = matches['Decision'][ia,iznow,i_pmat]
+                        i_m_preferred = matches['M or C'][ia,iznow,i_pmat]
+                        
+                        i_disagree = (~i_pot_agree)
+                        i_disagree_or_nomeet = (i_disagree) | (i_nomeet)
+                        i_disagree_and_meet = (i_disagree) & ~(i_nomeet)
+                        
+                        i_agree = ~i_disagree_or_nomeet
+        
+                        
+                        i_agree_mar = (i_agree) & (i_m_preferred)
+                        i_agree_coh = (i_agree) & (~i_m_preferred)
+                        
+                        assert np.all(~i_nomeet[i_agree])
+    #                    
+    #                    i_agree_mar1=(np.ones(i_agree_mar.shape,dtype=np.int32)==1)
+    #                    i_agree_mar=i_agree_mar1.copy()
+    #                    i_agree_coh=(np.ones(i_agree_mar.shape,dtype=np.int32)==0)
+    #                    i_disagree_or_nomeet=(np.ones(i_agree_mar.shape,dtype=np.int32)==0)
+    #                    i_nomeet=(np.ones(i_agree_mar.shape,dtype=np.int32)==0)
+    #                    i_disagree_and_meet=(np.ones(i_agree_mar.shape,dtype=np.int32)==0)
+                        
+                        
+                        
+                        nmar, ncoh, ndis, nnom = np.sum(i_agree_mar),np.sum(i_agree_coh),np.sum(i_disagree_and_meet),np.sum(i_nomeet)
+                        ntot = sum((nmar, ncoh, ndis, nnom))
+                        
+                        if self.verbose: print('{} mar, {} coh,  {} disagreed, {} did not meet ({} total)'.format(nmar,ncoh,ndis,nnom,ntot))
+                        #assert np.all(ismar==(i_agree )
+                        
+                        if np.any(i_agree_mar):
                             
-                        else:
-                            self.ils_i[ind[i_agree_mar],t+1] = \
-                                fls_policy[self.iexo[ind[i_agree_mar],t+1],self.itheta[ind[i_agree_mar],t+1],0]
+                            self.itheta[ind[i_agree_mar],t+1] = it_out[i_agree_mar]
+                            self.iexo[ind[i_agree_mar],t+1] = iall[i_agree_mar]#*0+199
+                            self.iexos[ind[i_agree_mar],t+1] = iall[i_agree_mar]#*0+199
+                            self.state[ind[i_agree_mar],t+1] = self.state_codes[self.setup.desc_i[ef][em]['M']]
+                            self.iassets[ind[i_agree_mar],t+1] = ia_out[i_agree_mar]
+                            self.partneredu[ind[i_agree_mar]][t+1]=eo
+                            # FLS decision
+                            #self.ils_i[ind[i_ren],t+1] = 
+                            tg = self.Mlist[ipol].setup.v_thetagrid_fine                    
+                            fls_policy = self.Mlist[ipol].decisions[t+1][dd][self.setup.desc_i[ef][em]['M']]['fls']
+                            if len(self.setup.agrid_s)>1  :
+                                self.ils_i[ind[i_agree_mar],t+1] = \
+                                    fls_policy[self.iassets[ind[i_agree_mar],t+1],self.iexo[ind[i_agree_mar],t+1],self.itheta[ind[i_agree_mar],t+1]] 
+                                
+                            else:
+                                self.ils_i[ind[i_agree_mar],t+1] = \
+                                    fls_policy[self.iexo[ind[i_agree_mar],t+1],self.itheta[ind[i_agree_mar],t+1],0]
+                            
+                            
+                        if np.any(i_agree_coh):
+                            
+                            self.itheta[ind[i_agree_coh],t+1] = it_out[i_agree_coh]#*0+60
+                            self.iexo[ind[i_agree_coh],t+1] = iall[i_agree_coh]#*0+199
+                            self.iexos[ind[i_agree_coh],t+1] = iall[i_agree_coh]#*0+199
+                            self.state[ind[i_agree_coh],t+1] = self.state_codes[self.setup.desc_i[ef][em]['C']]
+                            self.iassets[ind[i_agree_coh],t+1] = ia_out[i_agree_coh]
+                            self.partneredu[ind[i_agree_mar]][t+1]=eo
+                            
+                            # FLS decision
+                            tg = self.Mlist[ipol].setup.v_thetagrid_fine
+                            #fls_policy = self.V[t+1]['Couple, C']['fls']
+                            fls_policy = self.Mlist[ipol].decisions[t+1][dd][self.setup.desc_i[ef][em]['C']]['fls']
+                            
+                            if len(self.setup.agrid_s)>1  :
+                                self.ils_i[ind[i_agree_coh],t+1] = \
+                                     fls_policy[self.iassets[ind[i_agree_coh],t+1],self.iexo[ind[i_agree_coh],t+1],self.itheta[ind[i_agree_coh],t+1]]
+                            else:
+                                self.ils_i[ind[i_agree_coh],t+1] = \
+                                    fls_policy[self.iexo[ind[i_agree_coh],t+1],self.itheta[ind[i_agree_coh],t+1],0]
+                            
                         
-                        
-                    if np.any(i_agree_coh):
-                        
-                        self.itheta[ind[i_agree_coh],t+1] = it_out[i_agree_coh]#*0+60
-                        self.iexo[ind[i_agree_coh],t+1] = iall[i_agree_coh]#*0+199
-                        self.iexos[ind[i_agree_coh],t+1] = iall[i_agree_coh]#*0+199
-                        self.state[ind[i_agree_coh],t+1] = self.state_codes['Couple, C']
-                        self.iassets[ind[i_agree_coh],t+1] = ia_out[i_agree_coh]
-                        
-                        # FLS decision
-                        tg = self.Mlist[ipol].setup.v_thetagrid_fine
-                        #fls_policy = self.V[t+1]['Couple, C']['fls']
-                        fls_policy = self.Mlist[ipol].decisions[t+1][dd]['Couple, C']['fls']
-                        
-                        if len(self.setup.agrid_s)>1  :
-                            self.ils_i[ind[i_agree_coh],t+1] = \
-                                 fls_policy[self.iassets[ind[i_agree_coh],t+1],self.iexo[ind[i_agree_coh],t+1],self.itheta[ind[i_agree_coh],t+1]]
-                        else:
-                            self.ils_i[ind[i_agree_coh],t+1] = \
-                                fls_policy[self.iexo[ind[i_agree_coh],t+1],self.itheta[ind[i_agree_coh],t+1],0]
-                        
-                    
-                        
-                    if np.any(i_disagree_or_nomeet):
-                        # do not touch assets
-                        self.iexo[ind[i_disagree_or_nomeet],t+1]  = iz[i_disagree_or_nomeet]
-                        self.state[ind[i_disagree_or_nomeet],t+1] = self.state_codes[ss]
-                        self.ils_i[ind[i_disagree_or_nomeet],t+1] = self.ils_def
-                        
+                            
+                        if np.any(i_disagree_or_nomeet):
+                            # do not touch assets
+                            self.iexo[ind[i_disagree_or_nomeet],t+1]  = iz[i_disagree_or_nomeet]
+                            self.state[ind[i_disagree_or_nomeet],t+1] = self.state_codes[ss]
+                            self.ils_i[ind[i_disagree_or_nomeet],t+1] = self.ils_def
+                            
                         
                 #elif sname == "Couple, M" or sname == "Couple, C":
                 
                 def couples():
                     
+                    ind=ind_raw.copy()
+                    
                     ss = self.single_state
                     decision = self.Mlist[ipol].decisions[t][dd][sname]
+                    
+                    #get Education
+                    ef=self.setup.edu[sname][0]
+                    em=self.setup.edu[sname][1]
     
                     
                     # by default keep the same theta and weights
@@ -587,8 +622,8 @@ class Agents:
                     
                     
                     
-                    zf_grid = self.setup.exo_grids['Female, single'][t+1]
-                    zm_grid = self.setup.exo_grids['Male, single'][t+1]
+                    zf_grid = self.setup.exo_grids[self.setup.desc_i['f'][ef]][t+1]
+                    zm_grid = self.setup.exo_grids[self.setup.desc_i['m'][em]][t+1]
                     
                     
                     
@@ -596,13 +631,13 @@ class Agents:
                     if np.any(i_div):
                         
                         if len(self.setup.agrid_s)>1  :
-                            income_fem = np.exp(zf_grid[izf[i_div]]+self.setup.pars['f_wage_trend'][t+1])
-                            income_mal = np.exp(zm_grid[izm[i_div]]+self.setup.pars['m_wage_trend'][t+1])
+                            income_fem = np.exp(zf_grid[izf[i_div]]+self.setup.pars['wtrend']['f'][ef][t+1])
+                            income_mal = np.exp(zm_grid[izm[i_div]]+self.setup.pars['wtrend']['m'][em][t+1])
                             
                             income_share_fem = (income_fem) / (income_fem + income_mal)
                             
                             # this part determines assets
-                            costs = self.Mlist[ipol].setup.div_costs if sname == 'Couple, M' else self.Mlist[ipol].setup.sep_costs
+                            costs = self.Mlist[ipol].setup.div_costs if self.setup.desc[sname] == 'Couple, M' else self.Mlist[ipol].setup.sep_costs
                                        
                             share_f, share_m = costs.shares_if_split(income_share_fem)
                             
@@ -658,7 +693,8 @@ class Agents:
                         self.du[ind[i_div],t+1]= 0
                         self.duf[ind[i_div],t+1]= 0
                         
-                        if sname == "Couple, M":self.divorces[ind[i_div],t+1]=True
+                        
+                        if self.setup.desc[sname] == "Couple, M":self.divorces[ind[i_div],t+1]=True
                        
 
                         #FLS
@@ -672,7 +708,7 @@ class Agents:
                         #tg = self.setup.v_thetagrid_fine
                         
                         #Distinguish between marriage and cohabitation
-                        if sname == "Couple, M":
+                        if self.setup.desc[sname] == "Couple, M":
                             self.state[ind[i_ren],t+1] = self.state_codes[sname]
                             
                             if len(self.setup.agrid_s)>1  :
@@ -689,12 +725,12 @@ class Agents:
                             else:
                                ipick = (self.iexo[ind[i_ren],t+1],self.itheta[ind[i_ren],t+1],0)
                             
-                            ils_if_mar = self.Mlist[ipol].decisions[t+1][dd]["Couple, M"]['fls'][ipick]
-                            ils_if_coh = self.Mlist[ipol].decisions[t+1][dd]["Couple, C"]['fls'][ipick]
+                            ils_if_mar = self.Mlist[ipol].decisions[t+1][dd][self.setup.desc_i[ef][em]['M']]['fls'][ipick]
+                            ils_if_coh = self.Mlist[ipol].decisions[t+1][dd][self.setup.desc_i[ef][em]['C']]['fls'][ipick]
                             
                             self.ils_i[ind[i_ren],t+1] = i_coh1*ils_if_coh+(1-i_coh1)*ils_if_mar
-                            self.state[ind[i_ren],t+1] = i_coh1*self.state_codes["Couple, C"]+(1-i_coh1)*self.state_codes["Couple, M"]
-                          
+                            self.state[ind[i_ren],t+1] = i_coh1*self.state_codes[self.setup.desc_i[ef][em]['C']]+(1-i_coh1)*self.state_codes[self.setup.desc_i[ef][em]['M']]
+                            self.partneredu[ind[i_ren],t+1]=em if self.female else ef 
                                 
                             
                         
@@ -703,7 +739,7 @@ class Agents:
                         # do not touch theta as already updated
                         
                         #Distinguish between marriage and cohabitation
-                        if sname == "Couple, M":
+                        if self.setup.desc[sname] == "Couple, M":
                             self.state[ind[i_sq],t+1] = self.state_codes[sname]
                             
                             if len(self.setup.agrid_s)>1  :
@@ -715,26 +751,26 @@ class Agents:
                         else:
                             i_coh = decision['Cohabitation preferred to Marriage'][isc,iall,thts]
                             i_coh1=i_coh[i_sq]
-                            self.state[ind[i_sq],t+1] = i_coh1*self.state_codes["Couple, C"]+(1-i_coh1)*self.state_codes["Couple, M"]
+                            self.state[ind[i_sq],t+1] = i_coh1*self.state_codes[self.setup.desc_i[ef][em]['C']]+(1-i_coh1)*self.state_codes[self.setup.desc_i[ef][em]['M']]
                             
                             if len(self.setup.agrid_s)>1  :
                                 ipick = (self.iassets[ind[i_sq],t+1],self.iexo[ind[i_sq],t+1],self.itheta[ind[i_sq],t+1])
                             else:
                                 ipick = (self.iexo[ind[i_sq],t+1],self.itheta[ind[i_sq],t+1],0)
                     
-                            ils_if_mar = self.Mlist[ipol].decisions[t+1][dd]["Couple, M"]['fls'][ipick]
-                            ils_if_coh = self.Mlist[ipol].decisions[t+1][dd]["Couple, C"]['fls'][ipick]
+                            ils_if_mar = self.Mlist[ipol].decisions[t+1][dd][self.setup.desc_i[ef][em]['M']]['fls'][ipick]
+                            ils_if_coh = self.Mlist[ipol].decisions[t+1][dd][self.setup.desc_i[ef][em]['C']]['fls'][ipick]
                            
                             self.ils_i[ind[i_sq],t+1] = i_coh1*ils_if_coh+(1-i_coh1)*ils_if_mar
-                            self.state[ind[i_sq],t+1] = i_coh1*self.state_codes["Couple, C"]+(1-i_coh1)*self.state_codes["Couple, M"]
-                
+                            self.state[ind[i_sq],t+1] = i_coh1*self.state_codes[self.setup.desc_i[ef][em]['C']]+(1-i_coh1)*self.state_codes[self.setup.desc_i[ef][em]['M']]
+                            self.partneredu[ind[i_sq],t+1]=em if self.female else ef         
                 
                 if sname == self.single_state:
                     
                     single()
                     
                     
-                elif sname == "Couple, M" or sname == "Couple, C":
+                elif self.setup.desc[sname] == "Couple, M" or self.setup.desc[sname] == "Couple, C":
                     
                     couples()
                     
@@ -760,6 +796,8 @@ class AgentsPooled:
         self.divorces = combine([a.divorces for a in AgentsList])
         self.ipsim = combine([a.ipsim for a in AgentsList])
         self.c = combine([a.c for a in AgentsList])
+        self.education= combine([a.education for a in AgentsList])
+        self.partneredu= combine([a.partneredu for a in AgentsList])
         self.s = combine([a.s for a in AgentsList])
         self.x = combine([a.x for a in AgentsList])
         self.du = combine([a. du for a in AgentsList])

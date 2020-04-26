@@ -44,9 +44,19 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
  
     mdl=mdl_list[0] 
  
-         
+        
     #Import simulated values   
-    state=agents.state  
+    edu=agents.education
+    edup=agents.partneredu
+    state_true=agents.state  
+    
+    #Modify state names
+    state=state_true.copy()
+    state[(state_true==0) | (state_true==2)]==0
+    state[(state_true==1) | (state_true==3)]==1
+    state[(state_true==4) | (state_true==5)| (state_true==6 )| (state_true==7)]==2
+    state[(state_true==8) | (state_true==9)| (state_true==10 )| (state_true==11)]==3
+    
     assets_t=mdl.setup.agrid_c[agents.iassets] 
     assets_t[agents.state<=1]=mdl.setup.agrid_s[agents.iassets[agents.state<=1]] 
     iexo=agents.iexo      
@@ -65,7 +75,9 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     single=np.array((state==0),dtype=bool) 
     betag=mdl.setup.pars['beta_t'][0]**(np.linspace(1,len(state[0,:]),len(state[0,:]))-1) 
     betam=np.reshape(np.repeat(betag,len(state[:,0])),(len(state[:,0]),len(betag)),order='F') 
-    #agegrid=np.reshape(agegridtemp,resha) 
+    
+    
+
      
     #Fill psi and ushift here 
     for i in range(len(state[0,:])): 
@@ -76,51 +88,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
             if np.any(pos):psim[:,i][pos]=((setup.exogrid.psi_t[0][i][(setup.all_indices(i,agents.ipsim[:,i][pos]))[3]])) 
      
      
-    std1=np.std(psim[:,1])
-    psi_check[:,0]=psim[:,1]
-    psi_check[single]=0.0 
-    state_psid=agents_male.state 
-    labor_psid=agents_male.ils_i 
-    iexo_psid=agents_male.iexo 
-    change_psid=agents_male.policy_ind 
-    
-    for i in range(1,mdl.setup.pars['Tret']-1):
-        
-        couples0=(dur[:,i]==0) & (dur[:,i-1]==0) & (state[:,i]>1)
-        std0=0
-        mean0=0
-        if np.any(couples0):std1=np.std(psim[couples0,i]-psim[couples0,i-1]) 
-        if np.any(couples0):mean1=np.mean(psim[couples0,i]-psim[couples0,i-1]) 
-        
-        couples1=(dur[:,i]==1) & (dur[:,i-1]==0) & (state[:,i-1]>1)
-        std1=0
-        mean1=0
-        if np.any(couples1):std1=np.std(psi_check[couples1,i]-psi_check[couples1,i-1]) 
-        if np.any(couples1):mean1=np.mean(psi_check[couples1,i]-psi_check[couples1,i-1]) 
-        
-        couples2=(dur[:,i]==2) & (dur[:,i-1]==1) & (state[:,i-1]>1)
-        std2=0
-        mean2=0
-        if np.any(couples2):std2=np.std(psi_check[couples2,i]-psi_check[couples2,i-1])
-        if np.any(couples2):mean2=np.mean(psi_check[couples2,i]-psi_check[couples2,i-1])
-        
-        couples3=(dur[:,i]==3) & (dur[:,i-1]==2) & (state[:,i-1]>1)
-        std3=0
-        mean3=0
-        if np.any(couples3):std3=np.std(psi_check[couples3,i]-psi_check[couples3,i-1]) 
-        if np.any(couples3):mean3=np.mean(psi_check[couples3,i]-psi_check[couples3,i-1]) 
-        
-        couples4=(dur[:,i]==3) & (dur[:,i-1]==3) & (state[:,i-1]>1)
-        std4=0
-        mean4=0
-        if np.any(couples4):std4=np.std(psi_check[couples4,i]-psi_check[couples4,i-1]) 
-        if np.any(couples4):mean4=np.mean(psi_check[couples4,i]-psi_check[couples4,i-1]) 
-        
-
-        
-        print('Variance of innovation in t={} is {},{},{},{},{}'.format(i,std0,std1,std2,std3,std4))
-        print('Mean of innovation in t={} is {},{},{},{},{}'.format(i,mean0,mean1,mean2,mean3,mean4))
-     
+  
     if draw: 
         #Import values for female labor supply (simulated men only) 
 
@@ -155,8 +123,9 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         
          
     #Get states codes    
-    state_codes = {name: i for i, name in enumerate(mdl.setup.state_names)}    
-       
+    state_codes_complete = {name: i for i, name in enumerate(mdl.setup.state_names)}    
+    state_codes = {'Female, single': 0, 'Male, single': 1, 'Couple, M': 2,'Couple, C': 3}   
+    
      ###########################################    
     #Sample selection    
     ###########################################    
@@ -180,7 +149,9 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     female=female[:,:mdl.setup.pars['T']]    
     labor_psid=labor_psid[:,:mdl.setup.pars['T']] 
     iexo_psid=iexo_psid[:,:mdl.setup.pars['T']] 
-     
+    edu=edu[:,:mdl.setup.pars['T']] 
+    edup=edup[:,:mdl.setup.pars['T']] 
+    
     if draw: 
         iexo_w=iexo_w[:,:mdl.setup.pars['T']] 
         labor_w=labor_w[:,:mdl.setup.pars['T']] 
@@ -195,43 +166,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         divorces_w=divorces_w[:,:mdl.setup.pars['T']] 
        
         
-    ####################################################################    
-    #Now drop observation to mimic the actual data gathering process    
-    ####################################################################    
-        
-    #Get distribution of age conditional on cohabiting on the second wave    
-    with open('age_sw.pkl', 'rb') as file:    
-        age_sw=pickle.load(file)    
-            
-    keep=(assets_t[:,0]>-1)    
-       
-    
-    summa=0.0    
-    summa1=0.0    
-    for i in age_sw:    
-        summa+=age_sw[i]    
-        keep[int(summa1*len(state[:,0])/sum(age_sw.values())):int(summa*len(state[:,0])/sum(age_sw.values()))]=(state[int(summa1*len(state[:,0])/sum(age_sw.values())):int(summa*len(state[:,0])/sum(age_sw.values())),int((i-20)/mdl.setup.pars['py'])]!=3)    
-          
-        summa1+=age_sw[i]    
-    
-     
-    state=state[keep,]     
-    changep=changep[keep,]  
-    female=female[keep,]  
-    iexo=iexo[keep,] 
-    assets_t=assets_t[keep,] 
-    labor=labor[keep,] 
-    dur_work=dur[keep,]
-    duf_work=durf[keep,]
-     
-       
-     
-
-     
-    try: 
-        print('The average deviation from actual to final ditribution is {:0.2f}%'.format(np.mean(abs(prima-dopo))*100)) 
-    except: 
-        print('No stratified sampling') 
+ 
     ###################################################################   
     #Get age we stop observing spells: this matters for hazards 
     ###################################################################   

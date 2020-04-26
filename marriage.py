@@ -12,7 +12,7 @@ from numba import njit, vectorize
 from gridvec import VecOnGrid
 
 
-def v_mar_igrid(setup,t,V,icouple,ind_or_inds,*,female,marriage,interpolate=True,return_all=False):
+def v_mar_igrid(setup,t,V,icouple,ind_or_inds,desc,ef,em,*,female,marriage,interpolate=True,return_all=False):
     # this returns value functions for couple that entered the last period with
     # (s,Z,theta) from the grid and is allowed to renegotiate them or breakup
     
@@ -28,9 +28,9 @@ def v_mar_igrid(setup,t,V,icouple,ind_or_inds,*,female,marriage,interpolate=True
     
     
     if marriage:
-        coup = 'Couple, M'
+        coup = setup.desc_i[ef][em]['M']
     else:
-        coup = 'Couple, C'
+        coup = setup.desc_i[ef][em]['C']
     
     
     dtype = setup.dtype
@@ -40,7 +40,7 @@ def v_mar_igrid(setup,t,V,icouple,ind_or_inds,*,female,marriage,interpolate=True
     gamma = setup.pars['m_bargaining_weight']   
     
     
-    VMval_single, VFval_single = V['Male, single']['V'], V['Female, single']['V']
+    VMval_single, VFval_single = V[setup.desc_i['m'][em]]['V'], V[setup.desc_i['f'][ef]]['V']
     VMval_postren, VFval_postren = V[coup]['VM'][icouple,...], V[coup]['VF'][icouple,...]
     
     
@@ -88,13 +88,13 @@ def v_mar_igrid(setup,t,V,icouple,ind_or_inds,*,female,marriage,interpolate=True
 
 
 
-def v_no_mar(setup,t,V,icouple,ind_or_inds,*,female,marriage):
+def v_no_mar(setup,t,V,icouple,ind_or_inds,desc,ef,em,*,female,marriage):
     # emulates v_mar_igrid but with no marriage
     
     
     ind, izf, izm, ipsi = setup.all_indices(t,ind_or_inds)
     
-    vmout, vfout = V['Male, single']['V'][:,izm], V['Female, single']['V'][:,izf]
+    vmout, vfout = V[setup.desc_i['m'][em]]['V'][:,izm], V[setup.desc_i['f'][ef]]['V'][:,izf]
     
     
     nbsout = np.zeros_like(vmout,dtype=np.float32)

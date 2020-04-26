@@ -113,12 +113,15 @@ class Model(object):
             #get_ipython().magic('reset -sf')
             # v_iter should work fine ifor EV == None
             
-            ushift = self.setup.utility_shifters[desc]            
+            ushift = self.setup.utility_shifters[desc] 
+            edu=setup.edu[desc]
             
-            if desc == 'Female, single' or desc == 'Male, single':
+            if setup.desc[desc] == 'Female, single' or setup.desc[desc] == 'Male, single':
                 
-                female = (desc == 'Female, single')                
-                V, c, x, s = v_iter_single(setup,dd,t,EV,female,ushift)    
+                female = (setup.desc[desc] == 'Female, single')     
+                
+                EVt=None if EV==None else EV['expected']
+                V, c, x, s = v_iter_single(setup,dd,t,EVt,female,edu,ushift)    
 
                 
                 if self.display_v: print('at t = {} for {} mean V[0,:] is {}'.format(t,desc,V[0,:].mean()))
@@ -126,9 +129,10 @@ class Model(object):
                 return {desc: {'V':V,'c':c,'x':x,'s':s}}   
                 
              
-            elif desc == 'Couple, M' or desc == 'Couple, C':
+            elif setup.desc[desc] == 'Couple, M' or setup.desc[desc] == 'Couple, C':
+            
                 
-                V, VF, VM, c, x, s, fls, V_all_l = v_iter_couple(setup,dd,t,EV,ushift)    
+                V, VF, VM, c, x, s, fls, V_all_l = v_iter_couple(setup,dd,t,EV,edu,ushift)    
 
                       
                 if self.display_v: print('at t = {} for {} mean V[0,:,:] is {}'.format(t,desc,V[0,:,:].mean()))
@@ -140,13 +144,35 @@ class Model(object):
         
         def v_integrator(setup,desc,dd,t,V_next,decc=None):
             
-            if desc == 'Female, single' or desc == 'Male, single':
-                female = (desc == 'Female, single')
-                EV, dec = ev_single(setup,V_next,setup.agrid_s,female,dd,t,decc=decc)
-            elif desc == 'Couple, M':
-                EV, dec = ev_couple_m_c(setup,V_next,dd,t,True)
-            elif desc == 'Couple, C':
-                EV, dec = ev_couple_m_c(setup,V_next,dd,t,False)
+            #Get education
+            edu=setup.edu[desc]
+            
+            if self.setup.desc[desc] == 'Female, single' or self.setup.desc[desc] == 'Male, single':
+                female = (setup.desc[desc] == 'Female, single')
+                
+                #Integrated Values for a certain partner with education eo---we put this together later on
+                EV,dec=dict(),dict()
+                for eduo in ['e','n']:
+                    
+                    if self.setup.desc[desc] == 'Female, single':
+                        ef=edu
+                        em=eduo
+                    else:
+                        ef=eduo
+                        em=edu
+                        
+                    EV[eduo], dec[eduo] = ev_single(setup,V_next,setup.agrid_s,female,ef,em,desc,dd,t,decc=decc[ef][em])
+                    
+                #Now put together the expected value
+                if female:
+                    EV['expected']=setup.prob['f'][edu]['e']*EV['e']+setup.prob['f'][edu]['n']*EV['n']
+                else:
+                    EV['expected']=setup.prob['m']['e'][edu]*EV['e']+setup.prob['m']['n'][edu]*EV['n']
+                
+            elif self.setup.desc[desc] == 'Couple, M':
+                EV, dec = ev_couple_m_c(setup,V_next,edu,desc,dd,t,True)
+            elif self.setup.desc[desc] == 'Couple, C':
+                EV, dec = ev_couple_m_c(setup,V_next,edu,desc,dd,t,False)
                 
                 
             if type(EV) is tuple:
@@ -191,7 +217,7 @@ class Model(object):
         # on fine grid for theta that is used for integration and simulations.
         
         v = vout[desc]
-        if desc == 'Couple, M' or desc == 'Couple, C':
+        if self.setup.desc[desc] == 'Couple, M' or self.setup.desc[desc] == 'Couple, C':
             
             #cint = self.setup.v_thetagrid_fine.apply(v['c'],axis=2)
             sint = self.setup.v_thetagrid_fine.apply(v['s'],axis=2).astype(self.dtype)
@@ -244,8 +270,14 @@ class Model(object):
                     if t == T-1:
                         V_d, dec = self.initializer(desc,dd,t)
                     else:
-                        if desc == 'Female, single' or desc == 'Male, single':
-                            V_d, dec = self.iterator(desc,dd,t,Vnext,decnowd['Couple, C'])   
+                        if self.setup.desc[desc] == 'Female, single' or self.setup.desc[desc] == 'Male, single':
+                            
+                            #Wrap up cohabitation decisions
+                            decc={'e':{'e':decnowd['Couple, C ee'],'n':decnowd['Couple, C en']},
+                                  'n':{'e':decnowd['Couple, C ne'],'n':decnowd['Couple, C nn']}}
+                            
+                            
+                            V_d, dec = self.iterator(desc,dd,t,Vnext,decc)   
                         else:
                             V_d, dec = self.iterator(desc,dd,t,Vnext) 
                        

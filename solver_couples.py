@@ -16,7 +16,7 @@ if system() != 'Darwin' and system() != 'Windows':
 else:    
     nbatch_def = 17
 
-def v_iter_couple(setup,dd,t,EV_tuple,ushift,nbatch=nbatch_def,verbose=False,
+def v_iter_couple(setup,dd,t,EV_tuple,edu,ushift,nbatch=nbatch_def,verbose=False,
                               force_f32 = False):
     
     if verbose: start = default_timer()
@@ -28,16 +28,18 @@ def v_iter_couple(setup,dd,t,EV_tuple,ushift,nbatch=nbatch_def,verbose=False,
     
     ls = setup.ls_levels
     nls = len(ls)
+ 
+    #Get education
+    e=edu[0] #Female
+    eo=edu[1] #Male
     
-    
-    # type conversion is here
-    
-    zf  = setup.exogrid.all_t[dd][t][:,0]
-    zm  = setup.exogrid.all_t[dd][t][:,1]
-    zftrend = setup.pars['f_wage_trend'][t]
-    zmtrend = setup.pars['m_wage_trend'][t]
+    # type conversion is here   
+    zf  = setup.exogrid.all_t[e][eo][dd][t][:,0]
+    zm  = setup.exogrid.all_t[e][eo][dd][t][:,1]
+    zftrend = setup.pars['wtrend']['f'][e][t]
+    zmtrend = setup.pars['wtrend']['m'][eo][t]
 
-    psi = setup.exogrid.all_t[dd][t][:,2]
+    psi = setup.exogrid.all_t[e][eo][dd][t][:,2]
     beta = setup.pars['beta_t'][t]
     sigma = setup.pars['crra_power']
     R = setup.pars['R_t'][t]

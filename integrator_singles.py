@@ -14,7 +14,7 @@ from marriage import v_mar_igrid, v_no_mar
 
 
 
-def ev_single(setup,V,sown,female,dd,t,trim_lvl=0.001,decc=None):
+def ev_single(setup,V,sown,female,ef,em,desc,dd,t,trim_lvl=0.001,decc=None):
     # expected value of single person meeting a partner with a chance pmeet
     pmeet = setup.dtype( setup.pars['pmeet_t'][t] )
     
@@ -25,17 +25,18 @@ def ev_single(setup,V,sown,female,dd,t,trim_lvl=0.001,decc=None):
 #    ev_single_meet_test(setup,V,sown,female,t,
 #                                      skip_mar=skip_mar,trim_lvl=trim_lvl)
 #    
-    EV_meet, dec = ev_single_meet(setup,V,sown,female,dd,t,
+    EV_meet, dec = ev_single_meet(setup,V,sown,female,ef,em,desc,dd,t,
                                       skip_mar=skip_mar,trim_lvl=trim_lvl,dec_c=decc)
     
     
     
     if female:
-        M = setup.exogrid.zf_t_mat[t].T
-        EV_nomeet =  np.dot(V['Female, single']['V'],M).astype(setup.dtype)
+        M = setup.exogrid.zf_t_mat[ef][t].T
+        
     else:
-        M = setup.exogrid.zm_t_mat[t].T
-        EV_nomeet =  np.dot(V['Male, single']['V'],M).astype(setup.dtype)
+        M = setup.exogrid.zm_t_mat[em][t].T
+        
+    EV_nomeet =  np.dot(V[desc]['V'],M).astype(setup.dtype)
     
     assert EV_nomeet.dtype == setup.dtype
     assert EV_meet.dtype   == setup.dtype
@@ -44,18 +45,20 @@ def ev_single(setup,V,sown,female,dd,t,trim_lvl=0.001,decc=None):
     return (1-pmeet)*EV_nomeet + pmeet*EV_meet, dec
     
 
-def ev_single_meet(setup,V,sown,female,dd,t,skip_mar=False,trim_lvl=0.000001,dec_c=None):
+def ev_single_meet(setup,V,sown,female,ef,em,desc,dd,t,skip_mar=False,trim_lvl=0.000001,dec_c=None):
     # computes expected value of single person meeting a partner
     
     # this creates potential partners and integrates over them
     # this also removes unlikely combinations of future z and partner's 
     # characteristics so we have to do less bargaining
     
+    
+    
     nexo = setup.pars['nexo_t'][t]
     ns = sown.size
     
-    
-    p_mat = setup.part_mats['Female, single'][0][t].T if female else setup.part_mats['Male, single'][0][t].T
+    edu=ef if female else em
+    p_mat = setup.part_mats[setup.desc[desc]][edu][t].T 
     p_mat = p_mat.astype(setup.dtype,copy=False)
         
     V_next = np.ones((ns,nexo),dtype=setup.dtype)*(-1e10)
@@ -70,7 +73,7 @@ def ev_single_meet(setup,V,sown,female,dd,t,skip_mar=False,trim_lvl=0.000001,dec
     npart = i_assets_c.shape[1]
     
     
-    matches = setup.matches['Female, single'][t] if female else setup.matches['Male, single'][t]
+    matches = setup.matches[setup.desc[desc]][ef][t] if female else setup.matches[setup.desc[desc]][em][t] 
     
     
     dec = np.zeros(matches['iexo'].shape,dtype=np.bool)
@@ -81,19 +84,19 @@ def ev_single_meet(setup,V,sown,female,dd,t,skip_mar=False,trim_lvl=0.000001,dec
     for i in range(npart):
         if not skip_mar:
             # try marriage
-            res_m = v_mar_igrid(setup,t,V,i_assets_c[:,i],inds,
+            res_m = v_mar_igrid(setup,t,V,i_assets_c[:,i],inds,desc,ef,em,
                                      female=female,marriage=True)
             
             
-            res_c = v_mar_igrid(setup,t,V,i_assets_c[:,i],inds,
+            res_c = v_mar_igrid(setup,t,V,i_assets_c[:,i],inds,desc,ef,em,
                                      female=female,marriage=False)
         else:
             # try marriage
-            res_m = v_no_mar(setup,t,V,i_assets_c[:,i],inds,
+            res_m = v_no_mar(setup,t,V,i_assets_c[:,i],inds,desc,ef,em,
                                      female=female,marriage=True)
             
             
-            res_c = v_no_mar(setup,t,V,i_assets_c[:,i],inds,
+            res_c = v_no_mar(setup,t,V,i_assets_c[:,i],inds,desc,ef,em,
                                      female=female,marriage=False)
         
         

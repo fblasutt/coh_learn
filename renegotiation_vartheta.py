@@ -22,7 +22,7 @@ else:
 from renegotiation_vartheta_gpu import v_ren_gpu_oneopt, v_ren_gpu_twoopt
         
 
-def v_ren_vt(setup,V,marriage,dd,t,return_extra=False,return_vdiv_only=False,rescale=True,
+def v_ren_vt(setup,V,marriage,dd,edu,desc,t,return_extra=False,return_vdiv_only=False,rescale=True,
              thetafun=None, mixed_rescale=True):
     # this returns value functions for couple that entered the period with
     # (s,Z,theta) from the grid and is allowed to renegotiate them or breakup
@@ -53,7 +53,7 @@ def v_ren_vt(setup,V,marriage,dd,t,return_extra=False,return_vdiv_only=False,res
     # values of divorce
     vf_n, vm_n = v_div_vartheta(
         setup, dc, dd,t, sc,
-        V['Male, single']['V'], V['Female, single']['V'],
+        V[setup.desc_i['m'][edu[1]]]['V'], V[setup.desc_i['f'][edu[0]]]['V'],
         izf, izm, cost_fem=dc.money_lost_f, cost_mal=dc.money_lost_m, fun=thetafun)
     
     assert vf_n.dtype == setup.dtype
@@ -71,20 +71,22 @@ def v_ren_vt(setup,V,marriage,dd,t,return_extra=False,return_vdiv_only=False,res
         
     if marriage:        
         
+        #Value of the description
+        descr=setup.desc_i[edu[0]][edu[1]]['M']
         if not ugpu:
             v_out_nor, vf_out, vm_out, itheta_out, _ = \
-             v_ren_core_two_opts_with_int(V['Couple, M']['V'][None,...],
-                                          V['Couple, M']['VF'][None,...], 
-                                          V['Couple, M']['VM'][None,...], 
+             v_ren_core_two_opts_with_int(V[descr]['V'][None,...],
+                                          V[descr]['VF'][None,...], 
+                                          V[descr]['VM'][None,...], 
                                           vf_n, vm_n,
                                           itht, wntht, thtgrid)
              
         else:
            
             v_out_nor, vf_out, vm_out, itheta_out  = \
-                v_ren_gpu_oneopt(V['Couple, M']['V'],
-                                 V['Couple, M']['VF'],
-                                 V['Couple, M']['VM'],
+                v_ren_gpu_oneopt(V[descr]['V'],
+                                 V[descr]['VF'],
+                                 V[descr]['VM'],
                               vf_n, vm_n, itht, wntht, thtgrid)
                 
                
@@ -92,21 +94,23 @@ def v_ren_vt(setup,V,marriage,dd,t,return_extra=False,return_vdiv_only=False,res
         assert v_out_nor.dtype == setup.dtype
          
     else:
+        #Value of the description
+        descrc,descrm=setup.desc_i[edu[0]][edu[1]]['C'],setup.desc_i[edu[0]][edu[1]]['M']
         
         if not ugpu:
             v_out_nor, vf_out, vm_out, itheta_out, switch = \
                 v_ren_core_two_opts_with_int(
-                           np.stack([V['Couple, C']['V'], V['Couple, M']['V']]),
-                           np.stack([V['Couple, C']['VF'],V['Couple, M']['VF']]), 
-                           np.stack([V['Couple, C']['VM'],V['Couple, M']['VM']]), 
+                           np.stack([V[descrc]['V'], V[descrm]['V']]),
+                           np.stack([V[descrc]['VF'],V[descrm]['VF']]), 
+                           np.stack([V[descrc]['VM'],V[descrm]['VM']]), 
                                     vf_n, vm_n,
                                     itht, wntht, thtgrid)        
             
         else:
             v_out_nor, vf_out, vm_out, itheta_out, switch = \
-                v_ren_gpu_twoopt(V['Couple, C']['V'], V['Couple, M']['V'],
-                                 V['Couple, C']['VF'], V['Couple, M']['VF'],
-                                 V['Couple, C']['VM'], V['Couple, M']['VM'],
+                v_ren_gpu_twoopt(V[descrc]['V'], V[descrm]['V'],
+                                 V[descrc]['VF'], V[descrm]['VF'],
+                                 V[descrc]['VM'], V[descrm]['VM'],
                               vf_n, vm_n, itht, wntht, thtgrid)
         
         assert v_out_nor.dtype == setup.dtype

@@ -198,16 +198,22 @@ def mdl_resid(x=None,save_to=None,load_from=None,return_format=['distance'],
         
    
     #Get Number of simulated agent, malea and female
-    N=150000
-    Nf=int(N*age_uni['share_female'])
+    N=15000
+    Nf=N*age_uni['share_female']
     Nm=N-Nf
-    agents_fem = Agents( mdl_list ,age_uni['female'],female=True,pswitchlist=transition_matricesf,verbose=False,N=Nf)
-    agents_mal = Agents( mdl_list ,age_uni['male'],female=False,pswitchlist=transition_matricesm,verbose=False,N=Nm)
-    agents_pooled = AgentsPooled([agents_fem,agents_mal])
+    Nme=int(Nm*0.5)
+    Nmn=int(Nm*0.5)
+    Nfe=int(Nf*0.5)
+    Nfn=int(Nf*0.5)
+    agents_feme = Agents( mdl_list ,age_uni['female'],female=True,edu='e',pswitchlist=transition_matricesf,verbose=False,N=Nfe)
+    agents_male = Agents( mdl_list ,age_uni['male'],female=False,edu='e',pswitchlist=transition_matricesm,verbose=False,N=Nme)
+    agents_femn = Agents( mdl_list ,age_uni['female'],female=True,edu='n',pswitchlist=transition_matricesf,verbose=False,N=Nfn)
+    agents_maln = Agents( mdl_list ,age_uni['male'],female=False,edu='n',pswitchlist=transition_matricesm,verbose=False,N=Nmn)
+    agents_pooled = AgentsPooled([agents_feme,agents_male,agents_femn,agents_maln])
     
     
     #Compute moments
-    moments = moment(mdl_list,agents_pooled,agents_mal,draw=draw)
+    moments = moment(mdl_list,agents_pooled,agents_male,draw=draw)
     
     
     ############################################################

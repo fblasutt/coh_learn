@@ -12,7 +12,7 @@ from optimizers import v_optimize_couple
 
 
 
-def v_iter_single(setup,dd,t,EV,female,ushift,force_f32=False):
+def v_iter_single(setup,dd,t,EV,female,edu,ushift,force_f32=False):
     
     agrid_s = setup.agrid_s
     sgrid_s = setup.sgrid_s
@@ -23,8 +23,8 @@ def v_iter_single(setup,dd,t,EV,female,ushift,force_f32=False):
     
     using_pre_u=setup.usinglef_precomputed_u if female else setup.usinglem_precomputed_u
     using_pre_x=setup.usinglef_precomputed_x if female else setup.usinglem_precomputed_x
-    zvals = setup.exogrid.zf_t[t] if female else setup.exogrid.zm_t[t]
-    ztrend = setup.pars['f_wage_trend'][t] if female else setup.pars['m_wage_trend'][t]
+    zvals = setup.exogrid.zf_t[edu][t] if female else setup.exogrid.zm_t[edu][t]
+    ztrend = setup.pars['wtrend']['f'][edu][t] if female else setup.pars['wtrend']['m'][edu][t]
     #sigma = setup.pars['crra_power']
     beta = setup.pars['beta_t'][t]
     R = setup.pars['R_t'][t]
