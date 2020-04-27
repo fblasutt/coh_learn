@@ -70,8 +70,11 @@ class Agents:
         self.partnert=shokko[10,:,:]
         
         #True love shock
+        np.random.seed(1)
         self.shocke=np.reshape(np.random.normal(0.0, self.setup.pars['sigma_psi'], N*T),(N,T))
+        np.random.seed(2)
         self.shockmu=np.reshape(np.random.normal(0.0, self.setup.pars['sigma_psi_mu'], N*T),(N,T))
+        np.random.seed(3)
         self.shocke0=np.reshape(np.random.normal(0.0, self.setup.pars['sigma_psi']*self.setup.pars['sigma_psi_mult'], N*T),(N,T))
           
         
@@ -352,13 +355,10 @@ class Agents:
                 
                 def single():
 
-                         
+                    isedu=(self.partnert[ind_raw,t]<self.setup.prob[self.sex][self.edu]['e']) 
                     for eo in ['e','n']:
                         
-                                            
-                        #Get the potential partner first+iterate to check when it matche
-                        ind=ind_raw.copy()
-                        isedu=(self.partnert[ind_raw,t]<self.setup.prob[self.sex][self.edu]['e']) 
+                      
                         keepthis=isedu if eo=='e' else ~isedu 
                         ind=ind_raw[keepthis].copy()
                         
@@ -405,7 +405,11 @@ class Agents:
                         grid=self.setup.exogrid.psi_t[0][t+1]
                         shocks=self.setup.K[0]*(self.shocke0[ind,t+1]+self.shockmu[ind,t+1])
                         target=self.setup.pars['sigma_psi_init']
-                        ipsi,adjust=mc_init_normal_corr(mean,grid,shocks=shocks,target=target)
+                        #ipsi,adjust=mc_init_normal_corr(mean,grid,shocks=shocks,target=target)
+                        
+                        adjust=1.0
+                        ipsi=mc_init_normal_array(mean,grid,shocks=shocks,adjust=adjust)
+                        
                         mean1=adjust*shocks
                         self.predl[ind,t+1]=grid[abs(mean1[:,np.newaxis]-grid).argmin(axis=1)] 
                        
@@ -425,7 +429,7 @@ class Agents:
     #                    pmat_cum = mat_prob.cumsum(axis=1)
     #                    i_pmat = (v[:,None] > pmat_cum).sum(axis=1)
                         shk=self.setup.exogrid.psi_t[0][t+1][ipsi]
-                        print('The shock of predicted love is {}, true is {}, while theoricals are {} and {}'.format(np.std(shk),np.std(self.truel[ind,t+1]),self.setup.pars['sigma_psi_init'],self.setup.pars['sigma_psi']*self.setup.pars['sigma_psi_mult']))
+                       # print('The shock of predicted love is {}, true is {}, while theoricals are {} and {}'.format(np.std(shk),np.std(self.truel[ind,t+1]),self.setup.pars['sigma_psi_init'],self.setup.pars['sigma_psi']*self.setup.pars['sigma_psi_mult']))
                         
                         
                         
@@ -443,6 +447,8 @@ class Agents:
                         #those two below account for 20% of the time
                         i_pot_agree = matches['Decision'][ia,iznow,i_pmat]
                         i_m_preferred = matches['M or C'][ia,iznow,i_pmat]
+                        it_out = matches['theta'][ia,iznow,i_pmat] 
+                        ia_out = matches['ia'][ia,iznow,i_pmat]
                         
                         i_disagree = (~i_pot_agree)
                         i_disagree_or_nomeet = (i_disagree) | (i_nomeet)
@@ -478,7 +484,8 @@ class Agents:
                             self.iexos[ind[i_agree_mar],t+1] = iall[i_agree_mar]#*0+199
                             self.state[ind[i_agree_mar],t+1] = self.state_codes[self.setup.desc_i[ef][em]['M']]
                             self.iassets[ind[i_agree_mar],t+1] = ia_out[i_agree_mar]
-                            self.partneredu[ind[i_agree_mar]][t+1]=eo
+                            self.partneredu[ind[i_agree_mar],t+1]=eo
+                            
                             # FLS decision
                             #self.ils_i[ind[i_ren],t+1] = 
                             tg = self.Mlist[ipol].setup.v_thetagrid_fine                    
@@ -499,7 +506,7 @@ class Agents:
                             self.iexos[ind[i_agree_coh],t+1] = iall[i_agree_coh]#*0+199
                             self.state[ind[i_agree_coh],t+1] = self.state_codes[self.setup.desc_i[ef][em]['C']]
                             self.iassets[ind[i_agree_coh],t+1] = ia_out[i_agree_coh]
-                            self.partneredu[ind[i_agree_mar]][t+1]=eo
+                            self.partneredu[ind[i_agree_coh],t+1]=eo
                             
                             # FLS decision
                             tg = self.Mlist[ipol].setup.v_thetagrid_fine
@@ -558,7 +565,11 @@ class Agents:
                     grid=self.setup.exogrid.psi_t[dd][t+1]
                     shocks=self.setup.K[dd+1]*(self.shocke[ind,t+1]+self.shockmu[ind,t+1])
                     target=np.sqrt(np.var(mean)+self.setup.sigmad[dd]**2)
-                    ipsi,adjust=mc_init_normal_corr(mean,grid,shocks=shocks,target=target)
+                    #ipsi,adjust=mc_init_normal_corr(mean,grid,shocks=shocks,target=target)
+                    
+                    adjust=1.0
+                    ipsi=mc_init_normal_array(mean,grid,shocks=shocks,adjust=adjust)
+                        
                     mean1=mean+adjust*shocks
                     self.predl[ind,t+1]=grid[abs(mean1[:,np.newaxis]-grid).argmin(axis=1)] 
 #                    prova=self.setup.K[dd+1]*self.truel[ind,t+1]+(1-self.setup.K[dd+1])*self.setup.exogrid.psi_t[max(prev,0)][t][ipsio]
@@ -576,7 +587,7 @@ class Agents:
                     aft=self.setup.exogrid.psi_t[dd][t+1][ipsi]
                     diffe=bef-aft
                     
-                    print('The standard deviation of innovation in {} is {}, theorical is {}'.format(dd,np.std(diffe),self.setup.sigmad[dd]))
+                   # print('The standard deviation of innovation in {} is {}, theorical is {}'.format(dd,np.std(diffe),self.setup.sigmad[dd]))
                     
 
                     

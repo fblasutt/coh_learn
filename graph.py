@@ -22,7 +22,7 @@ from renegotiation_bilateral import v_ren_bil
 def v_reshape(setup,desc,field,V_by_t,Tmax,dd,tu=None): 
     # this reshapes V into many-dimensional object 
     if tu is None:
-        if desc == "Couple, C" or desc == "Couple, M": 
+        if  setup.desc[desc] =="Couple, C" or setup.desc[desc] == "Couple, M": 
                 
             v0 = V_by_t[0][dd][desc][field] if dd>=0 else V_by_t[0][desc][field]
     
@@ -43,7 +43,7 @@ def v_reshape(setup,desc,field,V_by_t,Tmax,dd,tu=None):
                 vin = V_by_t[t][dd][desc][field] if dd>=0 else  V_by_t[t][desc][field]
                 out[...,t] = vin 
     else:
-        if desc == "Couple, C" or desc == "Couple, M": 
+        if setup.desc[desc] == "Couple, C" or setup.desc[desc] == "Couple, M": 
             
             v0 = V_by_t[0][dd][desc][field][tu] if dd>=0 else V_by_t[0][desc][field][tu]
     
@@ -66,12 +66,10 @@ def v_reshape(setup,desc,field,V_by_t,Tmax,dd,tu=None):
      
     return out 
              
-             
- 
-    
+   
  
  
-def graphs(mdl,ai,zfi,zmi,psii,ti,thi,dd): 
+def graphs(mdl,ai,zfi,zmi,psii,ti,thi,dd,edu): 
     # Import Value Funcrtion previously saved on File 
     #with open('name_model.pkl', 'rb') as file: 
     #    (Packed,dec) = pickle.load(file) 
@@ -99,6 +97,12 @@ def graphs(mdl,ai,zfi,zmi,psii,ti,thi,dd):
     vtoutm_c=np.zeros([T,len(agrids),len(psig)]) 
     inds=np.zeros(len(psig)) 
      
+    
+    #Description of marriage and cohabitation given the current education
+    descm=setup.desc_i[edu[0]][edu[1]]['M']
+    descc=setup.desc_i[edu[0]][edu[1]]['C']
+    desc_f=setup.desc_i['f'][edu[0]]
+    desc_m=setup.desc_i['m'][edu[1]]
      
     # TODO: vectorize this part too (I do not understand what exactly it does...) 
    
@@ -112,14 +116,14 @@ def graphs(mdl,ai,zfi,zmi,psii,ti,thi,dd):
          
         ai_a = ai*np.ones_like(setup.agrid_s,dtype=np.int32) # these are assets of potential partner 
          
-        resc = v_mar_igrid(setup,t+1,Packed[t][dd],ai_a,inds,female=True,marriage=False) 
+        resc = v_mar_igrid(setup,t+1,Packed[t][dd],ai_a,inds,descc,edu[0],edu[1],female=True,marriage=False) 
         (vf_c,vm_c), nbs_c, decc, tht_c = resc['Values'], resc['NBS'], resc['Decision'], resc['theta'] 
          
         tcv=setup.thetagrid_fine[tht_c] 
         tcv[tht_c==-1]=None 
          
         # marriage 
-        resm = v_mar_igrid(setup,t,Packed[t][dd],ai_a,inds,female=True,marriage=True) 
+        resm = v_mar_igrid(setup,t,Packed[t][dd],ai_a,inds,descm,edu[0],edu[1],female=True,marriage=True) 
         (vf_m,vm_m), nbs_m, decm, tht_m = resm['Values'], resm['NBS'], resm['Decision'], resm['theta'] 
          
          
@@ -152,17 +156,17 @@ def graphs(mdl,ai,zfi,zmi,psii,ti,thi,dd):
     # if ti = 0 it creates an object that was not used for the solutions,  
     # as V in v_ren_new is the next period value function. ti-1 should be here. 
     if len(agrids)>1:
-        V_ren_c = v_ren_uni(setup,Packed[ti][dd],False,dd,ti-1,return_extra=True)[1]['Values'][0][np.arange(agrid.size),nex,inde] 
+        V_ren_c = v_ren_uni(setup,Packed[ti][dd],False,dd,edu,ti-1,return_extra=True)[1]['Values'][0][np.arange(agrid.size),nex,inde] 
         
         v_ren_mar = v_ren_uni if setup.div_costs.unilateral_divorce else v_ren_bil
         
-        V_ren_m = v_ren_mar(setup,Packed[ti][dd],True,dd,ti-1,return_extra=True)[1]['Values'][0]#[np.arange(agrid.size),nex,inde] 
+        V_ren_m = v_ren_mar(setup,Packed[ti][dd],True,dd,edu,ti-1,return_extra=True)[1]['Values'][0]#[np.arange(agrid.size),nex,inde] 
     else:
-        V_ren_c = v_ren_uni(setup,Packed[ti][dd],False,dd,ti-1,return_extra=True)[1]['Values'][0][np.arange(agrid.size),nex,inde] 
+        V_ren_c = v_ren_uni(setup,Packed[ti][dd],False,dd,edu,descc,ti-1,return_extra=True)[1]['Values'][0][np.arange(agrid.size),nex,inde] 
         
         v_ren_mar = v_ren_uni if setup.div_costs.unilateral_divorce else v_ren_bil
         
-        V_ren_m = v_ren_mar(setup,Packed[ti][dd],True,dd,ti-1,return_extra=True)[1]['Values'][0][np.arange(agrid.size),nex,inde] 
+        V_ren_m = v_ren_mar(setup,Packed[ti][dd],True,dd,edu,descm,ti-1,return_extra=True)[1]['Values'][0][np.arange(agrid.size),nex,inde] 
         
         
     #Divorced Women and Men 
@@ -171,92 +175,121 @@ def graphs(mdl,ai,zfi,zmi,psii,ti,thi,dd):
     # this thing assembles values of divorce / separation
     
     
-    vals = [{'Couple, M': 
-            v_ren_mar(setup,Packed[t][dd],True,dd,t-1,return_vdiv_only=True), 
-            'Couple, C': 
-            v_ren_uni(setup,Packed[t][dd],False,dd,t-1,return_vdiv_only=True), 
+    vals = [{descm: 
+            v_ren_mar(setup,Packed[t][dd],True,dd,edu,descm,t-1,return_vdiv_only=True), 
+            descc: 
+            v_ren_uni(setup,Packed[t][dd],False,dd,edu,descc,t-1,return_vdiv_only=True), 
            } 
             for t in range(T)] 
         
      
-    Vf_div = v_reshape(setup,'Couple, M','Value of Divorce, female',vals,T,-1)[...,0,:] 
-    Vm_div = v_reshape(setup,'Couple, M','Value of Divorce, male',vals,T,-1)[...,0,:] 
+    Vf_div = v_reshape(setup,descm,'Value of Divorce, female',vals,T,-1)[...,0,:] 
+    Vm_div = v_reshape(setup,descc,'Value of Divorce, male',vals,T,-1)[...,0,:] 
      
      
     # I take index 0 as ipsi does not matter for this 
      
     #Single Women 
              
-    Vfs, cfs, sfs = [v_reshape(setup,'Female, single',f,Packed,T,dd) 
+    Vfs, cfs, sfs = [v_reshape(setup,desc_f,f,Packed,T,dd) 
                         for f in ['V','c','s']] 
      
      
-    Vms, cms, sms = [v_reshape(setup,'Male, single',f,Packed,T,dd) 
+    Vms, cms, sms = [v_reshape(setup,desc_m,f,Packed,T,dd) 
                         for f in ['V','c','s']] 
                       
     #Couples: Marriage+Cohabitation 
      
-    ithetam_R = v_reshape(setup,'Couple, M','thetas',dec,T-1,dd) 
+    ithetam_R = v_reshape(setup,descm,'thetas',dec,T-1,dd) 
      
     thetam_R = setup.thetagrid_fine[ithetam_R] 
     thetam_R[ithetam_R==-1] = None 
      
-    ithetac_R = v_reshape(setup,'Couple, C','thetas',dec,T-1,dd) 
+    ithetac_R = v_reshape(setup,descc,'thetas',dec,T-1,dd) 
     thetac_R = setup.thetagrid_fine[ithetac_R] 
     thetac_R[ithetac_R==-1] = None 
      
     #Decisions to marry/cohabit/divorcce
-    aaa=dec[0][0]['Couple, C']['Decision']
+    aaa=dec[0][0][descc]['Decision']
     entry=  (i_mar*decm + (~i_mar)*decc)
-    m_over_c0= v_reshape(setup,'Couple, C','Cohabitation preferred to Marriage',dec,T-1,0)
-    m_over_c1= v_reshape(setup,'Couple, C','Cohabitation preferred to Marriage',dec,T-1,1)
-    m_over_c2= v_reshape(setup,'Couple, C','Cohabitation preferred to Marriage',dec,T-1,2)
-    m_over_c3= v_reshape(setup,'Couple, C','Cohabitation preferred to Marriage',dec,T-1,3)
-    nodiv0= v_reshape(setup,'Couple, C','Decision',dec,T-1,0)
-    nodiv1= v_reshape(setup,'Couple, C','Decision',dec,T-1,1)
-    nodiv2= v_reshape(setup,'Couple, C','Decision',dec,T-1,2)
-    nodiv3= v_reshape(setup,'Couple, C','Decision',dec,T-1,3)
-    val0= v_reshape(setup,'Couple, M','Values',dec,T-1,0,tu=1)
-    val1= v_reshape(setup,'Couple, M','Values',dec,T-1,1,1)
-    val2= v_reshape(setup,'Couple, M','Values',dec,T-1,2,1)
-    val3= v_reshape(setup,'Couple, M','Values',dec,T-1,3,1)
-    valc0= v_reshape(setup,'Couple, C','Values',dec,T-1,0,tu=1)
-    valc1= v_reshape(setup,'Couple, C','Values',dec,T-1,1,1)
-    valc2= v_reshape(setup,'Couple, C','Values',dec,T-1,2,1)
-    valc3= v_reshape(setup,'Couple, C','Values',dec,T-1,3,1)
+    m_over_c0= v_reshape(setup,descc,'Cohabitation preferred to Marriage',dec,T-1,0)
+    m_over_c1= v_reshape(setup,descc,'Cohabitation preferred to Marriage',dec,T-1,1)
+    m_over_c2= v_reshape(setup,descc,'Cohabitation preferred to Marriage',dec,T-1,2)
+    m_over_c3= v_reshape(setup,descc,'Cohabitation preferred to Marriage',dec,T-1,3)
+    nodiv0= v_reshape(setup,descc,'Decision',dec,T-1,0)
+    nodiv1= v_reshape(setup,descc,'Decision',dec,T-1,1)
+    nodiv2= v_reshape(setup,descc,'Decision',dec,T-1,2)
+    nodiv3= v_reshape(setup,descc,'Decision',dec,T-1,3)
+    val0= v_reshape(setup,descm,'Values',dec,T-1,0,tu=1)
+    val1= v_reshape(setup,descm,'Values',dec,T-1,1,1)
+    val2= v_reshape(setup,descm,'Values',dec,T-1,2,1)
+    val3= v_reshape(setup,descm,'Values',dec,T-1,3,1)
+    valc0= v_reshape(setup,descc,'Values',dec,T-1,0,tu=1)
+    valc1= v_reshape(setup,descc,'Values',dec,T-1,1,1)
+    valc2= v_reshape(setup,descc,'Values',dec,T-1,2,1)
+    valc3= v_reshape(setup,descc,'Values',dec,T-1,3,1)
     
     #Value Functions
-    Vm0, Vmm0, Vfm0, cm, sm, flsm = [v_reshape(setup,'Couple, M',f,Packed,T,0) 
+    Vm0, Vmm0, Vfm0, cm, sm, flsm = [v_reshape(setup,descm,f,Packed,T,0) 
                                     for f in ['V','VM','VF','c','s','fls']] 
-    Vc0, Vmc0, Vfc0, cc, sc, flsc = [v_reshape(setup,'Couple, C',f,Packed,T,0)
-                                    for f in ['V','VM','VF','c','s','fls']] 
-    
-    
-    Vm1, Vmm1, Vfm1, cm, sm, flsm = [v_reshape(setup,'Couple, M',f,Packed,T,1) 
-                                    for f in ['V','VM','VF','c','s','fls']] 
-    Vc1, Vmc1, Vfc1, cc, sc, flsc = [v_reshape(setup,'Couple, C',f,Packed,T,1) 
+    Vc0, Vmc0, Vfc0, cc, sc, flsc = [v_reshape(setup,descc,f,Packed,T,0)
                                     for f in ['V','VM','VF','c','s','fls']] 
     
     
-    Vm2, Vmm2, Vfm2, cm, sm, flsm = [v_reshape(setup,'Couple, M',f,Packed,T,2) 
+    Vm1, Vmm1, Vfm1, cm, sm, flsm = [v_reshape(setup,descm,f,Packed,T,1) 
                                     for f in ['V','VM','VF','c','s','fls']] 
-    Vc2, Vmc2, Vfc2, cc, sc, flsc = [v_reshape(setup,'Couple, C',f,Packed,T,2) 
+    Vc1, Vmc1, Vfc1, cc, sc, flsc = [v_reshape(setup,descc,f,Packed,T,1) 
                                     for f in ['V','VM','VF','c','s','fls']] 
     
     
-    Vm3, Vmm3, Vfm3, cm, sm, flsm = [v_reshape(setup,'Couple, M',f,Packed,T,3) 
+    Vm2, Vmm2, Vfm2, cm, sm, flsm = [v_reshape(setup,descm,f,Packed,T,2) 
                                     for f in ['V','VM','VF','c','s','fls']] 
-    Vc3, Vmc3, Vfc3, cc, sc, flsc = [v_reshape(setup,'Couple, C',f,Packed,T,3) 
+    Vc2, Vmc2, Vfc2, cc, sc, flsc = [v_reshape(setup,descc,f,Packed,T,2) 
+                                    for f in ['V','VM','VF','c','s','fls']] 
+    
+    
+    Vm3, Vmm3, Vfm3, cm, sm, flsm = [v_reshape(setup,descm,f,Packed,T,3) 
+                                    for f in ['V','VM','VF','c','s','fls']] 
+    Vc3, Vmc3, Vfc3, cc, sc, flsc = [v_reshape(setup,descc,f,Packed,T,3) 
                                     for f in ['V','VM','VF','c','s','fls']] 
     
                                     
-    Vm, Vmm, Vfm, cm, sm, flsm = [v_reshape(setup,'Couple, M',f,Packed,T,dd) 
+    Vm, Vmm, Vfm, cm, sm, flsm = [v_reshape(setup,descm,f,Packed,T,dd) 
                                     for f in ['V','VM','VF','c','s','fls']] 
-    Vc, Vmc, Vfc, cc, sc, flsc = [v_reshape(setup,'Couple, C',f,Packed,T,dd) 
+    Vc, Vmc, Vfc, cc, sc, flsc = [v_reshape(setup,descc,f,Packed,T,dd) 
+                                    for f in ['V','VM','VF','c','s','fls']] 
+    
+    
+    #All educated versus all uneducated
+    
+    Vmee, Vmmee, Vfmee, cmee, smee, flsmee = [v_reshape(setup,'Couple, M nn',f,Packed,T,0) 
+                                    for f in ['V','VM','VF','c','s','fls']] 
+    
+    Vcee, Vmcee, Vfcee, ccee, scee, flscee = [v_reshape(setup,'Couple, C nn',f,Packed,T,0) 
+                                    for f in ['V','VM','VF','c','s','fls']] 
+    
+    Vmnn, Vmmnn, Vfmnn, cmnn, smnn, flsmnn = [v_reshape(setup,'Couple, M nn',f,Packed,T,0) 
+                                    for f in ['V','VM','VF','c','s','fls']] 
+    
+    Vcnn, Vmcnn, Vfcnn, ccnn, scnn, flscnn = [v_reshape(setup,'Couple, C nn',f,Packed,T,0) 
+                                    for f in ['V','VM','VF','c','s','fls']] 
+    
+    Vmee3, Vmmee3, Vfmee3, cmee3, smee3, flsmee3 = [v_reshape(setup,'Couple, M nn',f,Packed,T,3) 
+                                    for f in ['V','VM','VF','c','s','fls']] 
+    
+    Vcee3, Vmcee3, Vfcee3, ccee3, scee3, flscee3 = [v_reshape(setup,'Couple, C nn',f,Packed,T,3) 
+                                    for f in ['V','VM','VF','c','s','fls']] 
+    
+    Vmnn3, Vmmnn3, Vfmnn3, cmnn3, smnn3, flsmnn3 = [v_reshape(setup,'Couple, M nn',f,Packed,T,3) 
+                                    for f in ['V','VM','VF','c','s','fls']] 
+    
+    Vcnn3, Vmcnn3, Vfcnn3, ccnn3, scnn3, flscnn3 = [v_reshape(setup,'Couple, C nn',f,Packed,T,3) 
                                     for f in ['V','VM','VF','c','s','fls']] 
      
      
- 
+
+    
+
      
     ######################################### 
     # Additional Variables needed for graphs 
@@ -402,25 +435,47 @@ def graphs(mdl,ai,zfi,zmi,psii,ti,thi,dd):
     plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3), 
                   fancybox=True, shadow=True, ncol=3, fontsize='x-small') 
     
-    
-        ########################################## 
-    # Value Functions wrt Love 
+    ########################################## 
+    # Value Functions wrt Love -ren
     ##########################################  
     fig = plt.figure() 
     f1=fig.add_subplot(2,1,1) 
-  
-    #plt.plot(psig, V_ren_m[ai,0:len(nex1),inde]-Vfc0[ai,zfi,zmi,0:len(psig),thi,ti],'k',linewidth=0.2, label='F Marriage0') 
-    plt.plot(psig1, Vfm1[ai,zfi,zmi,0:len(psig),thi,ti]-Vfc1[ai,zfi,zmi,0:len(psig),thi,ti],'b',linewidth=0.2, label='F Marriage1') 
-    plt.plot(psig2, Vfm2[ai,zfi,zmi,0:len(psig),thi,ti]-Vfc2[ai,zfi,zmi,0:len(psig),thi,ti],'r',linewidth=0.2, label='F Marriage2') 
-    plt.plot(psig3, Vfm3[ai,zfi,zmi,0:len(psig),thi,ti]-Vfc3[ai,zfi,zmi,0:len(psig),thi,ti],'y',linewidth=0.2, label='F Marriage3') 
-
+    nex1 = setup.all_indices(min(ti+1,T),(zfi,zmi,psig))[0] 
+    #plt.plot(psig, entry[ai,0:len(nex1)],'k',linewidth=0.2, label='Couple formed') 
+    
+    plt.plot(psig0, Vmee[ai,zfi,zmi,0:len(psig),thi,ti],'k',linewidth=0.2, label='sur ee 0 m') 
+    plt.plot(psig1, Vmee3[ai,zfi,zmi,0:len(psig),thi,ti],'b',linewidth=0.2, label='sur ee 3 m') 
+    plt.plot(psig2, Vmnn[ai,zfi,zmi,0:len(psig),thi,ti],'r',linewidth=0.2, label='sur nn 0 m') 
+    plt.plot(psig3, Vmnn3[ai,zfi,zmi,0:len(psig),thi,ti],'y',linewidth=0.2, label='sur nn 3 m') 
+    plt.plot(psig0, Vcee[ai,zfi,zmi,0:len(psig),thi,ti],'k',linestyle='--',linewidth=0.2, label='sur ee 0 c') 
+    plt.plot(psig1, Vcee3[ai,zfi,zmi,0:len(psig),thi,ti],'b',linestyle='--',linewidth=0.2, label='sur ee 3 c') 
+    plt.plot(psig2, Vcnn[ai,zfi,zmi,0:len(psig),thi,ti],'r',linestyle='--',linewidth=0.2, label='sur nn 0 c') 
+    plt.plot(psig3, Vcnn3[ai,zfi,zmi,0:len(psig),thi,ti],'y',linestyle='--',linewidth=0.2, label='sur nn 3 c') 
 
     plt.xlabel('Love') 
     plt.ylabel('Utility') 
-    #plt.title('Utility  Divorce costs: men=0.5, women=0.5') 
+    plt.title('Unit cohab and Marriage:duration and education') 
     plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3), 
                   fancybox=True, shadow=True, ncol=3, fontsize='x-small') 
-     
+    
+    ########################################## 
+    # Value Functions wrt Love -ren
+    ##########################################  
+    fig = plt.figure() 
+    f1=fig.add_subplot(2,1,1) 
+    nex1 = setup.all_indices(min(ti+1,T),(zfi,zmi,psig))[0] 
+    #plt.plot(psig, entry[ai,0:len(nex1)],'k',linewidth=0.2, label='Couple formed') 
+    plt.plot(psig0, Vmee[ai,zfi,zmi,0:len(psig),thi,ti]-Vcee[ai,zfi,zmi,0:len(psig),thi,ti],'k',linewidth=0.2, label='sur ee 0') 
+    plt.plot(psig1, Vmee3[ai,zfi,zmi,0:len(psig),thi,ti]-Vcee3[ai,zfi,zmi,0:len(psig),thi,ti],'b',linewidth=0.2, label='sur ee 3') 
+    plt.plot(psig2, Vmnn[ai,zfi,zmi,0:len(psig),thi,ti]-Vcnn[ai,zfi,zmi,0:len(psig),thi,ti],'r',linewidth=0.2, label='sur nn 0') 
+    plt.plot(psig3, Vmnn3[ai,zfi,zmi,0:len(psig),thi,ti]-Vcnn3[ai,zfi,zmi,0:len(psig),thi,ti],'y',linewidth=0.2, label='sur nn 3') 
+
+    plt.xlabel('Love') 
+    plt.ylabel('Utility') 
+    plt.title('Marriage surplus wrt cohab-duration and education') 
+    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3), 
+                  fancybox=True, shadow=True, ncol=3, fontsize='x-small')  
+
     ########################################## 
     # FLS wrt Love 
     ##########################################  

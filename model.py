@@ -301,9 +301,9 @@ class Model(object):
             import pickle
             pickle.dump(self,open('model_save.pkl','wb+'))
         
-    def graph(self,ai,zfi,zmi,psii,ti,thi,dd):        
+    def graph(self,ai,zfi,zmi,psii,ti,thi,dd,edu):        
         #Draw some graph of Value and Policy Functions
-        V=graphs(self,ai,zfi,zmi,psii,ti,thi,dd)        
+        V=graphs(self,ai,zfi,zmi,psii,ti,thi,dd,edu)        
         return V
       
         

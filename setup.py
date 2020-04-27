@@ -23,11 +23,11 @@ class ModelSetup(object):
         p = dict()       
         period_year=1#this can be 1,2,3 or 6
         transform=1#this tells how many periods to pull together for duration moments
-        T = 10#int(62/period_year)
-        Tret =6# int(47/period_year) # first period when the agent is retired
+        T = int(62/period_year)
+        Tret = int(47/period_year) # first period when the agent is retired
         Tbef=int(2/period_year)
-        Tren  =6# int(47/period_year)#int(42/period_year) # period starting which people do not renegotiate/divroce
-        Tmeet = 6#int(47/period_year)#int(42/period_year) # period starting which you do not meet anyone
+        Tren =  int(47/period_year)#int(42/period_year) # period starting which people do not renegotiate/divroce
+        Tmeet = int(47/period_year)#int(42/period_year) # period starting which you do not meet anyone
         dm=4
         p['dm']=dm
         p['py']=period_year
@@ -88,7 +88,17 @@ class ModelSetup(object):
         p['wtrend']['m']['n'] = [0.0*(t>=Tret)+(t<Tret)*(-0.5620125  +0.06767721*t -0.00192571*t**2+ 0.00001573*t**3) for t in range(T)]
                 
 
+
+        #Wages over time-partner
+        p['wtrendp']=dict()
+        p['wtrendp']['f'],p['wtrendp']['m']=dict(),dict()
+       
+        p['wtrendp']['f']['e'] =[0.0*(t>=Tret)+(t<Tret)*(-.6805060 +.04629912*t -.00160467*t**2+.00001626*t**3) for t in range(T)]
+        p['wtrendp']['f']['n'] =[0.0*(t>=Tret)+(t<Tret)*(-.6805060 +.04629912*t -.00160467*t**2+.00001626*t**3) for t in range(T)]
         
+        p['wtrendp']['m']['e'] = [0.0*(t>=Tret)+(t<Tret)*(-.5960803  +.05829568*t -.00169143*t**2+ .00001446*t**3) for t in range(T)]
+        p['wtrendp']['m']['n'] = [0.0*(t>=Tret)+(t<Tret)*(-.5960803  +.05829568*t -.00169143*t**2+ .00001446*t**3) for t in range(T)]
+                    
   
         p['util_lam'] = 0.19#0.4
         p['util_alp'] = 0.5
@@ -544,7 +554,7 @@ class ModelSetup(object):
 #        
         
         # grid for theta
-        self.ntheta = 3#41
+        self.ntheta = 11
         self.thetamin = 0.02
         self.thetamax = 0.98
         self.thetagrid = np.linspace(self.thetamin,self.thetamax,self.ntheta,dtype=self.dtype)
@@ -623,16 +633,18 @@ class ModelSetup(object):
 
         for e in ['e','n']:
             zf_t_partmat[e],zm_t_partmat[e]=dict(),dict()
-            for e in ['e','n']:
-                zf_t_partmat[e] = [self.mar_mats_iexo(t,e,eo,female=True) if t < p['T'] - 1 else None 
+            for eo in ['e','n']:
+                zf_t_partmat[e][eo] = [self.mar_mats_iexo(t,e,eo,female=True) if t < p['T'] - 1 else None 
                         for t in range(p['T'])]
-                zm_t_partmat[e] = [self.mar_mats_iexo(t,eo,e,female=False) if t < p['T'] - 1 else None 
+                zm_t_partmat[e][eo] = [self.mar_mats_iexo(t,e,eo,female=False) if t < p['T'] - 1 else None 
                         for t in range(p['T'])]
         
         self.part_mats = {'Female, single':zf_t_partmat,
                           'Male, single':  zm_t_partmat,
                           'Couple, M': None,
                           'Couple, C': None} # last is added for consistency
+        
+
         
         self.mar_mats_assets()
         
@@ -743,8 +755,8 @@ class ModelSetup(object):
             n_zown = z_own.shape[0]
             z_partner = setup.exogrid.zm_t[e][t]
             zmat_own = setup.exogrid.zf_t_mat[e][t]
-            trend=setup.pars['wtrend'][g][e][t]
-            mean=setup.pars['wtrend'][g][e][t]
+            trend=setup.pars['wtrendp'][go][eo][t]
+            mean=setup.pars['mean_partner_z_female']-setup.pars['wtrend'][go][eo][t]+setup.pars['wtrendp'][go][eo][t]
             sig_z_partner=(setup.pars['sig_zm_0']**2+(t+1)*setup.pars['sig_zm']**2)**0.5
         else:
             nz_single = setup.exogrid.zm_t[eo][t].shape[0]
@@ -753,8 +765,8 @@ class ModelSetup(object):
             n_zown = z_own.shape[0]
             z_partner = setup.exogrid.zf_t[eo][t]
             zmat_own = setup.exogrid.zm_t_mat[eo][t]    
-            trend=setup.pars['wtrend'][g][e][t]
-            mean=setup.pars['wtrend'][go][eo][t]
+            trend=setup.pars['wtrendp'][go][eo][t]
+            mean=setup.pars['mean_partner_z_male']-setup.pars['wtrend'][go][eo][t]+setup.pars['wtrendp'][go][eo][t]
             sig_z_partner=(setup.pars['sig_zf_0']**2+(t+1)*setup.pars['sig_zf']**2)**0.5
             
         def ind_conv(a,b,c): return setup.all_indices(t,(a,b,c))[0]
@@ -817,50 +829,53 @@ class ModelSetup(object):
                 pmat_a = self.prob_a_mat[female]
                 imat_a = self.i_a_mat[female]
                 
-                pmats = self.part_mats[desc][e]
+                self.matches[desc][e]=dict()
                 
-                
-                match_matrix = list()
-                
-                for t in range(self.pars['T']-1):
-                    pmat_iexo = pmats[t] # nz X nexo
-                    # note that here we do not use transpose
+                for eo in ['e','n']:
+                    pmats = self.part_mats[desc][e][eo]
                     
-                    nz = pmat_iexo.shape[0]
                     
-                    inds = np.where( np.any(pmat_iexo>-10,axis=0) )[0]
+                    match_matrix = list()
                     
-                    npos_iexo = inds.size
-                    npos_a = pmat_a.shape[1]
-                    npos = npos_iexo*npos_a
-                    pmatch = np.zeros((self.na,nz,npos),dtype=self.dtype)
-                    iamatch = np.zeros((self.na,nz,npos),dtype=np.int32)
-                    iexomatch = np.zeros((self.na,nz,npos),dtype=np.int32)
-                    
-                    i_conv = np.zeros((npos_iexo,npos_a),dtype=np.int32)
-                    
-                    for ia in range(npos_a):
-                        i_conv[:,ia] = np.arange(npos_iexo*ia,npos_iexo*(ia+1))
-                     
-                    
-                    for iz in range(nz):
-                        probs = pmat_iexo[iz,inds]
+                    for t in range(self.pars['T']-1):
+                        pmat_iexo = pmats[t] # nz X nexo
+                        # note that here we do not use transpose
+                        
+                        nz = pmat_iexo.shape[0]
+                        
+                        inds = np.where( np.any(pmat_iexo>-10,axis=0) )[0]
+                        
+                        npos_iexo = inds.size
+                        npos_a = pmat_a.shape[1]
+                        npos = npos_iexo*npos_a
+                        pmatch = np.zeros((self.na,nz,npos),dtype=self.dtype)
+                        iamatch = np.zeros((self.na,nz,npos),dtype=np.int32)
+                        iexomatch = np.zeros((self.na,nz,npos),dtype=np.int32)
+                        
+                        i_conv = np.zeros((npos_iexo,npos_a),dtype=np.int32)
                         
                         for ia in range(npos_a):
-                            
-                            pmatch[:,iz,(npos_iexo*ia):(npos_iexo*(ia+1))] = \
-                                (pmat_a[:,ia][:,None])*(probs[None,:])
-                            iamatch[:,iz,(npos_iexo*ia):(npos_iexo*(ia+1))] = \
-                                imat_a[:,ia][:,None]
-                            iexomatch[:,iz,(npos_iexo*ia):(npos_iexo*(ia+1))] = \
-                                inds[None,:]
-                                
-                            
-                    assert np.allclose(np.sum(pmatch,axis=2),1.0)
-                    match_matrix.append({'p':pmatch,'ia':iamatch,'iexo':iexomatch,'iconv':i_conv})
+                            i_conv[:,ia] = np.arange(npos_iexo*ia,npos_iexo*(ia+1))
+                         
                         
-                self.matches[desc][e] = match_matrix
-             
+                        for iz in range(nz):
+                            probs = pmat_iexo[iz,inds]
+                            
+                            for ia in range(npos_a):
+                                
+                                pmatch[:,iz,(npos_iexo*ia):(npos_iexo*(ia+1))] = \
+                                    (pmat_a[:,ia][:,None])*(probs[None,:])
+                                iamatch[:,iz,(npos_iexo*ia):(npos_iexo*(ia+1))] = \
+                                    imat_a[:,ia][:,None]
+                                iexomatch[:,iz,(npos_iexo*ia):(npos_iexo*(ia+1))] = \
+                                    inds[None,:]
+                                    
+                                
+                        assert np.allclose(np.sum(pmatch,axis=2),1.0)
+                        match_matrix.append({'p':pmatch,'ia':iamatch,'iexo':iexomatch,'iconv':i_conv})
+                            
+                    self.matches[desc][e][eo] = match_matrix
+                 
         
     
     

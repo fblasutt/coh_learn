@@ -89,11 +89,12 @@ if __name__ == '__main__':
         zmi=3
         psii=4
         ti=4
-        thi=11
+        thi=5
         dd=0
+        edu=['e','e']
          
         #Actual Graphs
-        mdl[0].graph(ai,zfi,zmi,psii,ti,thi,dd)
+        mdl[0].graph(ai,zfi,zmi,psii,ti,thi,dd,edu)
         #get_ipython().magic('reset -f')
         #If you plan to use graphs only once, deselect below to save space on disk
         #os.remove('name_model.pkl')

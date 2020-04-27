@@ -10,7 +10,8 @@ plots some graphs
      
 import numpy as np    
 import matplotlib.pyplot as plt    
-import matplotlib.backends.backend_pdf   
+import matplotlib.backends.backend_pdf  
+import statsmodels.formula.api as smf    
 
   
 #Avoid error for having too many figures 
@@ -31,8 +32,7 @@ matplotlib.rcParams.update({
   
 import pickle    
 import pandas as pd    
-import statsmodels.api as sm    
-import statsmodels.formula.api as smf    
+
    
      
 def moment(mdl_list,agents,agents_male,draw=True,validation=False):    
@@ -44,18 +44,18 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
  
     mdl=mdl_list[0] 
  
-        
+    
     #Import simulated values   
-    edu=agents.education
-    edup=agents.partneredu
     state_true=agents.state  
+    educ=np.reshape(agents.education.ravel(),state_true.shape)
+    edup=np.reshape(agents.partneredu.ravel(),state_true.shape)
     
     #Modify state names
     state=state_true.copy()
-    state[(state_true==0) | (state_true==2)]==0
-    state[(state_true==1) | (state_true==3)]==1
-    state[(state_true==4) | (state_true==5)| (state_true==6 )| (state_true==7)]==2
-    state[(state_true==8) | (state_true==9)| (state_true==10 )| (state_true==11)]==3
+    state[(state_true==0) | (state_true==2)]=0
+    state[(state_true==1) | (state_true==3)]=1
+    state[(state_true==4) | (state_true==5)| (state_true==6 )| (state_true==7)]=2
+    state[(state_true==8) | (state_true==9)| (state_true==10 )| (state_true==11)]=3
     
     assets_t=mdl.setup.agrid_c[agents.iassets] 
     assets_t[agents.state<=1]=mdl.setup.agrid_s[agents.iassets[agents.state<=1]] 
@@ -63,40 +63,35 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     theta_t=mdl.setup.thetagrid_fine[agents.itheta]    
     setup = mdl.setup   
     female=agents.is_female 
-    cons=agents.c 
-    consx=agents.x 
     labor=agents.ils_i 
-    dur=agents.du
-    durf=agents.duf
-    shks = agents.shocks_single_iexo  
+    durf=agents.duf 
     psi_check=np.zeros(state.shape) 
     psim=-1000*np.ones(state.shape) 
-    shift_check=np.array((state==2),dtype=np.float32) 
-    single=np.array((state==0),dtype=bool) 
-    betag=mdl.setup.pars['beta_t'][0]**(np.linspace(1,len(state[0,:]),len(state[0,:]))-1) 
-    betam=np.reshape(np.repeat(betag,len(state[:,0])),(len(state[:,0]),len(betag)),order='F') 
-    
-    
-
+    single=np.array((state<=1),dtype=bool) 
+   
      
     #Fill psi and ushift here 
     for i in range(len(state[0,:])): 
         for dd in range(setup.pars['dm']):
-            duration=(dur[:,i]==dd)
+            
             pos=(agents.ipsim[:,i]>-500)
             psi_check[:,i]=((setup.exogrid.psi_t[dd][i][(setup.all_indices(i,iexo[:,i]))[3]])) 
             if np.any(pos):psim[:,i][pos]=((setup.exogrid.psi_t[0][i][(setup.all_indices(i,agents.ipsim[:,i][pos]))[3]])) 
      
-     
+   
+    psi_check[:,0]=psim[:,1]  
+    psi_check[single]=0.0  
+    state_psid=agents_male.state  
+    labor_psid=agents_male.ils_i  
+    iexo_psid=agents_male.iexo  
+    change_psid=agents_male.policy_ind 
   
     if draw: 
         #Import values for female labor supply (simulated men only) 
 
-        iexo_w=agents.iexo  
+       
         labor_w=agents.ils_i 
-        female_w=agents.is_female 
         divorces_w=agents.divorces 
-        state_w=agents.state  
         theta_w=mdl.setup.thetagrid_fine[agents.itheta]  
         assets_w=mdl.setup.agrid_c[agents.iassets] 
         assets_w[agents.state<=1]=mdl.setup.agrid_s[agents.iassets[agents.state<=1]] 
@@ -123,8 +118,8 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         
          
     #Get states codes    
-    state_codes_complete = {name: i for i, name in enumerate(mdl.setup.state_names)}    
-    state_codes = {'Female, single': 0, 'Male, single': 1, 'Couple, M': 2,'Couple, C': 3}   
+    state_codes = {'Female, single': 0, 'Male, single': 1, 'Couple, M': 2,'Couple, C': 3} 
+    state_codes_full = {name: i for i, name in enumerate(mdl.setup.state_names)} 
     
      ###########################################    
     #Sample selection    
@@ -140,50 +135,8 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     #distributed. Clearly we can adjust this later on.    
         
         
-        
-    #First cut the first two periods give new 'length'    
-    assets_t=assets_t[:,:mdl.setup.pars['T']]    
-    iexo=iexo[:,:mdl.setup.pars['T']]    
-    state=state[:,:mdl.setup.pars['T']]    
-    theta_t=theta_t[:,:mdl.setup.pars['T']]    
-    female=female[:,:mdl.setup.pars['T']]    
-    labor_psid=labor_psid[:,:mdl.setup.pars['T']] 
-    iexo_psid=iexo_psid[:,:mdl.setup.pars['T']] 
-    edu=edu[:,:mdl.setup.pars['T']] 
-    edup=edup[:,:mdl.setup.pars['T']] 
-    
-    if draw: 
-        iexo_w=iexo_w[:,:mdl.setup.pars['T']] 
-        labor_w=labor_w[:,:mdl.setup.pars['T']] 
-        change_psid=change_psid[:,:mdl.setup.pars['T']] 
-        state_psid=state_psid[:,:mdl.setup.pars['T']] 
-        female_w=female_w[:,:mdl.setup.pars['T']] 
-        state_w=state_w[:,:mdl.setup.pars['T']] 
-        assets_w=assets_w[:,:mdl.setup.pars['T']] 
-        assetss_w=assetss_w[:,:mdl.setup.pars['T']] 
-        theta_w=theta_w[:,:mdl.setup.pars['T']] 
-        changep_w=changep_w[:,:mdl.setup.pars['T']] 
-        divorces_w=divorces_w[:,:mdl.setup.pars['T']] 
-       
-        
- 
-    ###################################################################   
-    #Get age we stop observing spells: this matters for hazards 
-    ###################################################################   
-    with open('age_sint.pkl', 'rb') as file:    
-        age_sint=pickle.load(file)    
-            
-    aged=np.ones((state.shape))   
-       
-    
-    summa=0.0   
-    summa1=0.0   
-    for i in age_sint:   
-        summa+=age_sint[int(i)]   
-        aged[int(summa1*len(aged[:])/sum(age_sint.values())):int(summa*len(aged[:])/sum(age_sint.values()))]=round((i-20)/mdl.setup.pars['py'],0)   
-        summa1+=age_sint[int(i)]   
-       
-    aged=np.array(aged,dtype=np.int16)   
+
+   
     ###########################################    
     #Moments: Construction of Spells    
     ###########################################    
@@ -193,15 +146,15 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     state_beg = -1*np.ones((N,nspells),dtype=np.int8)    
     time_beg = -1*np.ones((N,nspells),dtype=np.bool)    
     did_end = np.zeros((N,nspells),dtype=np.bool)    
-    state_end = -1*np.ones((N,nspells),dtype=np.int8)    
-    time_end = -1*np.ones((N,nspells),dtype=np.bool)    
+    state_end = -1*np.ones((N,nspells),dtype=np.int8)       
     sp_length = -1*np.ones((N,nspells),dtype=np.int16)    
     sp_dur = -1*np.ones((N,nspells),dtype=np.int16)    
     is_unid = -1*np.ones((N,nspells),dtype=np.int16)    
     is_unid_end = -1*np.ones((N,nspells),dtype=np.int16)    
-    is_unid_lim = -1*np.ones((N,nspells),dtype=np.int16)    
     n_spell = -1*np.ones((N,nspells),dtype=np.int16)    
     is_spell = np.zeros((N,nspells),dtype=np.bool)    
+    sp_edu=np.ones((N,nspells),dtype='<U1') 
+    sp_edup=np.ones((N,nspells),dtype='<U1')
        
          
     state_beg[:,0] = 0 # THIS ASSUMES EVERYONE STARTS AS SINGLE   #TODO consistent with men stuff? 
@@ -214,7 +167,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         ichange = ((state[:,t-1] != state[:,t]))    
         ifinish=(~ichange) & (t==mdl.setup.pars['T']-1) 
         sp_length[((~ichange)),ispell[((~ichange))]] += 1    
-        sp_dur[ifinish,ispell[ifinish]] = duf_work[ifinish,t] 
+        sp_dur[ifinish,ispell[ifinish]] = durf[ifinish,t] 
         #ichange = ((state[:,t-1] != state[:,t]) & (t<=aged[:,t]))    
         #sp_length[((~ichange) & (t<=aged[:,t])),ispell[((~ichange) & (t<=aged[:,t]))]] += 1    
              
@@ -225,12 +178,13 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         is_spell[ichange,ispell[ichange]+1] = True    
         sp_length[ichange,ispell[ichange]+1] = 1 # if change then 1 year right    
         state_end[ichange,ispell[ichange]] = state[ichange,t]    
-        sp_dur[ichange,ispell[ichange]] = duf_work[ichange,t-1] 
-        state_beg[ichange,ispell[ichange]+1] = state[ichange,t]     
+        sp_dur[ichange,ispell[ichange]] = durf[ichange,t-1] 
+        state_beg[ichange,ispell[ichange]+1] = state[ichange,t] 
+        sp_edu[ichange,ispell[ichange]+1] = educ[ichange,t] 
+        sp_edup[ichange,ispell[ichange]+1] = edup[ichange,t] 
         time_beg[ichange,ispell[ichange]+1] = t    
         n_spell[ichange,ispell[ichange]+1]=ispell[ichange]+1   
         is_unid[ichange,ispell[ichange]+1]=changep[ichange,t]   
-        is_unid_lim[ichange,ispell[ichange]+1]=changep[ichange,aged[ichange,0]]   
         is_unid_end[ichange,ispell[ichange]]=changep[ichange,t-1]   
            
              
@@ -241,33 +195,37 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     allspells_len = sp_length[is_spell]    
     allspells_end = state_end[is_spell] # may be -1 if not ended    
     allspells_timeb = time_beg[is_spell]   
-    allspells_isunid=is_unid[is_spell]   
-    allspells_isunidend=is_unid_end[is_spell]   
-    allspells_isunidlim=is_unid_lim[is_spell]   
+    allspells_isunid=is_unid[is_spell]    
     allspells_du=sp_dur[is_spell]   
     allspells_nspells=n_spell[is_spell]  
+    allspells_edu=sp_edu[is_spell]
+    allspells_edup=sp_edup[is_spell]
     
 
          
     # If the spell did not end mark it as ended with the state at its start    
-    allspells_end[allspells_end==-1] = allspells_beg[allspells_end==-1]    
-    allspells_isunidend[allspells_isunidend==-1] = allspells_isunidlim[allspells_isunidend==-1]   
+    allspells_end[allspells_end==-1] = allspells_beg[allspells_end==-1]      
     allspells_nspells[allspells_nspells==-1]=0   
     allspells_nspells=allspells_nspells+1  
     allspells_prec=allspells_du+1-allspells_len
         
+    #Modify education to be 0/1
+    wedu=(allspells_edu=='e')
+    educ_rels=np.zeros(allspells_edu.shape)
+    educ_rels[wedu]=1.0
+    
+    wedu=(allspells_edup=='e')
+    educ_relsp=np.zeros(allspells_edup.shape)
+    educ_relsp[wedu]=1.0
     
     #Use this to construct hazards   
     spells = np.stack((allspells_beg,allspells_len,allspells_end),axis=1)    
        
     #Use this for empirical analysis   
-    spells_empiricalt=np.stack((allspells_beg,allspells_timeb,allspells_len,allspells_end,allspells_nspells,allspells_isunid,allspells_isunidend, allspells_prec),axis=1)   
-    is_coh=((spells_empiricalt[:,0]==3) & (spells_empiricalt[:,5]==spells_empiricalt[:,6]))   
-    spells_empirical=spells_empiricalt[is_coh,1:6]   
-       
-      
+    spells_empiricalt=np.stack((allspells_beg,allspells_timeb,allspells_len,
+                                allspells_end,allspells_nspells,allspells_isunid,
+                                allspells_prec,educ_rels,educ_relsp),axis=1)   
 
-   
          
     #Now divide spells by relationship nature    
     all_spells=dict()    
@@ -278,123 +236,91 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         is_state= (all_spells[sname][:,1]!=0)    
         all_spells[sname]=all_spells[sname][is_state,:]    
             
-            
-    ############################################    
-    #Construct sample of first relationships    
-    ############################################    
-   
-        
-    #Now define variables    
-    rel_end = -1*np.ones((N,99),dtype=np.int16)    
-    rel_age= -1*np.ones((N,99),dtype=np.int16)    
-    rel_unid= -1*np.ones((N,99),dtype=np.int16)    
-    rel_number= -1*np.ones((N,99),dtype=np.int16)   
-    rel_sex=-1*np.ones((N,99),dtype=np.int16)   
-    isrel = np.zeros((N,),dtype=np.int8)    
-        
-    for t in range(2,mdl.setup.pars['Tret']-int(6/mdl.setup.pars['py'])):    
-            
-        irchange = ((state[:,t-1] != state[:,t]) & ((state[:,t-1]==0) | (state[:,t-1]==1)))    
-            
-        if not np.any(irchange): continue    
-        
-        rel_end[irchange,isrel[irchange]]=state[irchange,t]    
-        rel_age[irchange,isrel[irchange]]=t    
-        rel_unid[irchange,isrel[irchange]]=changep[irchange,t]    
-        rel_number[irchange,isrel[irchange]]=isrel[irchange]+1    
-        rel_sex[irchange,isrel[irchange]]=female[irchange,0]  
-            
-        isrel[irchange] = isrel[irchange]+1    
-        
-    #Get the final Variables    
-    allrel_end=rel_end[(rel_end!=-1)]    
-    allrel_age=rel_age[(rel_age!=-1)]    
-    allrel_uni=rel_unid[(rel_unid!=-1)]  
-    allrel_sex=rel_sex[(rel_unid!=-1)]  
-    allrel_number=rel_number[(rel_number!=-1)]    
-        
-    #Get whetehr marraige    
-    allrel_mar=np.zeros((allrel_end.shape))    
-    allrel_mar[(allrel_end==2)]=1    
-        
-    #Create a Pandas Dataframe    
-    data_rel=np.array(np.stack((allrel_mar,allrel_age,allrel_uni,allrel_number,allrel_sex),axis=0).T,dtype=np.float64)    
-    data_rel_panda=pd.DataFrame(data=data_rel,columns=['mar','age','uni','rnumber','sex'])    
-                       
+  
+        ############################################     
+    #Construct sample of first relationships     
+    ############################################     
     
-        
-    #Regression    
-    if np.var(data_rel_panda['uni'])>0.0001: 
-        try:    
-            FE_ols = smf.ols(formula='mar ~ uni+C(age)+C(sex)', data = data_rel_panda.dropna()).fit()    
-            beta_unid_s=FE_ols.params['uni']    
-        except:    
-            print('No data for unilateral divorce regression...')    
-            beta_unid_s=0.0  
-    else: 
-        beta_unid_s=0.0  
          
+    #Now define variables     
+    rel_end = -1*np.ones((N,99),dtype=np.int16)     
+    rel_age= -1*np.ones((N,99),dtype=np.int16)     
+    rel_unid= -1*np.ones((N,99),dtype=np.int16)     
+    rel_number= -1*np.ones((N,99),dtype=np.int16)    
+    rel_sex=-1*np.ones((N,99),dtype=np.int16)  
+    rel_edu=np.ones((N,99),dtype='<U1') 
+    rel_edup=np.ones((N,99),dtype='<U1') 
+    isrel = np.zeros((N,),dtype=np.int8)     
+         
+    for t in range(2,mdl.setup.pars['Tret']-int(6/mdl.setup.pars['py'])):     
+             
+        irchange = ((state[:,t-1] != state[:,t]) & ((state[:,t-1]==0) | (state[:,t-1]==1)))     
+             
+        if not np.any(irchange): continue     
+         
+        rel_end[irchange,isrel[irchange]]=state[irchange,t]     
+        rel_age[irchange,isrel[irchange]]=t     
+        rel_edu[irchange,isrel[irchange]]=educ[irchange,t] 
+        rel_edup[irchange,isrel[irchange]]=edup[irchange,t] 
+        rel_unid[irchange,isrel[irchange]]=changep[irchange,t]     
+        rel_number[irchange,isrel[irchange]]=isrel[irchange]+1     
+        rel_sex[irchange,isrel[irchange]]=female[irchange,0]   
+             
+        isrel[irchange] = isrel[irchange]+1     
+         
+    #Get the final Variables     
+    allrel_end=rel_end[(rel_end!=-1)]     
+    allrel_age=rel_age[(rel_age!=-1)]     
+    allrel_uni=rel_unid[(rel_unid!=-1)]   
+    allrel_sex=rel_sex[(rel_unid!=-1)]
+    allrel_edu=rel_edu[(rel_unid!=-1)]
+    allrel_edup=rel_edup[(rel_unid!=-1)]
+    allrel_number=rel_number[(rel_number!=-1)]     
+         
+    #Get whetehr marraige     
+    allrel_mar=np.zeros((allrel_end.shape))     
+    allrel_mar[(allrel_end==2)]=1     
+    
+    #Modify education variables
+    wedu=(allrel_edu=='e')
+    educ_rel=np.zeros(allrel_edu.shape)
+    educ_rel[wedu]=1.0
+    
+    wedu=(allrel_edup=='e')
+    educ_relp=np.zeros(allrel_edup.shape)
+    educ_relp[wedu]=1.0
+         
+    #Create a Pandas Dataframe     
+    data_rel=np.array(np.stack((allrel_mar,allrel_age,allrel_uni,allrel_number,allrel_sex,educ_rel,educ_relp),axis=0).T)     
+    data_rel_panda=pd.DataFrame(data=data_rel,columns=['mar','age','uni','rnumber','sex','edu','edup'])     
+                        
+     
+         
+    #Regression      
+    try:     
+        FE_ols = smf.ols(formula='mar ~ edu+C(age)+C(sex)', data = data_rel_panda.dropna()).fit()     
+        beta_edu_s=FE_ols.params['edu']     
+        beta_unid_s=0.0
+    except:     
+        print('No data for unilateral divorce regression...')     
+        beta_unid_s=0.0  
+        beta_edu_s=0.0
+ 
+      
+
         
-        
-    moments['beta unid']=beta_unid_s     
+    moments['beta unid']=0.0  
        
     ###################################################   
     # Second regression for the length of cohabitation   
     ###################################################   
     if draw:
-        data_coh_panda=pd.DataFrame(data=spells_empirical,columns=['age','duration','end','rel','uni'])    
-           
-        if np.var(data_rel_panda['uni'])>0.0001: 
-            #Regression    
-            try:    
-            #FE_ols = smf.ols(formula='duration ~ uni+C(age)', data = data_coh_panda.dropna()).fit()    
-            #beta_dur_s=FE_ols.params['uni']    
-               
-                from lifelines import CoxPHFitter   
-                cph = CoxPHFitter()   
-                data_coh_panda['age2']=data_coh_panda['age']**2   
-                data_coh_panda['age3']=data_coh_panda['age']**3   
-                data_coh_panda['rel2']=data_coh_panda['rel']**2   
-                data_coh_panda['rel3']=data_coh_panda['rel']**3   
-                #data_coh_panda=pd.get_dummies(data_coh_panda, columns=['age'])   
-                   
-                #Standard Cox   
-                data_coh_panda['endd']=1.0   
-                data_coh_panda.loc[data_coh_panda['end']==3.0,'endd']=0.0   
-                data_coh_panda1=data_coh_panda.drop(['end'], axis=1)   
-                cox_join=cph.fit(data_coh_panda1, duration_col='duration', event_col='endd')   
-                haz_join=cox_join.hazard_ratios_['uni']   
-                   
-                #Cox where risk is marriage   
-                data_coh_panda['endd']=0.0   
-                data_coh_panda.loc[data_coh_panda['end']==2.0,'endd']=1.0   
-                data_coh_panda2=data_coh_panda.drop(['end'], axis=1)   
-                cox_mar=cph.fit(data_coh_panda2, duration_col='duration', event_col='endd')   
-                haz_mar=cox_mar.hazard_ratios_['uni']   
-                   
-                #Cox where risk is separatio   
-                data_coh_panda['endd']=0.0   
-                data_coh_panda.loc[data_coh_panda['end']<2.0,'endd']=1.0   
-                data_coh_panda3=data_coh_panda.drop(['end'], axis=1)   
-                cox_sep=cph.fit(data_coh_panda3, duration_col='duration', event_col='endd')   
-                haz_sep=cox_sep.hazard_ratios_['uni']   
-                   
-            except:    
-                print('No data for unilateral divorce regression...')    
-                haz_sep=1.0  
-                haz_join=1.0  
-                haz_mar=1.0  
-        else: 
-            print('No data for unilateral divorce regression...')    
-            haz_sep=1.0  
-            haz_join=1.0  
-            haz_mar=1.0  
-             
+         
         try:
             
             #Build the dataset for analysis on divorce risk
-            spells_empiricalm=spells_empiricalt[(spells_empiricalt[:,0]==2),1:8]   
-            data_m_panda=pd.DataFrame(data=spells_empiricalm,columns=['age','duration','end','rel','uni','drop','coh']) 
+            spells_empiricalm=spells_empiricalt[(spells_empiricalt[:,0]==2),1:9]   
+            data_m_panda=pd.DataFrame(data=spells_empiricalm,columns=['age','duration','end','rel','uni','coh','edu','edup']) 
             
             from lifelines import CoxPHFitter   
             cph = CoxPHFitter()   
@@ -409,15 +335,11 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
             #data_m_panda['rel2']=data_m_panda['rel']**2   
             #data_m_panda['rel3']=data_m_panda['rel']**3   
         
-            
-            
-        
-            #data_coh_panda=pd.get_dummies(data_coh_panda, columns=['age'])   
                
             #Standard Cox   
             data_m_panda['endd']=1.0   
             data_m_panda.loc[data_m_panda['end']==2.0,'endd']=0.0   
-            data_m_panda1=data_m_panda.drop(columns=['rel', 'uni','coh','end','drop','rel','age',1]) 
+            data_m_panda1=data_m_panda.drop(columns=['rel', 'uni','coh','end','rel','age',1]) 
             cox_join=cph.fit(data_m_panda1, duration_col='duration', event_col='endd')   
             parm=cox_join.params_
             
@@ -435,11 +357,70 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
             raw_dut=raw_dut/raw_dut[0]
             ref_dut[0]=1.0
             
+            #Get paramter for education
+            beta_div_edu_s=cox_join.hazard_ratios_['edu']
+            beta_div_edup_s=cox_join.hazard_ratios_['edup']
+            
         except:
             Tmax=int(15/mdl.setup.pars['py'])
             raw_dut=np.zeros((Tmax))
             ref_dut=np.zeros((Tmax))
+            beta_div_edup_s=0.0
+            beta_div_edu_s=0.0
             
+    ###################################################   
+    # Second regression for the length of cohabitation   
+    ###################################################   
+    if draw:
+        data_coh_panda=pd.DataFrame(data=spells_empiricalt[(spells_empiricalt[:,0]==3),1:9] ,
+                                                           columns=['age','duration','end','rel','uni','coh','edu','edup'])    
+   
+        #Regression    
+        try:    
+        #FE_ols = smf.ols(formula='duration ~ uni+C(age)', data = data_coh_panda.dropna()).fit()    
+        #beta_dur_s=FE_ols.params['uni']    
+           
+            from lifelines import CoxPHFitter   
+            cph = CoxPHFitter()   
+            data_coh_panda['age2']=data_coh_panda['age']**2   
+            data_coh_panda['age3']=data_coh_panda['age']**3   
+            data_coh_panda['rel2']=data_coh_panda['rel']**2   
+            data_coh_panda['rel3']=data_coh_panda['rel']**3   
+            #data_coh_panda=pd.get_dummies(data_coh_panda, columns=['age'])   
+               
+            #Standard Cox   
+            data_coh_panda['endd']=1.0   
+            data_coh_panda.loc[data_coh_panda['end']==3.0,'endd']=0.0   
+            data_coh_panda1=data_coh_panda.drop(['end','coh','uni'], axis=1)   
+            cox_join=cph.fit(data_coh_panda1, duration_col='duration', event_col='endd')   
+            haz_join=cox_join.hazard_ratios_['edu']
+            haz_joinp=cox_join.hazard_ratios_['edup']
+               
+            #Cox where risk is marriage   
+            data_coh_panda['endd']=0.0   
+            data_coh_panda.loc[data_coh_panda['end']==2.0,'endd']=1.0   
+            data_coh_panda2=data_coh_panda.drop(['end','coh','uni'], axis=1)   
+            cox_mar=cph.fit(data_coh_panda2, duration_col='duration', event_col='endd')   
+            haz_mar=cox_mar.hazard_ratios_['edu'] 
+            haz_marp=cox_mar.hazard_ratios_['edup'] 
+               
+            #Cox where risk is separatio   
+            data_coh_panda['endd']=0.0   
+            data_coh_panda.loc[data_coh_panda['end']==0.0,'endd']=1.0   
+            data_coh_panda3=data_coh_panda.drop(['end','coh','uni'], axis=1)   
+            cox_sep=cph.fit(data_coh_panda3, duration_col='duration', event_col='endd')   
+            haz_sep=cox_sep.hazard_ratios_['edu']   
+            haz_sepp=cox_sep.hazard_ratios_['edup']   
+               
+        except:    
+            print('No data for unilateral divorce regression...')    
+            haz_sep=1.0  
+            haz_join=1.0  
+            haz_mar=1.0  
+            haz_sepp=1.0  
+            haz_joinp=1.0  
+            haz_marp=1.0  
+        
     ##################################    
     # Construct the Hazard functions    
     #################################    
@@ -553,14 +534,32 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     condm=spells_sc==2    
     sharem=len(spells_sc[condm])/max(len(spells_sc),0.0001)    
        
-       
+    if draw:
+        #For some graphs
+        changem=np.zeros(state.shape,dtype=bool)  
+        changec=np.zeros(state.shape,dtype=bool)  
+        change=np.zeros(state.shape,dtype=bool)  
+
+    
+        for t in range(1,mdl.setup.pars['Tret']-1):     
+                 
+            irchangem = ((state[:,t]==2) & ((state[:,t-1]==0) | (state[:,t-1]==1)))   
+            irchangec = ((state[:,t]==3) & ((state[:,t-1]==0) | (state[:,t-1]==1)))   
+            irchange=((state[:,t]!=state[:,t-1]) & ((state[:,t-1]==0) | (state[:,t-1]==1)))   
+            changem[:,t]=irchangem  
+            changec[:,t]=irchangec  
+            change[:,t]=irchange 
+        statempsi=(state==2)
+        statecpsi=(state==3)
     #Cut the first two periods give new 'length'    
     lenn=mdl.setup.pars['T']-mdl.setup.pars['Tbef']    
     assets_t=assets_t[:,mdl.setup.pars['Tbef']:mdl.setup.pars['T']]    
     iexo=iexo[:,mdl.setup.pars['Tbef']:mdl.setup.pars['T']]    
-    state=state[:,mdl.setup.pars['Tbef']:mdl.setup.pars['T']]    
-    theta_t=theta_t[:,mdl.setup.pars['Tbef']:mdl.setup.pars['T']]    
-         
+    state=state[:,mdl.setup.pars['Tbef']:mdl.setup.pars['T']] 
+    state_true=state_true[:,mdl.setup.pars['Tbef']:mdl.setup.pars['T']]    
+    labor=labor[:,mdl.setup.pars['Tbef']:mdl.setup.pars['T']]    
+    female=female[:,mdl.setup.pars['Tbef']:mdl.setup.pars['T']] 
+    #psi_check=psi_check[:,mdl.setup.pars['Tbef']:mdl.setup.pars['T']]
     ###########################################    
     #Moments: FLS   
     ###########################################    
@@ -582,178 +581,41 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     moments['flsm'] = flsm    
     moments['flsc'] = flsc    
      
-    ################## 
-    #Sample Selection# 
-    ################# 
-     
-    #Import the distribution from the data 
-    with open('freq_psid_tot.pkl', 'rb') as file:    
-        freq_psid_tot_data=pickle.load(file)   
-         
-    #Import Get when in a couple and reshape accordingly 
-    resha=len(change_psid[0,:])*len(change_psid[:,0]) 
-    state_totl=np.reshape(state_psid,resha) 
-    incouple= (state_totl==2) | (state_totl==3) 
-    incoupler=np.reshape(incouple,resha) 
-     
-    #Define main variables 
-    ctemp=change_psid.copy() 
-    change_psid2=np.reshape(ctemp,resha) 
-    agetemp=np.linspace(1,len(change_psid[0,:]),len(change_psid[0,:])) 
-    agegridtemp=np.reshape(np.repeat(agetemp,len(change_psid[:,0])),(len(change_psid[:,0]),len(agetemp)),order='F') 
-    agegrid=np.reshape(agegridtemp,resha) 
-     
-    #Keep all those guys only if the are men and in a relatioinship 
-    #TODO 
-     
-    #Make data compatible with current age. 
-    freq_psid_tot_data['age']=freq_psid_tot_data['age']-18.0 
-    freq_psid_tot_data.loc[freq_psid_tot_data['age']<0.0,'age']=0.0 
-     
-    #Drop if no change in law! 
-    if np.all(changep==0): 
-        #freq_psid_tot_data.loc[freq_psid_tot_data['age']<1910.0,'age']=1000 
-        freq_psid_tot_data['unid']=0 
-    
-         
-    freq_psid_tot_data2=freq_psid_tot_data.groupby(['age','unid'])['age'].count() 
-     
-    #Create a Dataframe with simulated data to perform the draw 
-    inde=np.linspace(1,resha,resha,dtype=np.int32) 
-     
-    ddd2=np.stack((inde[incoupler],agegrid[incoupler],change_psid2[incoupler]),axis=0).T 
-    df_psidt=pd.DataFrame(data=ddd2,columns=["Index","age","unid"],index=ddd2[:,0]) 
-    df_psidt['age']=df_psidt['age'].astype(np.float) 
-     
-    try:#if (len(df_psidt)>0) & (setup.pars['py']==1) & (max(df_psidt['unid'])>0.9) & (min(df_psidt['unid'])<0.9): 
-        sampletemp=strata_sample(["'age'", "'unid'"],freq_psid_tot_data2,frac=0.1,tsample=df_psidt,distr=True) 
-        final2t=df_psidt.merge(sampletemp,how='left',on='Index',indicator=True) 
-         
-        keep3=[False]*len(df_psidt) 
-        keep3=(np.array(final2t['_merge'])=='both') 
-         
-        #TODO assign labor according to stuff above 
-        #Keep again for all relevant variables 
-     
-         
-        #Initial distribution 
-        prima_psid_tot=freq_psid_tot_data2/np.sum(freq_psid_tot_data2) 
-         
-        #Final distribution 
-        final3=df_psidt[keep3] 
-        final4=final3.groupby(['age','unid'])['age'].count() 
-        dopo_psid_tot=final4/np.sum(final4) 
-         
-         
-        print('The average deviation from actual to final psid_tot ditribution is {:0.2f}%'.format(np.mean(abs(prima_psid_tot-dopo_psid_tot))*100)) 
-          
-    except:#else: 
-        keep3=[True]*len(df_psidt) 
+
     ############ 
     #Average FLS 
     ############ 
-     
-    state_totl=state_totl[incoupler][keep3] 
-    labor_totl=np.reshape(labor_psid,resha) 
-    labor_totl=labor_totl[incoupler][keep3] 
+
     mean_fls=0.0  
-    pick=((state_totl[:]==2)  | (state_totl[:]==3))  
-    if pick.any():mean_fls=np.array(setup.ls_levels)[labor_totl[pick]].mean()  
+    pick=(((state==2)  | (state==3)) &  (female==0))
+    if pick.any():mean_fls=np.array(setup.ls_levels)[labor[pick]].mean()  
       
     moments['mean_fls'] = mean_fls  
      
-    ###########################################    
-    #Moments: wage   Ratio 
-    ###########################################    
-    iexo_totl=np.reshape(iexo_psid,resha) 
-    iexo_totl=iexo_totl[incoupler][keep3] 
-    age_w=np.array(agegrid[incoupler][keep3],dtype=np.int16)-1 
-    wagem1=np.array(setup.pars['m_wage_trend'])[age_w][...,None]+np.array(setup.exogrid.zm_t)[age_w] 
-    index=np.reshape(np.repeat(setup.all_indices(0,iexo_totl)[2],setup.pars['n_zm_t'][0]),(len(iexo_totl),setup.pars['n_zm_t'][0]),order='C') 
-    maskp=np.reshape(np.repeat(np.linspace(0,setup.pars['n_zm_t'][0]-1,setup.pars['n_zm_t'][0]),len(index)), 
-                      (index.shape),order='F') 
-    wagem=wagem1[maskp==index] 
-     
-    moments['wage_ratio']=np.mean(wagem[state_totl==2])-np.mean(wagem[state_totl==3]) 
-     
-     
-    ################### 
-    #Sample Selection 
-    ################### 
-     
-    #Import the distribution from the data 
-    with open('freq_psid_par.pkl', 'rb') as file:    
-        freq_psid_par_data=pickle.load(file)   
-         
-    #Import Get when in a couple and reshape accordingly 
-    resha=len(change_psid[0,:])*len(change_psid[:,0]) 
-    state_par=np.reshape(state_psid,resha) 
-    incouplep= (state_par==2) | (state_par==3) 
-    incouplepm= np.zeros(incouplep.shape) 
-    incouplepm[np.where(state_par[incouplep]==2)[0]]=1 
-    incouplerp=np.reshape(incouplep,resha) 
-    incouplepm2=np.reshape(incouplepm,resha) 
-     
- 
-     
-    #Define main variables 
-    ctemp=change_psid.copy() 
-    change_psid3=np.reshape(ctemp,resha) 
-     
-    #Keep all those guys only if the are men and in a relatioinship 
-    #TODO 
-     
-    #Make data compatible with current age. 
-    freq_psid_par_data['age']=freq_psid_par_data['age']-18.0 
-    freq_psid_par_data.loc[freq_psid_par_data['age']<0.0,'age']=0.0 
-     
-    #Drop if no change in law! 
-    if np.all(changep==0): 
-        #freq_psid_par_data.loc[freq_psid_par_data['age']<1910.0,'age']=1000 
-        freq_psid_par_data['unid']=0 
-         
-  
-         
-    freq_psid_par_data2=freq_psid_par_data.groupby(['age','unid','mar'])['age'].count() 
- 
-     
-    ddd3=np.stack((inde[incouplerp],agegrid[incouplerp],change_psid3[incouplerp],incouplepm2[incouplerp]),axis=0).T 
     
-    df_psidp=pd.DataFrame(data=ddd3,columns=["Index","age","unid","mar"],index=ddd3[:,0]) 
-    df_psidp['age']=df_psidp['age'].astype(np.float) 
+      
+   
      
-    try:#if (len(df_psidp)>0) &  (setup.pars['py']==1) & (max(df_psidp['unid'])>0.9) & (min(df_psidp['unid'])<0.9):   
-        sampletempp=strata_sample(["'age'", "'unid'", "'mar'"],freq_psid_par_data2,frac=0.02,tsample=df_psidp,distr=True) 
-        final2p=df_psidp.merge(sampletempp,how='left',on='Index',indicator=True) 
-         
-        keep4=[False]*len(df_psidp) 
-        keep4=(np.array(final2p['_merge'])=='both') 
-         
-        #TODO assign labor according to stuff above 
-        #Keep again for all relevant variables 
+    moments['wage_ratio']=0.0
+    moments['div_ratio']=0.0
      
-         
-        #Initial distribution 
-        prima_psid_par=freq_psid_par_data2/np.sum(freq_psid_par_data2) 
-         
-        #Final distribution 
-        final3p=df_psidp[keep4] 
-        final4p=final3p.groupby(['age','unid','mar'])['age'].count() 
-        dopo_psid_par=final4p/np.sum(final4p) 
-         
-         
-        print('The average deviation from actual to final psid_tot ditribution is {:0.2f}%'.format(np.mean(abs(prima_psid_par-dopo_psid_par))*100)) 
-          
-    except:#else: 
-        keep4=[True]*len(df_psidp) 
+     
+ 
          
     ################ 
     #Ratio of fls  
     ############### 
-    ages=agegrid[incouplerp][keep4] 
-    state_par=state_par[incouplerp][keep4] 
-    labor_par=np.reshape(labor_psid,resha) 
-    labor_par=labor_par[incouplerp][keep4] 
+    resha=len(state[0,:])*len(state[:,0])
+    agetemp=np.linspace(1,len(state[0,:]),len(state[0,:]))  
+    agegridtemp=np.reshape(np.repeat(agetemp,len(state[:,0])),(len(state[:,0]),len(agetemp)),order='F')  
+    agegrid=np.reshape(agegridtemp,resha) 
+    
+    incouple= (state==2) | (state==3)  
+    incoupler=np.reshape(incouple,resha)
+    ages=agegrid[incoupler]
+    state_par=np.reshape(state,resha)[incoupler]
+    labor_par=np.reshape(labor,resha) 
+    labor_par=labor_par[incoupler]
      
     mean_fls_m=0.0  
     picky=(state_par[:]==2) & (ages<=15) 
@@ -836,226 +698,216 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     moments['share mar'] = reltt[2,:]/N    
     moments['share coh'] = reltt[3,:]/N    
      
+    
+    
      
-    ############################################## 
-    #Sample selection for divorce by income 
-    ############################################ 
-     
-     #Import the distribution from the data 
-    with open('freq_psid_div.pkl', 'rb') as file:    
-        freq_psid_div_data=pickle.load(file)   
+    ########################################################### 
+    #Ever in a relationship by Education
+    ######################################################### 
          
-         
-     
-    #Define main variables 
-    ctemp=change_psid.copy() 
-    change_psid4=np.reshape(ctemp,resha) 
-     
+    Erelt=np.zeros((2,lenn))    
+    Erelt1=np.zeros((2,lenn))    
+        
    
-    #Keep all those guys only if the are men and in a relatioinship 
-    #TODO 
-     
-    
-    #Drop if no change in law! 
-    if np.all(changep==0): 
-        #freq_psid_tot_data.loc[freq_psid_tot_data['age']<1910.0,'age']=1000 
-        freq_psid_div_data['unid']=0 
-    
-         
-    freq_psid_div_data2=freq_psid_div_data.groupby(['age','unid'])['age'].count() 
-     
-    #Create a Dataframe with simulated data to perform the draw 
-    inde=np.linspace(1,resha,resha,dtype=np.int32) 
-     
-    ddd4=np.stack((inde,agegrid,change_psid4),axis=0).T 
-    df_psidd=pd.DataFrame(data=ddd4,columns=["Index","age","unid"],index=ddd4[:,0]) 
-    df_psidd['age']=df_psidd['age'].astype(np.float) 
-     
-    try:#if (len(df_psidd)>0) & (setup.pars['py']==1)   & (max(df_psidd['unid'])>0.9) & (min(df_psidd['unid'])<0.9):   
-        sampletemp=strata_sample(["'age'", "'unid'"],freq_psid_div_data2,frac=0.1,tsample=df_psidd,distr=True) 
-        final2d=df_psidd.merge(sampletemp,how='left',on='Index',indicator=True) 
-         
-        keep5=[False]*len(df_psidd) 
-        keep5=(np.array(final2d['_merge'])=='both') 
-         
-        #TODO assign labor according to stuff above 
-        #Keep again for all relevant variables 
-     
-         
-        #Initial distribution 
-        prima_psid_div=freq_psid_div_data2/np.sum(freq_psid_div_data2) 
-         
-        #Final distribution 
-        final3=df_psidd[keep5] 
-        final4=final3.groupby(['age','unid'])['age'].count() 
-        dopo_psid_div=final4/np.sum(final4) 
-         
-         
-        print('The average deviation from actual to final psid_div ditribution is {:0.2f}%'.format(np.mean(abs(prima_psid_div-dopo_psid_div))*100)) 
+    for ed,edn in zip(['e','n'],range(len(['e','n']))):
+        for t in range(lenn):    
+                   
+                 
+             
+            #Arrays for preparation    
+            is_state = (np.any(state[:,:t+1]>1,1)) & (educ[:,t+1]==ed)          
+            is_state1 = (state[:,t]>1)    
+            
+            if not (np.any(is_state) or np.any(is_state1)): continue    
+             
           
-    except:#else: 
-        keep5=[True]*len(df_psidd) 
-         
+            #Relationship over time    
+            Erelt[edn,t]=np.sum(is_state)    
+            Erelt1[edn,t]=np.sum(is_state1)    
+             
+                  
+    #Now, before saving the moments, take interval of 5 years    
+    # if (mdl.setup.pars['Tret']>=mdl.setup.pars['Tret']):            
+    Ereltt=Erelt[:,:mdl.setup.pars['Tret']-mdl.setup.pars['Tbef']+1]           
+    Ereltt=Ereltt[:,pos]    
+
  
  
-    ################################################## 
-    #DIVORCE BY INCOME 
-    #################################################  
-     
-    #Wage 
-    iexo_div=np.reshape(iexo_psid,resha) 
-    iexo_div=iexo_div 
-    stated=np.reshape(state_psid,resha) 
-    age_w=np.array(agegrid,dtype=np.int16)-1 
-    wagem1=np.array(setup.pars['m_wage_trend'])[age_w][...,None]+np.array(setup.exogrid.zm_t)[age_w] 
-    indexm=np.reshape(np.repeat(setup.all_indices(0,iexo_div)[2],setup.pars['n_zm_t'][0]),(len(iexo_div),setup.pars['n_zm_t'][0]),order='C') 
-    indexs=np.reshape(np.repeat(setup.all_indices(0,iexo_div)[0],setup.pars['n_zm_t'][0]),(len(iexo_div),setup.pars['n_zm_t'][0]),order='C') 
-    maskp=np.reshape(np.repeat(np.linspace(0,setup.pars['n_zm_t'][0]-1,setup.pars['n_zm_t'][0]),len(indexs)), (indexs.shape),order='F') 
-                      
-    indexs[indexs>setup.pars['n_zm_t'][0]-1]=0 
-    wagem=wagem1[maskp==indexs] 
-    wagem[stated>1]=wagem1[maskp==indexm][stated>1] 
-    
-     
-    #Marital Status 
-    married=(state_psid==2) 
-    agegridtemp=agegridtemp.copy()-1 
-    agem=np.argmax(married,axis=1) 
-    neverm=(agem==0) 
-    agem[neverm]=9999 
-    divo1=(state_psid==1) & (agegridtemp>agem[...,None]) 
-    divo=np.reshape(divo1,resha)[keep5] 
-    married=np.reshape(married,resha)[keep5] 
-     
-    #Poor rich indicator 
-    keep5m=np.reshape(keep5,(int(len(keep5)/len(iexo_psid[0,:])),len(iexo_psid[0,:]))) 
-    wageinter=np.reshape(wagem,(int(len(wagem)/len(iexo_psid[0,:])),len(iexo_psid[0,:]))) 
-    wageinter[(~keep5m)]=None 
-    mincome1=np.nanmedian(wageinter,axis=0) 
-    mincome2=np.repeat(mincome1,len(iexo_psid[:,0]),axis=0) 
-    mincome3=np.reshape(mincome2,(int(len(wagem)/len(iexo_psid[0,:])),len(iexo_psid[0,:])),order='F') 
-    mincome=np.reshape(mincome3,wagem.shape)[keep5] 
-    sq=(wagem[keep5]==mincome) 
-    even=(np.random.random_sample(mincome.shape)>0.5)#np.repeat((np.linspace(1,len(mincome3[:,0]),len(mincome3[:,0]),dtype=np.int32)%2==0),len(mincome3[0,:])) 
-    lq=(wagem[keep5]<mincome) | ((even) & (sq)) 
-    uq=(wagem[keep5]>mincome) | ((~even) & (sq)) 
-     
-    moments['div_ratio']=(np.sum(divo[uq])/np.sum(married[uq]))/(np.sum(divo[lq])/np.sum(married[lq])) 
-     
+   
      
     ################################################## 
     #EVERYTHING BELOW IS NOT NECESSARY FOR MOMENTS 
     ################################################# 
      
     if draw:  
+        
+            
+        ########################################################### 
+        #Ever MArried and Cohabited 
+        ######################################################### 
+             
+        Frelt=np.zeros((len(state_codes_full),lenn))    
+        Frelt1=np.zeros((len(state_codes_full),lenn))    
+            
+        for ist,sname in enumerate(state_codes_full):  
          
+            for t in range(lenn):    
+                       
+                     
+                 
+                #Arrays for preparation    
+                is_state = (np.any(state_true[:,:t+1]==ist,1))           
+                is_state1 = (state_true[:,t]==ist)    
+                
+                if not (np.any(is_state) or np.any(is_state1)): continue    
+                 
+              
+                #Relationship over time    
+                Frelt[ist,t]=np.sum(is_state)    
+                Frelt1[ist,t]=np.sum(is_state1)    
+                 
+                      
+        #Now, before saving the moments, take interval of 5 years    
+        # if (mdl.setup.pars['Tret']>=mdl.setup.pars['Tret']):            
+        Freltt=relt[:,:mdl.setup.pars['Tret']-mdl.setup.pars['Tbef']+1]    
+        years=np.linspace(20,50,7)    
+        years_model=np.linspace(20,50,int(30/mdl.setup.pars['py']))    
+            
+        #Find the right entries for creating moments    
+        pos=list()    
+        for j in range(len(years)):    
+            pos=pos+[np.argmin(np.abs(years_model-years[j]))]    
+            
+        #Approximation if more than 5 years in one period    
+        if len(pos)<7:    
+            for i in range(7-len(pos)):    
+                pos=pos+[pos[-1]]    
+        pos=np.array(pos)    
+            
+            
+            
+        Freltt=Freltt[:,pos]    
+             
         #Update N to the new sample size    
-        #N=len(state_w)    
+        #N=len(state)    
      
         ###########################################    
         #Moments: Variables over Age    
         ###########################################    
          
-        ifemale2=(female_w[:,0]==1) 
-        imale2=(female_w[:,0]==0) 
+        ifemale2=(female[:,0]==1) 
+        imale2=(female[:,0]==0) 
         ass_rel=np.zeros((len(state_codes),lenn,2))    
         inc_rel=np.zeros((len(state_codes),lenn,2))  
-        log_inc_rel=np.zeros((2,len(state_w)))  
+        log_inc_rel=np.zeros((2,len(state)))  
          
         #Create wages 
-        wage_f=np.zeros(state_w.shape) 
-        wage_m=np.zeros(state_w.shape) 
+        wage_f=np.zeros(state.shape) 
+        wage_m=np.zeros(state.shape) 
          
-        wage_fc=np.zeros(len(state_w[0,:])) 
-        wage_mc=np.zeros(len(state_w[0,:])) 
-        wage_fm=np.zeros(len(state_w[0,:])) 
-        wage_mm=np.zeros(len(state_w[0,:])) 
+        wage_fc=np.zeros(len(state[0,:])) 
+        wage_mc=np.zeros(len(state[0,:])) 
+        wage_fm=np.zeros(len(state[0,:])) 
+        wage_mm=np.zeros(len(state[0,:])) 
          
-        wage_f2=np.zeros(state_w.shape) 
-        wage_m2=np.zeros(state_w.shape) 
-        wage_fp=np.zeros(state_w.shape) 
-        wage_mp=np.zeros(state_w.shape) 
+        wage_f2=np.zeros(state.shape) 
+        wage_m2=np.zeros(state.shape) 
+        wage_fp=np.zeros(state.shape) 
+        wage_mp=np.zeros(state.shape) 
          
-        wage_fpc=np.zeros(len(state_w[0,:])) 
-        wage_mpc=np.zeros(len(state_w[0,:])) 
-        wage_fpm=np.zeros(len(state_w[0,:])) 
-        wage_mpm=np.zeros(len(state_w[0,:])) 
+        wage_fpc=np.zeros(len(state[0,:])) 
+        wage_mpc=np.zeros(len(state[0,:])) 
+        wage_fpm=np.zeros(len(state[0,:])) 
+        wage_mpm=np.zeros(len(state[0,:])) 
          
-        wage_fs=np.zeros(len(state_w[0,:])) 
-        wage_ms=np.zeros(len(state_w[0,:])) 
+        wage_fs=np.zeros(len(state[0,:])) 
+        wage_ms=np.zeros(len(state[0,:])) 
          
-        var_wage_fc=np.zeros(len(state_w[0,:])) 
-        var_wage_mc=np.zeros(len(state_w[0,:])) 
-        var_wage_fm=np.zeros(len(state_w[0,:])) 
-        var_wage_mm=np.zeros(len(state_w[0,:])) 
+        var_wage_fc=np.zeros(len(state[0,:])) 
+        var_wage_mc=np.zeros(len(state[0,:])) 
+        var_wage_fm=np.zeros(len(state[0,:])) 
+        var_wage_mm=np.zeros(len(state[0,:])) 
          
-        var_wage_fpc=np.zeros(len(state_w[0,:])) 
-        var_wage_mpc=np.zeros(len(state_w[0,:])) 
-        var_wage_fpm=np.zeros(len(state_w[0,:])) 
-        var_wage_mpm=np.zeros(len(state_w[0,:])) 
+        var_wage_fpc=np.zeros(len(state[0,:])) 
+        var_wage_mpc=np.zeros(len(state[0,:])) 
+        var_wage_fpm=np.zeros(len(state[0,:])) 
+        var_wage_mpm=np.zeros(len(state[0,:])) 
          
         #For assets 
-        assets_fc=np.zeros(len(state_w[0,:])) 
-        assets_fm=np.zeros(len(state_w[0,:])) 
-        assets_mc=np.zeros(len(state_w[0,:])) 
-        assets_mm=np.zeros(len(state_w[0,:])) 
+        assets_fc=np.zeros(len(state[0,:])) 
+        assets_fm=np.zeros(len(state[0,:])) 
+        assets_mc=np.zeros(len(state[0,:])) 
+        assets_mm=np.zeros(len(state[0,:])) 
          
-        assets_fpc=np.zeros(len(state_w[0,:])) 
-        assets_fpm=np.zeros(len(state_w[0,:])) 
-        assets_mpc=np.zeros(len(state_w[0,:])) 
-        assets_mpm=np.zeros(len(state_w[0,:])) 
+        assets_fpc=np.zeros(len(state[0,:])) 
+        assets_fpm=np.zeros(len(state[0,:])) 
+        assets_mpc=np.zeros(len(state[0,:])) 
+        assets_mpm=np.zeros(len(state[0,:])) 
          
-        var_assets_fc=np.zeros(len(state_w[0,:])) 
-        var_assets_fm=np.zeros(len(state_w[0,:])) 
-        var_assets_mc=np.zeros(len(state_w[0,:])) 
-        var_assets_mm=np.zeros(len(state_w[0,:])) 
+        var_assets_fc=np.zeros(len(state[0,:])) 
+        var_assets_fm=np.zeros(len(state[0,:])) 
+        var_assets_mc=np.zeros(len(state[0,:])) 
+        var_assets_mm=np.zeros(len(state[0,:])) 
          
-        var_assets_fpc=np.zeros(len(state_w[0,:])) 
-        var_assets_fpm=np.zeros(len(state_w[0,:])) 
-        var_assets_mpc=np.zeros(len(state_w[0,:])) 
-        var_assets_mpm=np.zeros(len(state_w[0,:])) 
+        var_assets_fpc=np.zeros(len(state[0,:])) 
+        var_assets_fpm=np.zeros(len(state[0,:])) 
+        var_assets_mpc=np.zeros(len(state[0,:])) 
+        var_assets_mpm=np.zeros(len(state[0,:])) 
          
-        corr_ass_sepm=np.zeros(len(state_w[0,:])) 
-        corr_ass_sepf=np.zeros(len(state_w[0,:])) 
-        share_ass_sepm=np.zeros(len(state_w[0,:])) 
-        share_ass_sepf=np.zeros(len(state_w[0,:])) 
-        mcorr_ass_sepm=np.zeros(len(state_w[0,:])) 
-        mcorr_ass_sepf=np.zeros(len(state_w[0,:])) 
-        mshare_ass_sepm=np.zeros(len(state_w[0,:])) 
-        mshare_ass_sepf=np.zeros(len(state_w[0,:])) 
+        corr_ass_sepm=np.zeros(len(state[0,:])) 
+        corr_ass_sepf=np.zeros(len(state[0,:])) 
+        share_ass_sepm=np.zeros(len(state[0,:])) 
+        share_ass_sepf=np.zeros(len(state[0,:])) 
+        mcorr_ass_sepm=np.zeros(len(state[0,:])) 
+        mcorr_ass_sepf=np.zeros(len(state[0,:])) 
+        mshare_ass_sepm=np.zeros(len(state[0,:])) 
+        mshare_ass_sepf=np.zeros(len(state[0,:])) 
          
          
-        psis=np.zeros(state_w.shape) 
-        ifemale=(female_w[:,0]==1) 
-        imale=(female_w[:,0]==0) 
+      
+        ifemale=(female[:,0]==1) 
+        imale=(female[:,0]==0) 
+        
+            #Routine for computing the wage trend
+        def wtrend(sex,age,education,compute='mean'):
+            
+            if compute=='mean':
+                meane=np.mean(education==['e'])
+                meann=np.mean(education==['n'])
+                return meane*np.array(setup.pars['wtrend'][sex]['e'])[age[(education=='e')]]+meann*np.array(setup.pars['wtrend'][sex]['n'])[age[(education=='n')]]
+            
+            else:
+                
+                return np.array(setup.pars['wtrend'][sex][compute])[age[(education==compute)]]
+                 
  
-        for i in range(len(state_w[0,:])): 
+        for i in range(len(state[0,:])): 
              
             #For Income 
-            singlef=(ifemale) & (state_w[:,i]==0) 
-            singlem=(imale) & (state_w[:,i]==1)        
-            nsinglef=(ifemale) & (state_w[:,i]>=2) 
-            nsinglem=(imale) & (state_w[:,i]>=2) 
-            nsinglefc=(ifemale) & (state_w[:,i]==3) 
-            nsinglemc=(imale) & (state_w[:,i]==3) 
-            nsinglefm=(ifemale) & (state_w[:,i]==2) 
-            nsinglemm=(imale) & (state_w[:,i]==2) 
+            singlef=(ifemale) & (state[:,i]==0) 
+            singlem=(imale) & (state[:,i]==1)        
+            nsinglef=(ifemale) & (state[:,i]>=2) 
+            nsinglem=(imale) & (state[:,i]>=2) 
+            nsinglefc=(ifemale) & (state[:,i]==3) 
+            nsinglemc=(imale) & (state[:,i]==3) 
+            nsinglefm=(ifemale) & (state[:,i]==2) 
+            nsinglemm=(imale) & (state[:,i]==2) 
              
-            singlef2=(ifemale2) & (state_w[:,i]==0) 
-            singlem2=(imale2) & (state_w[:,i]==1)        
-            nsinglef2=(ifemale2) & (state_w[:,i]>=2) 
-            nsinglem2=(imale2) & (state_w[:,i]>=2) 
+            singlef2=(ifemale2) & (state[:,i]==0) 
+            singlem2=(imale2) & (state[:,i]==1)        
+            nsinglef2=(ifemale2) & (state[:,i]>=2) 
+            nsinglem2=(imale2) & (state[:,i]>=2) 
              
             #For assets 
-            cohf=(ifemale) & (state_w[:,i]==3) & (state_w[:,max(i-1,0)]<=1) 
-            marf=(ifemale) & (state_w[:,i]==2) & (state_w[:,max(i-1,0)]<=1) 
-            cohm=(imale) & (state_w[:,i]==3) & (state_w[:,max(i-1,0)]<=1) 
-            marm=(imale) & (state_w[:,i]==2) & (state_w[:,max(i-1,0)]<=1) 
+            cohf=(ifemale) & (state[:,i]==3) & (state[:,max(i-1,0)]<=1) 
+            marf=(ifemale) & (state[:,i]==2) & (state[:,max(i-1,0)]<=1) 
+            cohm=(imale) & (state[:,i]==3) & (state[:,max(i-1,0)]<=1) 
+            marm=(imale) & (state[:,i]==2) & (state[:,max(i-1,0)]<=1) 
              
-            acm=(imale) & (state_w[:,i]==1) & (state_w[:,max(i-1,0)]==3) 
-            acf=(ifemale) & (state_w[:,i]==0) & (state_w[:,max(i-1,0)]==3) 
-            macm=(imale) & (state_w[:,i]==1) & (state_w[:,max(i-1,0)]==2) #& (state_w[:,max(i-2,0)]==2) 
-            macf=(ifemale) & (state_w[:,i]==0) & (state_w[:,max(i-1,0)]==2)# & (state_w[:,max(i-2,0)]==2) 
+            acm=(imale) & (state[:,i]==1) & (state[:,max(i-1,0)]==3) 
+            acf=(ifemale) & (state[:,i]==0) & (state[:,max(i-1,0)]==3) 
+            macm=(imale) & (state[:,i]==1) & (state[:,max(i-1,0)]==2) #& (state[:,max(i-2,0)]==2) 
+            macf=(ifemale) & (state[:,i]==0) & (state[:,max(i-1,0)]==2)# & (state[:,max(i-2,0)]==2) 
             acmp=(acm) & (assetss_w[:,i]>0)  
             acfp=(acf) & (assetss_w[:,i]>0) 
             macmp=(macm) & (assetss_w[:,i]>0) 
@@ -1099,59 +951,191 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
             if np.any(cohm):var_assets_fpc[i]=np.var(assets_w[cohm,i]-assetss_w[cohm,i]) 
             if np.any(cohf):var_assets_mpc[i]=np.var(assets_w[cohf,i]-assetss_w[cohf,i]) 
          
+            
+       
+            #Here consider heterogeneity by Education
+ 
             #Aggregate Income 
-            if np.any(nsinglef):wage_f[nsinglef,i]=np.exp(setup.pars['f_wage_trend'][i]+setup.exogrid.zf_t[i][((setup.all_indices(i,iexo_w[:,i]))[1])])[nsinglef] 
-            if np.any(nsinglem):wage_m[nsinglem,i]=np.exp(setup.pars['m_wage_trend'][i]+setup.exogrid.zm_t[i][((setup.all_indices(i,iexo_w[:,i]))[2])])[nsinglem] 
-            if np.any(singlef):wage_f[singlef,i]=np.exp(setup.pars['f_wage_trend'][i]+setup.exogrid.zf_t[i][iexo_w[singlef,i]])  
-            if np.any(singlem):wage_m[singlem,i]=np.exp(setup.pars['m_wage_trend'][i]+setup.exogrid.zm_t[i][iexo_w[singlem,i]])  
-            if np.any(nsinglef):wage_mp[nsinglef,i]=np.exp(setup.pars['m_wage_trend'][i]+setup.exogrid.zm_t[i][((setup.all_indices(i,iexo_w[:,i]))[2])])[nsinglef] 
-            if np.any(nsinglem):wage_fp[nsinglem,i]=np.exp(setup.pars['f_wage_trend'][i]+setup.exogrid.zf_t[i][((setup.all_indices(i,iexo_w[:,i]))[1])])[nsinglem] 
-            if np.any(marf):psis[:,i]=psi_check[:,i]#((setup.exogrid.psi_t[i][(setup.all_indices(i,iexo_w[:,i]))[3]])) 
+            if np.any(nsinglef):wage_f[nsinglef,i]=np.concatenate((
+                            np.exp(setup.pars['wtrend']['f']['e'][i]+setup.exogrid.zf_t['e'][i][((setup.all_indices(i,iexo[:,i]))[1])])[(nsinglef) & (educ[:,i]=='e')],
+                            np.exp(setup.pars['wtrend']['f']['n'][i]+setup.exogrid.zf_t['n'][i][((setup.all_indices(i,iexo[:,i]))[1])])[(nsinglef) & (educ[:,i]=='n')]))
+            
+            if np.any(nsinglem):wage_m[nsinglem,i]=np.concatenate((
+            np.exp(setup.pars['wtrend']['m']['e'][i]+setup.exogrid.zm_t['e'][i][((setup.all_indices(i,iexo[:,i]))[2])])[(nsinglem) & (educ[:,i]=='e')],            
+            np.exp(setup.pars['wtrend']['m']['n'][i]+setup.exogrid.zm_t['n'][i][((setup.all_indices(i,iexo[:,i]))[2])])[(nsinglem) & (educ[:,i]=='n')]))
+            
+            
+            if np.any(singlef):wage_f[singlef,i]=np.concatenate((
+            np.exp(setup.pars['wtrend']['f']['e'][i]+setup.exogrid.zf_t['e'][i][iexo[singlef,i]])[educ[singlef,i]=='e'],            
+            np.exp(setup.pars['wtrend']['f']['n'][i]+setup.exogrid.zf_t['n'][i][iexo[singlef,i]])[educ[singlef,i]=='n']))
+            
+            
+            if np.any(singlem):wage_m[singlem,i]=np.concatenate((
+            np.exp(setup.pars['wtrend']['m']['e'][i]+setup.exogrid.zm_t['e'][i][iexo[singlem,i]])[educ[singlem,i]=='e'],            
+            np.exp(setup.pars['wtrend']['m']['n'][i]+setup.exogrid.zm_t['n'][i][iexo[singlem,i]])[educ[singlem,i]=='n']))
+            
+            
+            if np.any(nsinglef):wage_mp[nsinglef,i]=np.concatenate((
+            np.exp(setup.pars['wtrend']['m']['e'][i]+setup.exogrid.zm_t['e'][i][((setup.all_indices(i,iexo[:,i]))[2])])[(nsinglef) & (educ[:,i]=='e')],            
+            np.exp(setup.pars['wtrend']['m']['n'][i]+setup.exogrid.zm_t['n'][i][((setup.all_indices(i,iexo[:,i]))[2])])[(nsinglef) & (educ[:,i]=='n')]))
+            
+            
+            if np.any(nsinglem):wage_fp[nsinglem,i]=np.concatenate((
+            np.exp(setup.pars['wtrend']['f']['e'][i]+setup.exogrid.zf_t['e'][i][((setup.all_indices(i,iexo[:,i]))[1])])[(nsinglem) & (educ[:,i]=='e')],            
+            np.exp(setup.pars['wtrend']['f']['n'][i]+setup.exogrid.zf_t['n'][i][((setup.all_indices(i,iexo[:,i]))[1])])[(nsinglem) & (educ[:,i]=='n')]))
+            
+            
+            #((setup.exogrid.psi_t[i][(setup.all_indices(i,iexo[:,i]))[3]])) 
              
+            #For income process validation 
+            wage_f2[nsinglef2,i]=np.concatenate((
+            np.exp(setup.pars['wtrend']['f']['e'][i]+setup.exogrid.zf_t['e'][i][((setup.all_indices(i,iexo[:,i]))[1])])[(nsinglef2) & (educ[:,i]=='e')],           
+            np.exp(setup.pars['wtrend']['f']['n'][i]+setup.exogrid.zf_t['n'][i][((setup.all_indices(i,iexo[:,i]))[1])])[(nsinglef2) & (educ[:,i]=='n')] ))
+            
+            
+            
+            wage_m2[nsinglem2,i]=np.concatenate((
+            np.exp(setup.pars['wtrend']['m']['e'][i]+setup.exogrid.zm_t['e'][i][((setup.all_indices(i,iexo[:,i]))[2])])[(nsinglem2) & (educ[:,i]=='e')],            
+            np.exp(setup.pars['wtrend']['m']['n'][i]+setup.exogrid.zm_t['n'][i][((setup.all_indices(i,iexo[:,i]))[2])])[(nsinglem2) & (educ[:,i]=='n')]))
+            
+            
+            
+            wage_m2[nsinglef2,i]=np.concatenate((
+            np.exp(setup.pars['wtrend']['m']['e'][i]+setup.exogrid.zm_t['e'][i][((setup.all_indices(i,iexo[:,i]))[2])])[(nsinglef2) & (educ[:,i]=='e')] ,            
+            np.exp(setup.pars['wtrend']['m']['n'][i]+setup.exogrid.zm_t['n'][i][((setup.all_indices(i,iexo[:,i]))[2])])[(nsinglef2) & (educ[:,i]=='n')] ))
+            
+            
+            
+            wage_f2[nsinglem2,i]=np.concatenate((
+            np.exp(setup.pars['wtrend']['f']['e'][i]+setup.exogrid.zf_t['e'][i][((setup.all_indices(i,iexo[:,i]))[1])])[(nsinglem2) & (educ[:,i]=='e')],            
+            np.exp(setup.pars['wtrend']['f']['n'][i]+setup.exogrid.zf_t['n'][i][((setup.all_indices(i,iexo[:,i]))[1])])[(nsinglem2) & (educ[:,i]=='n')]))
+            
+            
+            
+            wage_f2[singlef2,i]=np.concatenate((
+            np.exp(setup.pars['wtrend']['f']['e'][i]+setup.exogrid.zf_t['e'][i][iexo[singlef2,i]])[educ[singlef2,i]=='e'],            
+            np.exp(setup.pars['wtrend']['f']['n'][i]+setup.exogrid.zf_t['n'][i][iexo[singlef2,i]])[educ[singlef2,i]=='n']))
+            
+            
+            
+            wage_m2[singlem2,i]=np.concatenate((
+            np.exp(setup.pars['wtrend']['m']['e'][i]+setup.exogrid.zm_t['e'][i][iexo[singlem2,i]])[educ[singlem2,i]=='e'],            
+            np.exp(setup.pars['wtrend']['m']['n'][i]+setup.exogrid.zm_t['n'][i][iexo[singlem2,i]])[educ[singlem2,i]=='n']))
+            
+            
             #Single only Income 
-            wage_fs[i]=np.mean(setup.pars['f_wage_trend'][i]+setup.exogrid.zf_t[i][iexo_w[singlef,i]] ) 
-            wage_ms[i]=np.mean(setup.pars['m_wage_trend'][i]+setup.exogrid.zm_t[i][iexo_w[singlem,i]] ) 
+            wage_fs[i]=np.mean(
+            np.concatenate((np.array(setup.pars['wtrend']['f']['e'][i]+setup.exogrid.zf_t['e'][i][iexo[singlef,i]])[educ[singlef,i]=='e'] ,           
+                            np.array(setup.pars['wtrend']['f']['n'][i]+setup.exogrid.zf_t['n'][i][iexo[singlef,i]])[educ[singlef,i]=='n'])))
+            
+            
+            wage_ms[i]=np.mean(
+            np.concatenate((np.array(setup.pars['wtrend']['m']['e'][i]+setup.exogrid.zm_t['e'][i][iexo[singlem,i]])[educ[singlem,i]=='e'] ,            
+                            np.array(setup.pars['wtrend']['m']['n'][i]+setup.exogrid.zm_t['n'][i][iexo[singlem,i]])[educ[singlem,i]=='n'])))
              
             #Cohabitation Income 
-            if np.any(nsinglefc):wage_fc[i]=np.mean(setup.pars['f_wage_trend'][i]+setup.exogrid.zf_t[i][((setup.all_indices(i,iexo_w[:,i]))[1])][nsinglefc]) 
-            if np.any(nsinglemc):wage_mc[i]=np.mean(setup.pars['m_wage_trend'][i]+setup.exogrid.zm_t[i][((setup.all_indices(i,iexo_w[:,i]))[2])][nsinglemc]) 
-            if np.any(nsinglefc):wage_mpc[i]=np.mean(setup.pars['m_wage_trend'][i]+setup.exogrid.zm_t[i][((setup.all_indices(i,iexo_w[:,i]))[2])][nsinglefc]) 
-            if np.any(nsinglemc):wage_fpc[i]=np.mean(setup.pars['f_wage_trend'][i]+setup.exogrid.zf_t[i][((setup.all_indices(i,iexo_w[:,i]))[1])][nsinglemc]) 
+            if np.any(nsinglefc):wage_fc[i]=np.mean(
+            np.concatenate((setup.pars['wtrend']['f']['e'][i]+setup.exogrid.zf_t['e'][i][((setup.all_indices(i,iexo[:,i]))[1])][(nsinglefc) & (educ[:,i]=='e')],            
+                            setup.pars['wtrend']['f']['n'][i]+setup.exogrid.zf_t['n'][i][((setup.all_indices(i,iexo[:,i]))[1])][(nsinglefc) & (educ[:,i]=='n')])))
+            
+            
+            
+            if np.any(nsinglemc):wage_mc[i]=np.mean(
+            np.concatenate((setup.pars['wtrend']['m']['e'][i]+setup.exogrid.zm_t['e'][i][((setup.all_indices(i,iexo[:,i]))[2])][(nsinglemc) & (educ[:,i]=='e')],            
+                            setup.pars['wtrend']['m']['n'][i]+setup.exogrid.zm_t['n'][i][((setup.all_indices(i,iexo[:,i]))[2])][(nsinglemc) & (educ[:,i]=='n')])))
+            
+            
+            
+            if np.any(nsinglefc):wage_mpc[i]=np.mean(
+            np.concatenate((setup.pars['wtrend']['m']['e'][i]+setup.exogrid.zm_t['e'][i][((setup.all_indices(i,iexo[:,i]))[2])][(nsinglefc) & (edup[:,i]=='e')],            
+                            setup.pars['wtrend']['m']['n'][i]+setup.exogrid.zm_t['n'][i][((setup.all_indices(i,iexo[:,i]))[2])][(nsinglefc) & (edup[:,i]=='n')])))
+            
+            
+            
+            if np.any(nsinglemc):wage_fpc[i]=np.mean(
+            np.concatenate((setup.pars['wtrend']['f']['e'][i]+setup.exogrid.zf_t['e'][i][((setup.all_indices(i,iexo[:,i]))[1])][(nsinglemc) & (edup[:,i]=='e')] ,            
+                            setup.pars['wtrend']['f']['n'][i]+setup.exogrid.zf_t['n'][i][((setup.all_indices(i,iexo[:,i]))[1])][(nsinglemc) & (edup[:,i]=='n')]) ))
      
      
-            if np.any(nsinglefc):var_wage_fc[i]=np.var(setup.pars['f_wage_trend'][i]+setup.exogrid.zf_t[i][((setup.all_indices(i,iexo_w[:,i]))[1])][nsinglefc]) 
-            if np.any(nsinglemc):var_wage_mc[i]=np.var(setup.pars['m_wage_trend'][i]+setup.exogrid.zm_t[i][((setup.all_indices(i,iexo_w[:,i]))[2])][nsinglemc]) 
-            if np.any(nsinglefc):var_wage_mpc[i]=np.var(setup.pars['m_wage_trend'][i]+setup.exogrid.zm_t[i][((setup.all_indices(i,iexo_w[:,i]))[2])][nsinglefc]) 
-            if np.any(nsinglemc):var_wage_fpc[i]=np.var(setup.pars['f_wage_trend'][i]+setup.exogrid.zf_t[i][((setup.all_indices(i,iexo_w[:,i]))[1])][nsinglemc]) 
+            if np.any(nsinglefc):var_wage_fc[i]=np.var(
+            np.concatenate((setup.pars['wtrend']['f']['e'][i]+setup.exogrid.zf_t['e'][i][((setup.all_indices(i,iexo[:,i]))[1])][(nsinglefc) & (educ[:,i]=='e')],            
+                            setup.pars['wtrend']['f']['n'][i]+setup.exogrid.zf_t['n'][i][((setup.all_indices(i,iexo[:,i]))[1])][(nsinglefc) & (educ[:,i]=='n')])))
+            
+            
+            
+            if np.any(nsinglemc):var_wage_mc[i]=np.var(
+            np.concatenate((setup.pars['wtrend']['m']['e'][i]+setup.exogrid.zm_t['e'][i][((setup.all_indices(i,iexo[:,i]))[2])][(nsinglemc) & (educ[:,i]=='e')],            
+                            setup.pars['wtrend']['m']['n'][i]+setup.exogrid.zm_t['n'][i][((setup.all_indices(i,iexo[:,i]))[2])][(nsinglemc) & (educ[:,i]=='n')])))
+            
+            
+            
+            if np.any(nsinglefc):var_wage_mpc[i]=np.var(
+            np.concatenate((setup.pars['wtrend']['m']['e'][i]+setup.exogrid.zm_t['e'][i][((setup.all_indices(i,iexo[:,i]))[2])][(nsinglefc) & (edup[:,i]=='e')] ,            
+                            setup.pars['wtrend']['m']['n'][i]+setup.exogrid.zm_t['n'][i][((setup.all_indices(i,iexo[:,i]))[2])][(nsinglefc) & (edup[:,i]=='n')])))
+            
+            
+            
+            if np.any(nsinglemc):var_wage_fpc[i]=np.var(
+            np.concatenate((setup.pars['wtrend']['f']['e'][i]+setup.exogrid.zf_t['e'][i][((setup.all_indices(i,iexo[:,i]))[1])][(nsinglemc) & (edup[:,i]=='e')],            
+                            setup.pars['wtrend']['f']['n'][i]+setup.exogrid.zf_t['n'][i][((setup.all_indices(i,iexo[:,i]))[1])][(nsinglemc) & (edup[:,i]=='n')])))
      
             #Marriage Income 
-            if np.any(nsinglefm):wage_fm[i]=np.mean(setup.pars['f_wage_trend'][i]+setup.exogrid.zf_t[i][((setup.all_indices(i,iexo_w[:,i]))[1])][nsinglefm]) 
-            if np.any(nsinglemm):wage_mm[i]=np.mean(setup.pars['m_wage_trend'][i]+setup.exogrid.zm_t[i][((setup.all_indices(i,iexo_w[:,i]))[2])][nsinglemm]) 
-            if np.any(nsinglefm):wage_mpm[i]=np.mean(setup.pars['m_wage_trend'][i]+setup.exogrid.zm_t[i][((setup.all_indices(i,iexo_w[:,i]))[2])][nsinglefm]) 
-            if np.any(nsinglemm):wage_fpm[i]=np.mean(setup.pars['f_wage_trend'][i]+setup.exogrid.zf_t[i][((setup.all_indices(i,iexo_w[:,i]))[1])][nsinglemm]) 
+            if np.any(nsinglefm):wage_fm[i]=np.mean(
+            np.concatenate((setup.pars['wtrend']['f']['e'][i]+setup.exogrid.zf_t['e'][i][((setup.all_indices(i,iexo[:,i]))[1])][(nsinglefm) & (educ[:,i]=='e')],            
+                            setup.pars['wtrend']['f']['n'][i]+setup.exogrid.zf_t['n'][i][((setup.all_indices(i,iexo[:,i]))[1])][(nsinglefm) & (educ[:,i]=='n')])))
+            
+            
+            
+            if np.any(nsinglemm):wage_mm[i]=np.mean(
+            np.concatenate((setup.pars['wtrend']['m']['e'][i]+setup.exogrid.zm_t['e'][i][((setup.all_indices(i,iexo[:,i]))[2])][(nsinglemm) & (educ[:,i]=='e')],            
+                            setup.pars['wtrend']['m']['n'][i]+setup.exogrid.zm_t['n'][i][((setup.all_indices(i,iexo[:,i]))[2])][(nsinglemm) & (educ[:,i]=='n')])))
+            
+            
+            
+            if np.any(nsinglefm):wage_mpm[i]=np.mean(
+            np.concatenate((setup.pars['wtrend']['m']['e'][i]+setup.exogrid.zm_t['e'][i][((setup.all_indices(i,iexo[:,i]))[2])][(nsinglefm) & (edup[:,i]=='e')],            
+                           setup.pars['wtrend']['m']['n'][i]+setup.exogrid.zm_t['n'][i][((setup.all_indices(i,iexo[:,i]))[2])][(nsinglefm) & (edup[:,i]=='n')])))
+            
+            
+            
+            if np.any(nsinglemm):wage_fpm[i]=np.mean(
+            np.concatenate((setup.pars['wtrend']['f']['e'][i]+setup.exogrid.zf_t['e'][i][((setup.all_indices(i,iexo[:,i]))[1])][(nsinglemm) & (edup[:,i]=='e')],            
+                            setup.pars['wtrend']['f']['n'][i]+setup.exogrid.zf_t['n'][i][((setup.all_indices(i,iexo[:,i]))[1])][(nsinglemm) & (edup[:,i]=='n')])))
      
-            if np.any(nsinglefm):var_wage_fm[i]=np.var(setup.pars['f_wage_trend'][i]+setup.exogrid.zf_t[i][((setup.all_indices(i,iexo_w[:,i]))[1])][nsinglefm]) 
-            if np.any(nsinglemm):var_wage_mm[i]=np.var(setup.pars['m_wage_trend'][i]+setup.exogrid.zm_t[i][((setup.all_indices(i,iexo_w[:,i]))[2])][nsinglemm]) 
-            if np.any(nsinglefm):var_wage_mpm[i]=np.var(setup.pars['m_wage_trend'][i]+setup.exogrid.zm_t[i][((setup.all_indices(i,iexo_w[:,i]))[2])][nsinglefm]) 
-            if np.any(nsinglemm):var_wage_fpm[i]=np.var(setup.pars['f_wage_trend'][i]+setup.exogrid.zf_t[i][((setup.all_indices(i,iexo_w[:,i]))[1])][nsinglemm]) 
+            if np.any(nsinglefm):var_wage_fm[i]=np.var(
+            np.concatenate((setup.pars['wtrend']['f']['e'][i]+setup.exogrid.zf_t['e'][i][((setup.all_indices(i,iexo[:,i]))[1])][(nsinglefm) & (educ[:,i]=='e')],            
+                           setup.pars['wtrend']['f']['n'][i]+setup.exogrid.zf_t['n'][i][((setup.all_indices(i,iexo[:,i]))[1])][(nsinglefm) & (educ[:,i]=='n')])))
+            
+            
+            
+            if np.any(nsinglemm):var_wage_mm[i]=np.var(
+            np.concatenate((setup.pars['wtrend']['m']['e'][i]+setup.exogrid.zm_t['e'][i][((setup.all_indices(i,iexo[:,i]))[2])][(nsinglemm) & (educ[:,i]=='e')] ,            
+                            setup.pars['wtrend']['m']['n'][i]+setup.exogrid.zm_t['n'][i][((setup.all_indices(i,iexo[:,i]))[2])][(nsinglemm) & (educ[:,i]=='n')]) ))
+            
+            
+            
+            if np.any(nsinglefm):var_wage_mpm[i]=np.var(
+            np.concatenate((setup.pars['wtrend']['m']['e'][i]+setup.exogrid.zm_t['e'][i][((setup.all_indices(i,iexo[:,i]))[2])][(nsinglefm) & (edup[:,i]=='e')] ,            
+                            setup.pars['wtrend']['m']['n'][i]+setup.exogrid.zm_t['n'][i][((setup.all_indices(i,iexo[:,i]))[2])][(nsinglefm) & (edup[:,i]=='n')]) ))
+            
+            
+            
+            if np.any(nsinglemm):var_wage_fpm[i]=np.var(
+            np.concatenate((setup.pars['wtrend']['f']['e'][i]+setup.exogrid.zf_t['e'][i][((setup.all_indices(i,iexo[:,i]))[1])][(nsinglemm) & (edup[:,i]=='e')],            
+                            setup.pars['wtrend']['f']['n'][i]+setup.exogrid.zf_t['n'][i][((setup.all_indices(i,iexo[:,i]))[1])][(nsinglemm) & (edup[:,i]=='n')])))
                        
-              
-            #For income process validation 
-            wage_f2[nsinglef2,i]=np.exp(setup.pars['f_wage_trend'][i]+setup.exogrid.zf_t[i][((setup.all_indices(i,iexo_w[:,i]))[1])])[nsinglef2] 
-            wage_m2[nsinglem2,i]=np.exp(setup.pars['m_wage_trend'][i]+setup.exogrid.zm_t[i][((setup.all_indices(i,iexo_w[:,i]))[2])])[nsinglem2] 
-            wage_m2[nsinglef2,i]=np.exp(setup.pars['m_wage_trend'][i]+setup.exogrid.zm_t[i][((setup.all_indices(i,iexo_w[:,i]))[2])])[nsinglef2] 
-            wage_f2[nsinglem2,i]=np.exp(setup.pars['f_wage_trend'][i]+setup.exogrid.zf_t[i][((setup.all_indices(i,iexo_w[:,i]))[1])])[nsinglem2] 
-            wage_f2[singlef2,i]=np.exp(setup.pars['f_wage_trend'][i]+setup.exogrid.zf_t[i][iexo_w[singlef2,i]])  
-            wage_m2[singlem2,i]=np.exp(setup.pars['m_wage_trend'][i]+setup.exogrid.zm_t[i][iexo_w[singlem2,i]])  
+
             
              
         #Log Income over time 
         for t in range(lenn): 
-            ipart=(labor_w[:,t]>0.1) & (ifemale2) #& (state_w[:,t]>1) 
-            ipartm=(state_w[:,t]==1) & (imale2) 
+            ipart=(labor_w[:,t]>0.1) & (ifemale2) #& (state[:,t]>1) 
+           
             log_inc_rel[0,t]=np.mean(np.log(wage_f2[ipart,t])) 
             log_inc_rel[1,t]=np.mean(np.log(wage_m2[imale2,t])) 
                  
+            
+            
              
         for ist,sname in enumerate(state_codes):  
                  
@@ -1161,13 +1145,13 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
                 #Arrays for preparation    
                 is_state = (np.any(state[:,0:t]==ist,1))           
                 is_state1 = (state[:,t]==ist)    
-                is_state2 = (state_w[:,t]==ist)    
+                is_state2 = (state[:,t]==ist)    
                 if t<1:    
                     is_state=is_state1    
                 
                 ind1 = np.where(is_state1)[0]  
-                ind1f = np.where((is_state1) & (agents.is_female[:,0][keep]))[0] 
-                ind1m = np.where((is_state1) & ~(agents.is_female[:,0][keep]))[0] 
+                ind1f = np.where((is_state1) & (agents.is_female[:,0]))[0] 
+                ind1m = np.where((is_state1) & ~(agents.is_female[:,0]))[0] 
                          
                 if not (np.any(is_state) or np.any(is_state1)): continue    
                      
@@ -1200,34 +1184,23 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
                       
                 elif sname=="Couple, C" or sname=="Couple, M":  
                      
-                     if np.any(ind1f):inc_rel[ist,t,0]=np.mean(wage_f[:,t][keep][ind1f])+np.mean(wage_mp[:,t][keep][ind1f]) 
-                     if np.any(ind1m):inc_rel[ist,t,1]=np.mean(wage_m[:,t][keep][ind1m])+np.mean(wage_fp[:,t][keep][ind1m]) 
+                     if np.any(ind1f):inc_rel[ist,t,0]=np.mean(wage_f[:,t][ind1f])+np.mean(wage_mp[:,t][ind1f]) 
+                     if np.any(ind1m):inc_rel[ist,t,1]=np.mean(wage_m[:,t][ind1m])+np.mean(wage_fp[:,t][ind1m]) 
                       
                 else:   
                     
                    print('Error: No relationship chosen')   
                     
-        #For some graphs
-        changem=np.zeros(state_w.shape,dtype=bool)  
-        changec=np.zeros(state_w.shape,dtype=bool)  
-        change=np.zeros(state_w.shape,dtype=bool)  
-        for t in range(1,mdl.setup.pars['Tret']-1):     
-                 
-            irchangem = ((state_w[:,t]==2) & ((state_w[:,t-1]==0) | (state_w[:,t-1]==1)))   
-            irchangec = ((state_w[:,t]==3) & ((state_w[:,t-1]==0) | (state_w[:,t-1]==1)))   
-            irchange=((state_w[:,t]!=state_w[:,t-1]) & ((state_w[:,t-1]==0) | (state_w[:,t-1]==1)))   
-            changem[:,t]=irchangem  
-            changec[:,t]=irchangec  
-            change[:,t]=irchange 
+
                  
         #Check correlations 
-        assets_ww=assets_w[:,:60]
-        ifemale1=(female_w==1) 
-        imale1=(female_w==0) 
-        nsinglefc1=(ifemale1[:,:60]) & (state_w[:,:60]==3) & (labor_w[:,:60]>0.1) 
-        nsinglefm1=(ifemale1[:,:60]) & (state_w[:,:60]==2) & (labor_w[:,:60]>0.1) 
-        nsinglefc2=(imale1[:,:60]) & (state_w[:,:60]==3) & (labor_w[:,:60]>0.1) 
-        nsinglefm2=(imale1[:,:60]) & (state_w[:,:60]==2) & (labor_w[:,:60]>0.1) 
+       
+        ifemale1=(female==1) 
+        imale1=(female==0) 
+        nsinglefc1=(ifemale1[:,:60]) & (state[:,:60]==3) & (labor_w[:,:60]>0.1) 
+        nsinglefm1=(ifemale1[:,:60]) & (state[:,:60]==2) & (labor_w[:,:60]>0.1) 
+        nsinglefc2=(imale1[:,:60]) & (state[:,:60]==3) & (labor_w[:,:60]>0.1) 
+        nsinglefm2=(imale1[:,:60]) & (state[:,:60]==2) & (labor_w[:,:60]>0.1) 
         wage_ft=wage_f[:,:60] 
         wage_mpt=wage_mp[:,:60] 
         wage_mt=wage_m[:,:60] 
@@ -1238,14 +1211,14 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         agef=int(40/setup.pars['py'])
         if (agei==agef):agef=agef+1
         assets_w_mod=assets_w[:,agei:agef]
-        nsinglefc1_mod=(ifemale1[:,agei:agef]) & (state_w[:,agei:agef]==3) & (labor_w[:,agei:agef]>0.1) 
-        nsinglefm1_mod=(ifemale1[:,agei:agef]) & (state_w[:,agei:agef]==2) & (labor_w[:,agei:agef]>0.1) 
-        nsinglefc2_mod=(imale1[:,agei:agef]) & (state_w[:,agei:agef]==3) & (labor_w[:,agei:agef]>0.1) 
-        nsinglefm2_mod=(imale1[:,agei:agef]) & (state_w[:,agei:agef]==2) & (labor_w[:,agei:agef]>0.1) 
-        nsinglefc1_mod1=(ifemale1[:,agei:agef]) & (state_w[:,agei:agef]==3)  
-        nsinglefm1_mod1=(ifemale1[:,agei:agef]) & (state_w[:,agei:agef]==2)
-        nsinglefc2_mod1=(imale1[:,agei:agef]) & (state_w[:,agei:agef]==3)
-        nsinglefm2_mod1=(imale1[:,agei:agef]) & (state_w[:,agei:agef]==2)
+        nsinglefc1_mod=(ifemale1[:,agei:agef]) & (state[:,agei:agef]==3) & (labor_w[:,agei:agef]>0.1) 
+        nsinglefm1_mod=(ifemale1[:,agei:agef]) & (state[:,agei:agef]==2) & (labor_w[:,agei:agef]>0.1) 
+        nsinglefc2_mod=(imale1[:,agei:agef]) & (state[:,agei:agef]==3) & (labor_w[:,agei:agef]>0.1) 
+        nsinglefm2_mod=(imale1[:,agei:agef]) & (state[:,agei:agef]==2) & (labor_w[:,agei:agef]>0.1) 
+        nsinglefc1_mod1=(ifemale1[:,agei:agef]) & (state[:,agei:agef]==3)  
+        nsinglefm1_mod1=(ifemale1[:,agei:agef]) & (state[:,agei:agef]==2)
+        nsinglefc2_mod1=(imale1[:,agei:agef]) & (state[:,agei:agef]==3)
+        nsinglefm2_mod1=(imale1[:,agei:agef]) & (state[:,agei:agef]==2)
         wage_ft_mod=wage_f[:,agei:agef] 
         wage_mpt_mod=wage_mp[:,agei:agef] 
         wage_mt_mod=wage_m[:,agei:agef] 
@@ -1408,9 +1381,9 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         f2=fig.add_subplot(2,1,1)    
              
         for ist,sname in enumerate(state_codes):    
-            plt.plot(np.array(range(lenn)), ass_rel[ist,:,0],color=print(ist/len(state_codes)),markersize=6, label=sname)    
-        plt.plot(np.array(range(lenn)), ass_rel[2,:,1], linestyle='--',color=print(2/len(state_codes)),markersize=6, label='Marriage male') 
-        plt.plot(np.array(range(lenn)), ass_rel[3,:,1], linestyle='--',color=print(3/len(state_codes)),markersize=6, label='Cohabitation other') 
+            plt.plot(np.array(range(lenn)), ass_rel[ist,:,0],markersize=6, label=sname)    
+        plt.plot(np.array(range(lenn)), ass_rel[2,:,1], linestyle='--',color='r',markersize=6, label='Marriage male') 
+        plt.plot(np.array(range(lenn)), ass_rel[3,:,1], linestyle='--',color='b',markersize=6, label='Cohabitation other') 
         plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
                   fancybox=True, shadow=True, ncol=len(state_codes), fontsize='x-small')    
         #plt.legend(loc='upper left', shadow=True, fontsize='x-small')    
@@ -1425,10 +1398,10 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
              
         for ist,sname in enumerate(state_codes):    
                
-            plt.plot(np.array(range(lenn)), inc_rel[ist,:,0],color=print(ist/len(state_codes)),markersize=6, label=sname)  
+            plt.plot(np.array(range(lenn)), inc_rel[ist,:,0],markersize=6, label=sname)  
              
-        plt.plot(np.array(range(lenn)), inc_rel[2,:,1], linestyle='--',color=print(2/len(state_codes)),markersize=6, label='Marriage male') 
-        plt.plot(np.array(range(lenn)), inc_rel[3,:,1], linestyle='--',color=print(3/len(state_codes)),markersize=6, label='Cohabitation Male') 
+        plt.plot(np.array(range(lenn)), inc_rel[2,:,1], linestyle='--',color='r',markersize=6, label='Marriage male') 
+        plt.plot(np.array(range(lenn)), inc_rel[3,:,1], linestyle='--',color='b',markersize=6, label='Cohabitation Male') 
         plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
                   fancybox=True, shadow=True, ncol=len(state_codes), fontsize='x-small')    
         plt.xlabel('Time')    
@@ -1448,10 +1421,10 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
          
         lend=len(inc_men['earn_age']) 
         agea=np.array(range(lend))+20 
-        plt.plot(agea, inc_men['earn_age'], marker='o',color=print(3/len(state_codes)),markersize=6, label='Men Data') 
-        plt.plot(agea, inc_women['earn_age'], marker='o',color=print(2/len(state_codes)),markersize=6, label='Women Data') 
-        plt.plot(agea, log_inc_rel[0,mdl.setup.pars['Tbef']:lend+mdl.setup.pars['Tbef']],color=print(2/len(state_codes)),markersize=6, label='Women Simulation') 
-        plt.plot(agea, log_inc_rel[1,mdl.setup.pars['Tbef']:lend+mdl.setup.pars['Tbef']],color=print(3/len(state_codes)),markersize=6, label='Men Simulation') 
+        plt.plot(agea, inc_men['earn_age'], marker='o',color='r',markersize=6, label='Men Data') 
+        plt.plot(agea, inc_women['earn_age'], marker='o',color='b',markersize=6, label='Women Data') 
+        plt.plot(agea, log_inc_rel[0,mdl.setup.pars['Tbef']:lend+mdl.setup.pars['Tbef']],'y',markersize=6, label='Women Simulation') 
+        plt.plot(agea, log_inc_rel[1,mdl.setup.pars['Tbef']:lend+mdl.setup.pars['Tbef']],'k',markersize=6, label='Men Simulation') 
         plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
                   fancybox=True, shadow=True, ncol=len(state_codes), fontsize='x-small')    
         plt.xlabel('Age')    
@@ -1616,14 +1589,28 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         fig = plt.figure()    
         f4=fig.add_subplot(2,1,1)    
         xa=(mdl.setup.pars['py']*np.array(range(len(relt1[0,])))+20)   
-        for ist,sname in enumerate(state_codes):    
-            plt.plot([],[],color=print(ist/len(state_codes)), label=sname)    
+        for ist,sname in enumerate(state_codes):   plt.plot([],[], label=sname)                
         plt.stackplot(xa,relt1[0,]/N,relt1[1,]/N,relt1[2,]/N,relt1[3,]/N,    
                       colors = ['b','y','g','r'])               
         plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
                   fancybox=True, shadow=True, ncol=len(state_codes), fontsize='x-small')    
         plt.xlabel('Age')    
         plt.ylabel('Share')    
+        
+        ##########################################    
+        # Relationship Over the Live Cycle - Full    
+        ##########################################          
+        fig = plt.figure()    
+        f4=fig.add_subplot(2,1,1)    
+        xa=(mdl.setup.pars['py']*np.array(range(len(Frelt1[0,])))+20)   
+        for ist,sname in enumerate(state_codes_full): plt.plot([],[], label=sname)               
+        plt.stackplot(xa,Frelt1[0,]/N,Frelt1[1,]/N,Frelt1[2,]/N,Frelt1[3,]/N,
+                         Frelt1[4,]/N,Frelt1[5,]/N,Frelt1[6,]/N,Frelt1[7,]/N,
+                         Frelt1[8,]/N,Frelt1[9,]/N,Frelt1[10,]/N,Frelt1[11,]/N)               
+        plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
+                  fancybox=True, shadow=True, ncol=int(len(state_codes_full)/3), fontsize='x-small')    
+        plt.xlabel('Age')    
+        plt.ylabel('Share')  
              
         ##########################################    
         # Relationship and Data    
@@ -1645,6 +1632,23 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         plt.ylabel('Share')    
         plt.margins(0,0)  
         plt.savefig('erel.pgf', bbox_inches = 'tight',pad_inches = 0)  
+        
+        ##########################################    
+        # Relationship by Education
+        ##########################################          
+        fig = plt.figure()    
+        f4=fig.add_subplot(2,1,1)    
+        lg=min(len(mar_d),len(relt[1,:]))    
+        xa=(5*np.array(range(lg))+20)      
+        plt.plot(xa, Ereltt[0,0:lg]/np.sum(educ[:,0]=='e'),'g',linewidth=1.5, label='College')      
+        plt.plot(xa, Ereltt[1,0:lg]/np.sum(educ[:,0]=='n'),'r',linewidth=1.5, label='No College')    
+        plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
+                  fancybox=True, shadow=True, ncol=len(state_codes), fontsize='x-small')    
+        plt.ylim(ymax=1.0)    
+        plt.xlabel('Age')    
+        plt.ylabel('Share')    
+        plt.margins(0,0)  
+     
              
         ##########################################    
         # FLS Over the Live Cycle    
@@ -1666,26 +1670,29 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         f6=fig.add_subplot(2,1,1) 
          
          
-        sns.kdeplot(psis[state_w==3], shade=True,shade_lowest=False,linewidth=0.01, color="r", bw=.05,label = 'Cohabitaition') 
-        sns.kdeplot(psis[state_w==2], shade=True,shade_lowest=False,linewidth=0.01, color="b", bw=.05,label = 'Marriage') 
-        sns.kdeplot(psis[changec], color="r", bw=.05,label = 'Cohabitaition Beg') 
-        sns.kdeplot(psis[changem], color="b", bw=.05,label = 'Marriage Beg')   
+        sns.kdeplot(psi_check[statecpsi], shade=True,shade_lowest=False,linewidth=0.01, color="r", bw=.05,label = 'Cohabitaition') 
+        sns.kdeplot(psi_check[statempsi], shade=True,shade_lowest=False,linewidth=0.01, color="b", bw=.05,label = 'Marriage') 
+        sns.kdeplot(psi_check[changec], color="r", bw=.05,label = 'Cohabitaition Beg') 
+        sns.kdeplot(psi_check[changem], color="b", bw=.05,label = 'Marriage Beg')   
         plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
                   fancybox=True, shadow=True, ncol=len(state_codes), fontsize='x-small')    
         plt.xlabel('Love Shock')    
-        plt.ylabel('Denisty')  
+        plt.ylabel('Denisty') 
+        
+
          
         ##########################################    
         # Distribution of Love - Cumulative 
-        ##########################################   
+        #################################
+        #########   
         fig = plt.figure()    
         f1=fig.add_subplot(2,1,1) 
          
         # evaluate the histogram 
-        valuesc, basec = np.histogram(psis[changec], bins=1000) 
-        valuesm, basem = np.histogram(psis[changem], bins=1000) 
-        valuesct, basect = np.histogram(psis[state_w==3], bins=1000) 
-        valuesmt, basemt = np.histogram(psis[state_w==2], bins=1000) 
+        valuesc, basec = np.histogram(psi_check[changec], bins=1000) 
+        valuesm, basem = np.histogram(psi_check[changem], bins=1000) 
+        valuesct, basect = np.histogram(psi_check[statecpsi], bins=1000) 
+        valuesmt, basemt = np.histogram(psi_check[statempsi], bins=1000) 
         #evaluate the cumulative 
         cumulativec = np.cumsum(valuesc) 
         cumulativem = np.cumsum(valuesm) 
@@ -1694,14 +1701,39 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         # plot the cumulative function 
         plt.plot(basec[:-1], cumulativec/max(cumulativec), c='red',label = 'Cohabitaition') 
         plt.plot(basem[:-1], cumulativem/max(cumulativem), c='blue',label = 'Marriage') 
-        #plt.plot(basect[:-1], cumulativect/max(cumulativect),linestyle='--', c='red',label = 'Cohabitaition-All') 
-        #plt.plot(basemt[:-1], cumulativemt/max(cumulativemt),linestyle='--', c='blue',label = 'Marriage-All') 
         plt.legend(loc='best', ncol=1, fontsize='x-small')    
         plt.xlabel('Love Shock $\psi$')    
         plt.ylabel('Probability')  
         plt.savefig('psidist.pgf', bbox_inches = 'tight',pad_inches = 0)  
          
  
+        ##########################################    
+        # Distribution of Love by Education
+        #################################
+        #########   
+        fig = plt.figure()    
+        f1=fig.add_subplot(2,1,1) 
+         
+        # evaluate the histogram 
+        valuescte, basecte = np.histogram(psi_check[(changec) & (educ=='e')], bins=1000) 
+        valuesmte, basemte = np.histogram(psi_check[(changem) & (educ=='e')], bins=1000) 
+        valuesctn, basectn = np.histogram(psi_check[(changec) & (educ=='n')], bins=1000) 
+        valuesmtn, basemtn = np.histogram(psi_check[(changem) & (educ=='n')], bins=1000) 
+        #evaluate the cumulative 
+
+        cumulativecte = np.cumsum(valuescte) 
+        cumulativemte = np.cumsum(valuesmte) 
+        cumulativectn = np.cumsum(valuesctn) 
+        cumulativemtn = np.cumsum(valuesmtn) 
+        # plot the cumulative function 
+        plt.plot(basec[:-1], cumulativecte/max(cumulativecte), c='black',label = 'Cohabitaition - Co') 
+        plt.plot(basem[:-1], cumulativemte/max(cumulativemte), c='b',label = 'Marriage - Co') 
+        plt.plot(basec[:-1], cumulativectn/max(cumulativectn), c='y',linestyle='--',label = 'Cohabitaition - NoCo') 
+        plt.plot(basem[:-1], cumulativemtn/max(cumulativemtn), c='r',linestyle='--',label = 'Marriage - NoCo') 
+        plt.legend(loc='best', ncol=1, fontsize='x-small')    
+        plt.xlabel('Love Shock $\psi$')    
+        plt.ylabel('Probability')  
+        plt.savefig('psidist_edu.pgf', bbox_inches = 'tight',pad_inches = 0) 
          
         ##########################################    
         # Distribution of Pareto Weight  
@@ -1710,10 +1742,10 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         f6=fig.add_subplot(2,1,1) 
          
          
-        sns.kdeplot(theta_w[state_w==3], shade=True,shade_lowest=False,linewidth=0.01, color="r", bw=.05,label = 'Cohabitaition') 
-        sns.kdeplot(theta_w[state_w==2], shade=True,shade_lowest=False,linewidth=0.01, color="b", bw=.05,label = 'Marriage') 
-        sns.kdeplot(theta_w[changec], color="r", bw=.05,label = 'Cohabitaition Beg') 
-        sns.kdeplot(theta_w[changem], color="b", bw=.05,label = 'Marriage Beg')  
+        sns.kdeplot(theta_t[statecpsi], shade=True,shade_lowest=False,linewidth=0.01, color="r", bw=.05,label = 'Cohabitaition') 
+        sns.kdeplot(theta_t[statempsi], shade=True,shade_lowest=False,linewidth=0.01, color="b", bw=.05,label = 'Marriage') 
+        sns.kdeplot(theta_t[changec], color="r", bw=.05,label = 'Cohabitaition Beg') 
+        sns.kdeplot(theta_t[changem], color="b", bw=.05,label = 'Marriage Beg')  
         plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
                   fancybox=True, shadow=True, ncol=len(state_codes), fontsize='x-small')    
         plt.xlabel('Female Pareto Weight')    
@@ -1762,23 +1794,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         #plt.xlim(xmax=1.0,xmin=0.0)    
          
          
-        ##########################################    
-        # Wage: Marriage vs. cohabitation  
-        ##########################################     
-        fig = plt.figure()    
-        f6=fig.add_subplot(2,1,1)    
-             
-            
-        # create plot    
-        x=np.array([0.25,0.75])   
-        y=np.array([div_d,moments['div_ratio']])    
-        yerr=np.array([(wage_i[1]-wage_i[0])/2.0,0.0])    
-        plt.axhline(y=1.0,linewidth=0.1, color='r')    
-        plt.errorbar(x, y, yerr=yerr, fmt='o', elinewidth=0.03)    
-        plt.ylabel('Ratio of Male Divorce rates: Rich over poor')    
-        plt.xticks(x, ["Data","Simulation"] )   
-        #plt.ylim(ymax=0.1)    
-        plt.xlim(xmax=1.0,xmin=0.0)  
+  
           
           
         ##########################################    
@@ -1799,25 +1815,103 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         plt.xlim(xmax=1.0,xmin=0.0)    
           
             
-           
-        ##########################################################   
-        # Histogram of Unilateral Divorce on Cohabitation Length   
-        #############################################################   
-        fig = plt.figure()    
-        f6=fig.add_subplot(2,1,1)    
-             
+        ##########################################################  
+        # Histogram of Unilateral Divorce on Cohabitation Length  
+        #############################################################  
+        fig = plt.figure()   
+        f6=fig.add_subplot(2,1,1)   
             
-        # create plot    
-        x=np.array([0.2,0.5,0.8])   
-        y=np.array([haz_join,haz_mar,haz_sep])    
-        yerr=y*0.0    
-        plt.axhline(y=1.0,linewidth=0.1, color='r')    
-        plt.errorbar(x, y, yerr=yerr, fmt='o', elinewidth=0.03)    
-        plt.ylabel('Relative Hazard - UniD vs. Bil')    
-        plt.xticks(x, ["Overall Risk","Risk of Marriage","Risk of Separation"] )   
-        #plt.ylim(ymax=1.2,ymin=0.7)    
-        plt.xlim(xmax=1.0,xmin=0.0)    
-        #plt.xticks(index , ('Unilateral', 'Bilateral'))    
+           
+        # create plot   
+        x=np.array([0.2,0.5,0.8])  
+        y=np.array([haz_join,haz_mar,haz_sep])   
+        yerr=y*0.0   
+        plt.axhline(y=1.0,linewidth=0.1, color='r')   
+        plt.errorbar(x, y, yerr=yerr, fmt='o', elinewidth=0.03)   
+        plt.ylabel('Relative Hazard - Education')   
+        plt.xticks(x, ["Overall Risk","Risk of Marriage","Risk of Separation"] )  
+        #plt.ylim(ymax=1.2,ymin=0.7)   
+        plt.xlim(xmax=1.0,xmin=0.0)   
+        
+        ##########################################################  
+        # Histogram of Unilateral Divorce on Cohabitation Length  
+        #############################################################  
+        fig = plt.figure()   
+        f6=fig.add_subplot(2,1,1)   
+            
+           
+        # create plot   
+        x=np.array([0.2,0.5,0.8])  
+        y=np.array([haz_joinp,haz_marp,haz_sepp])   
+        yerr=y*0.0   
+        plt.axhline(y=1.0,linewidth=0.1, color='r')   
+        plt.errorbar(x, y, yerr=yerr, fmt='o', elinewidth=0.03)   
+        plt.ylabel('Relative Hazard - Education Partner')   
+        plt.xticks(x, ["Overall Risk","Risk of Marriage","Risk of Separation"] )  
+        #plt.ylim(ymax=1.2,ymin=0.7)   
+        plt.xlim(xmax=1.0,xmin=0.0)   
+        
+        ##########################################   
+        # Entering in a relationship by Edu
+        ##########################################   
+        fig = plt.figure()   
+        f6=fig.add_subplot(2,1,1)   
+            
+        beta_edu_d=0.0
+        beta_edu_i=np.array([0.0,0.0])
+        # create plot   
+        x=np.array([0.25,0.75])  
+        y=np.array([beta_edu_d,beta_edu_s])   
+        yerr=np.array([(beta_edu_i[1]-beta_edu_i[0])/2.0,0.0])   
+        plt.axhline(y=1.0,linewidth=0.1, color='r')   
+        plt.errorbar(x, y, yerr=yerr, fmt='o', elinewidth=0.03)   
+        plt.ylabel('Enter rel by Edu')   
+        plt.xticks(x, ["Data","Simulation"] )  
+        plt.ylim(ymax=0.5)   
+        plt.xlim(xmax=1.0,xmin=0.0)   
+        
+        
+        ##########################################   
+        # Divorce by Edu
+        ##########################################   
+        fig = plt.figure()   
+        f6=fig.add_subplot(2,1,1)   
+            
+        
+        beta_div_edu_d=1.0
+        beta_div_edu_i=np.array([1.0,1.0])
+        # create plot   
+        x=np.array([0.25,0.75])  
+        y=np.array([beta_div_edu_d,beta_div_edu_s])   
+        yerr=np.array([(beta_div_edu_i[1]-beta_div_edu_i[0])/2.0,0.0])   
+        plt.axhline(y=1.0,linewidth=0.1, color='r')   
+        plt.errorbar(x, y, yerr=yerr, fmt='o', elinewidth=0.03)   
+        plt.ylabel('Divorce-Education')   
+        plt.xticks(x, ["Data","Simulation"] )  
+        plt.ylim(ymax=1.4)   
+        plt.xlim(xmax=1.0,xmin=0.0)   
+        
+        
+        ##########################################   
+        # Divorce by Edu P  
+        ##########################################   
+        fig = plt.figure()   
+        f6=fig.add_subplot(2,1,1)   
+            
+        
+        beta_div_edup_d=1.0
+        beta_div_edup_i=np.array([1.0,1.0])
+        # create plot   
+        x=np.array([0.25,0.75])  
+        y=np.array([beta_div_edup_d,beta_div_edup_s])   
+        yerr=np.array([(beta_div_edup_i[1]-beta_div_edup_i[0])/2.0,0.0])   
+        plt.axhline(y=1.0,linewidth=0.1, color='r')   
+        plt.errorbar(x, y, yerr=yerr, fmt='o', elinewidth=0.03)   
+        plt.ylabel('Divorce-Education P')   
+        plt.xticks(x, ["Data","Simulation"] )  
+        plt.ylim(ymax=1.4)   
+        plt.xlim(xmax=1.0,xmin=0.0)   
+     
           
      
         ##########################################    
@@ -1832,5 +1926,11 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
          
            
     return moments   
-             
+   
+class KeySet(object):
+    def __init__(self, i, arr):
+        self.i = i
+        self.arr = arr
+    def __hash__(self):
+        return hash((self.i, hash(self.arr.tostring())))          
             

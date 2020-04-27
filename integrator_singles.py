@@ -58,7 +58,8 @@ def ev_single_meet(setup,V,sown,female,ef,em,desc,dd,t,skip_mar=False,trim_lvl=0
     ns = sown.size
     
     edu=ef if female else em
-    p_mat = setup.part_mats[setup.desc[desc]][edu][t].T 
+    eduo=em if female else ef
+    p_mat = setup.part_mats[setup.desc[desc]][edu][eduo][t].T 
     p_mat = p_mat.astype(setup.dtype,copy=False)
         
     V_next = np.ones((ns,nexo),dtype=setup.dtype)*(-1e10)
@@ -73,7 +74,7 @@ def ev_single_meet(setup,V,sown,female,ef,em,desc,dd,t,skip_mar=False,trim_lvl=0
     npart = i_assets_c.shape[1]
     
     
-    matches = setup.matches[setup.desc[desc]][ef][t] if female else setup.matches[setup.desc[desc]][em][t] 
+    matches = setup.matches[setup.desc[desc]][ef][em][t] if female else setup.matches[setup.desc[desc]][em][ef][t] 
     
     
     dec = np.zeros(matches['iexo'].shape,dtype=np.bool)
