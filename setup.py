@@ -430,7 +430,7 @@ class ModelSetup(object):
 #        
         
         # grid for theta
-        self.ntheta = 11
+        self.ntheta = 41
         self.thetamin = 0.02
         self.thetamax = 0.98
         self.thetagrid = np.linspace(self.thetamin,self.thetamax,self.ntheta,dtype=self.dtype)
