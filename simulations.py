@@ -79,7 +79,7 @@ class Agents:
           
         
         z_t = self.setup.exogrid.zf_t[self.edu] if female else self.setup.exogrid.zm_t[self.edu]
-        sig = self.setup.pars['sig_zf_0'] if female else self.setup.pars['sig_zm_0']
+        sig = self.setup.pars['sig_zf_0'][edu] if female else self.setup.pars['sig_zm_0'][edu]
         z_prob = int_prob(z_t[0], sig = sig )
         shocks_init = shokko[6,:,0]#np.random.random_sample((N,))        
         i_z = np.sum((shocks_init[:,None] > np.cumsum(z_prob)[None,:]), axis=1)

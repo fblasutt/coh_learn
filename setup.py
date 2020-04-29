@@ -36,17 +36,17 @@ class ModelSetup(object):
         p['Tret'] = Tret
         p['Tren'] = Tren
         p['Tbef'] = Tbef
-        p['sig_zf_0']  = .5449176#mk0.4096**(0.5)
-        p['sig_zf']    = .0272437**(0.5)#0.0399528**(0.5)
+        p['sig_zf_0']  = {'e':.5449176,'n':.5449176}#{'e':.5449176,'n':.3449176}#
+        p['sig_zf']    = {'e':.0272437**(0.5),'n':.0272437**(0.5)}#{'e':.0272437**(0.5),'n':.0122437**(0.5)}#
         p['n_zf_t']      = [5]*Tret + [1]*(T-Tret)
-        p['sig_zm_0']  = 0.54896510#.405769**(0.5)
-        p['sig_zm']    = .025014**(0.5)#0.0417483**(0.5)
+        p['sig_zm_0']  = {'e':0.54896510,'n':0.54896510}#{'e':0.54896510,'n':0.34896510} #
+        p['sig_zm']    = {'e':.025014**(0.5),'n':.025014**(0.5)} # {'e':.025014**(0.5),'n':.013014**(0.5)}#
         p['n_zm_t']      = [5]*Tret + [1]*(T-Tret)
         p['sigma_psi_mult'] = 0.28
         p['sigma_psi_mu'] = 0.0#1.0#nthe1.1
         p['sigma_psi']   = 0.11
         p['R_t'] = [1.02**period_year]*T
-        p['n_psi_t']     = [11]*T#[11]*T
+        p['n_psi_t']     = [41]*T#[11]*T
         p['beta_t'] = [0.98**period_year]*T
         p['A'] = 1.0 # consumption in couple: c = (1/A)*[c_f^(1+rho) + c_m^(1+rho)]^(1/(1+rho))
         p['crra_power'] = 1.5
@@ -81,10 +81,10 @@ class ModelSetup(object):
         p['wtrend']=dict()
         p['wtrend']['f'],p['wtrend']['m']=dict(),dict()
        
-        p['wtrend']['f']['e'] =[0.0*(t>=Tret)+(t<Tret)*(-.74491918 +.04258303*t -.0016542*t**2+.00001775*t**3) for t in range(T)]
+        p['wtrend']['f']['e'] =[0.0*(t>=Tret)+(t<Tret)*(-.44491918 +.04258303*t -.0016542*t**2+.00001775*t**3) for t in range(T)]
         p['wtrend']['f']['n'] =[0.0*(t>=Tret)+(t<Tret)*(-.74491918 +.04258303*t -.0016542*t**2+.00001775*t**3) for t in range(T)]
         
-        p['wtrend']['m']['e'] = [0.0*(t>=Tret)+(t<Tret)*(-0.5620125  +0.06767721*t -0.00192571*t**2+ 0.00001573*t**3) for t in range(T)]
+        p['wtrend']['m']['e'] = [0.0*(t>=Tret)+(t<Tret)*(-0.2620125  +0.06767721*t -0.00192571*t**2+ 0.00001573*t**3) for t in range(T)]
         p['wtrend']['m']['n'] = [0.0*(t>=Tret)+(t<Tret)*(-0.5620125  +0.06767721*t -0.00192571*t**2+ 0.00001573*t**3) for t in range(T)]
                 
 
@@ -93,11 +93,39 @@ class ModelSetup(object):
         p['wtrendp']=dict()
         p['wtrendp']['f'],p['wtrendp']['m']=dict(),dict()
        
-        p['wtrendp']['f']['e'] =[0.0*(t>=Tret)+(t<Tret)*(-.6805060 +.04629912*t -.00160467*t**2+.00001626*t**3) for t in range(T)]
+        p['wtrendp']['f']['e'] =[0.0*(t>=Tret)+(t<Tret)*(-.3805060 +.04629912*t -.00160467*t**2+.00001626*t**3) for t in range(T)]
         p['wtrendp']['f']['n'] =[0.0*(t>=Tret)+(t<Tret)*(-.6805060 +.04629912*t -.00160467*t**2+.00001626*t**3) for t in range(T)]
         
-        p['wtrendp']['m']['e'] = [0.0*(t>=Tret)+(t<Tret)*(-.5960803  +.05829568*t -.00169143*t**2+ .00001446*t**3) for t in range(T)]
+        p['wtrendp']['m']['e'] = [0.0*(t>=Tret)+(t<Tret)*(-.2960803  +.05829568*t -.00169143*t**2+ .00001446*t**3) for t in range(T)]
         p['wtrendp']['m']['n'] = [0.0*(t>=Tret)+(t<Tret)*(-.5960803  +.05829568*t -.00169143*t**2+ .00001446*t**3) for t in range(T)]
+        
+        
+        
+#        #Wages over time
+#        p['wtrend']=dict()
+#        p['wtrend']['f'],p['wtrend']['m']=dict(),dict()
+#       
+#        p['wtrend']['f']['n'] =[0.0*(t>=Tret)+(t<Tret)*(-.44491918 +.04258303*t -.0016542*t**2+.00001775*t**3) for t in range(T)]
+#        p['wtrend']['f']['e'] =[0.0*(t>=Tret)+(t<Tret)*(-.74491918 +.04258303*t -.0016542*t**2+.00001775*t**3) for t in range(T)]
+#        
+#        p['wtrend']['m']['n'] = [0.0*(t>=Tret)+(t<Tret)*(-0.2620125  +0.06767721*t -0.00192571*t**2+ 0.00001573*t**3) for t in range(T)]
+#        p['wtrend']['m']['e'] = [0.0*(t>=Tret)+(t<Tret)*(-0.5620125  +0.06767721*t -0.00192571*t**2+ 0.00001573*t**3) for t in range(T)]
+#                
+#
+#
+#        #Wages over time-partner
+#        p['wtrendp']=dict()
+#        p['wtrendp']['f'],p['wtrendp']['m']=dict(),dict()
+#       
+#        p['wtrendp']['f']['n'] =[0.0*(t>=Tret)+(t<Tret)*(-.3805060 +.04629912*t -.00160467*t**2+.00001626*t**3) for t in range(T)]
+#        p['wtrendp']['f']['e'] =[0.0*(t>=Tret)+(t<Tret)*(-.6805060 +.04629912*t -.00160467*t**2+.00001626*t**3) for t in range(T)]
+#        
+#        p['wtrendp']['m']['n'] = [0.0*(t>=Tret)+(t<Tret)*(-.2960803  +.05829568*t -.00169143*t**2+ .00001446*t**3) for t in range(T)]
+#        p['wtrendp']['m']['e'] = [0.0*(t>=Tret)+(t<Tret)*(-.5960803  +.05829568*t -.00169143*t**2+ .00001446*t**3) for t in range(T)]
+#        
+
+        
+        
                     
   
         p['util_lam'] = 0.19#0.4
@@ -347,11 +375,12 @@ class ModelSetup(object):
             p['n_zf_t']      = [5]*Tret + [5]*(T-Tret)
             p['n_zm_t']      = [5]*Tret + [5]*(T-Tret)
             exogrid['zf_t'],  exogrid['zf_t_mat'],exogrid['zm_t'],  exogrid['zm_t_mat']=dict(),dict(),dict(),dict()
-            exogrid['zf_t']['e'],  exogrid['zf_t_mat']['e'] = rouw_nonst(p['T'],p['sig_zf']*period_year**0.5,p['sig_zf_0'],p['n_zf_t'][0])
-            exogrid['zf_t']['n'],  exogrid['zf_t_mat']['n'] = rouw_nonst(p['T'],p['sig_zf']*period_year**0.5,p['sig_zf_0'],p['n_zf_t'][0])
-            exogrid['zm_t']['e'],  exogrid['zm_t_mat']['e'] = rouw_nonst(p['T'],p['sig_zm']*period_year**0.5,p['sig_zm_0'],p['n_zm_t'][0])
-            exogrid['zm_t']['n'],  exogrid['zm_t_mat']['n'] = rouw_nonst(p['T'],p['sig_zm']*period_year**0.5,p['sig_zm_0'],p['n_zm_t'][0])
+            exogrid['zf_t']['e'],  exogrid['zf_t_mat']['e'] = rouw_nonst(p['T'],p['sig_zf']['e']*period_year**0.5,p['sig_zf_0']['e'],p['n_zf_t'][0])
+            exogrid['zf_t']['n'],  exogrid['zf_t_mat']['n'] = rouw_nonst(p['T'],p['sig_zf']['n']*period_year**0.5,p['sig_zf_0']['n'],p['n_zf_t'][0])
+            exogrid['zm_t']['e'],  exogrid['zm_t_mat']['e'] = rouw_nonst(p['T'],p['sig_zm']['e']*period_year**0.5,p['sig_zm_0']['e'],p['n_zm_t'][0])
+            exogrid['zm_t']['n'],  exogrid['zm_t_mat']['n'] = rouw_nonst(p['T'],p['sig_zm']['n']*period_year**0.5,p['sig_zm_0']['n'],p['n_zm_t'][0])
             
+     
             ################################
             #First mimic US pension system
             ###############################
@@ -463,7 +492,7 @@ class ModelSetup(object):
                 
                 #FBad shock women
                 zf_bad = [tauchen_drift(exogrid['zf_t'][e][t], exogrid['zf_t'][e][t+1], 
-                                                1.0, p['sig_zf'], p['z_drift'])
+                                                1.0, p['sig_zf'][e], p['z_drift'])
                                     for t in range(self.pars['Tret']-1) ]
                         
                 #Account for retirement here
@@ -554,7 +583,7 @@ class ModelSetup(object):
 #        
         
         # grid for theta
-        self.ntheta = 11
+        self.ntheta = 21
         self.thetamin = 0.02
         self.thetamax = 0.98
         self.thetagrid = np.linspace(self.thetamin,self.thetamax,self.ntheta,dtype=self.dtype)
@@ -652,10 +681,16 @@ class ModelSetup(object):
         
         
         # building m grid
-        ezfmin = min([np.min(self.ls_levels[-1]*np.exp(g+t)) for g,t in zip(exogrid['zf_t']['e'],p['wtrend']['f']['e'])])
-        ezmmin = min([np.min(self.mlevel*np.exp(g+t)) for g,t in zip(exogrid['zm_t']['e'],p['wtrend']['m']['e'])])
+        ezfmin = min([np.min(self.ls_levels[-1]*np.exp(g+t)) for g,t in zip(exogrid['zf_t']['n'],p['wtrend']['f']['n'])])
+        ezmmin = min([np.min(self.mlevel*np.exp(g+t)) for g,t in zip(exogrid['zm_t']['n'],p['wtrend']['m']['n'])])
         ezfmax = max([np.max(self.ls_levels[-1]*np.exp(g+t)) for g,t in zip(exogrid['zf_t']['e'],p['wtrend']['f']['e'])])
         ezmmax = max([np.max(self.mlevel*np.exp(g+t)) for g,t in zip(exogrid['zm_t']['e'],p['wtrend']['m']['e'])])
+#        
+#        ezfmin = min([np.min(self.ls_levels[-1]*np.exp(g+t)) for g,t in zip(exogrid['zf_t']['e'],p['wtrend']['f']['e'])])
+#        ezmmin = min([np.min(self.mlevel*np.exp(g+t)) for g,t in zip(exogrid['zm_t']['e'],p['wtrend']['m']['e'])])
+#        ezfmax = max([np.max(self.ls_levels[-1]*np.exp(g+t)) for g,t in zip(exogrid['zf_t']['n'],p['wtrend']['f']['n'])])
+#        ezmmax = max([np.max(self.mlevel*np.exp(g+t)) for g,t in zip(exogrid['zm_t']['n'],p['wtrend']['m']['n'])])
+#        
         
         
         
@@ -753,21 +788,21 @@ class ModelSetup(object):
             p_mat = np.empty((nexo,nz_single))
             z_own = setup.exogrid.zf_t[e][t]
             n_zown = z_own.shape[0]
-            z_partner = setup.exogrid.zm_t[e][t]
+            z_partner = setup.exogrid.zm_t[eo][t]
             zmat_own = setup.exogrid.zf_t_mat[e][t]
             trend=setup.pars['wtrendp'][go][eo][t]
             mean=setup.pars['mean_partner_z_female']-setup.pars['wtrend'][go][eo][t]+setup.pars['wtrendp'][go][eo][t]
-            sig_z_partner=(setup.pars['sig_zm_0']**2+(t+1)*setup.pars['sig_zm']**2)**0.5
+            sig_z_partner=(setup.pars['sig_zm_0'][e]**2+(t+1)*setup.pars['sig_zm'][e]**2)**0.5
         else:
-            nz_single = setup.exogrid.zm_t[eo][t].shape[0]
+            nz_single = setup.exogrid.zm_t[e][t].shape[0]
             p_mat = np.empty((nexo,nz_single))
-            z_own = setup.exogrid.zm_t[eo][t]
+            z_own = setup.exogrid.zm_t[e][t]
             n_zown = z_own.shape[0]
             z_partner = setup.exogrid.zf_t[eo][t]
-            zmat_own = setup.exogrid.zm_t_mat[eo][t]    
+            zmat_own = setup.exogrid.zm_t_mat[e][t]    
             trend=setup.pars['wtrendp'][go][eo][t]
             mean=setup.pars['mean_partner_z_male']-setup.pars['wtrend'][go][eo][t]+setup.pars['wtrendp'][go][eo][t]
-            sig_z_partner=(setup.pars['sig_zf_0']**2+(t+1)*setup.pars['sig_zf']**2)**0.5
+            sig_z_partner=(setup.pars['sig_zf_0'][e]**2+(t+1)*setup.pars['sig_zf'][e]**2)**0.5
             
         def ind_conv(a,b,c): return setup.all_indices(t,(a,b,c))[0]
         

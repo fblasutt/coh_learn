@@ -199,7 +199,7 @@ def mdl_resid(x=None,save_to=None,load_from=None,return_format=['distance'],
    
     #Get Number of simulated agent, malea and female
     N=15000
-    Nf=int(N*age_uni['share_female'])
+    Nf=int(N*0.5)#age_uni['share_female'])
     Nm=N-Nf
     Nme=int(Nm*0.5)
     Nmn=int(Nm*0.5)

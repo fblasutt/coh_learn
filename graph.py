@@ -262,10 +262,10 @@ def graphs(mdl,ai,zfi,zmi,psii,ti,thi,dd,edu):
     
     #All educated versus all uneducated
     
-    Vmee, Vmmee, Vfmee, cmee, smee, flsmee = [v_reshape(setup,'Couple, M nn',f,Packed,T,0) 
+    Vmee, Vmmee, Vfmee, cmee, smee, flsmee = [v_reshape(setup,'Couple, M ee',f,Packed,T,0) 
                                     for f in ['V','VM','VF','c','s','fls']] 
     
-    Vcee, Vmcee, Vfcee, ccee, scee, flscee = [v_reshape(setup,'Couple, C nn',f,Packed,T,0) 
+    Vcee, Vmcee, Vfcee, ccee, scee, flscee = [v_reshape(setup,'Couple, C ee',f,Packed,T,0) 
                                     for f in ['V','VM','VF','c','s','fls']] 
     
     Vmnn, Vmmnn, Vfmnn, cmnn, smnn, flsmnn = [v_reshape(setup,'Couple, M nn',f,Packed,T,0) 
@@ -274,10 +274,10 @@ def graphs(mdl,ai,zfi,zmi,psii,ti,thi,dd,edu):
     Vcnn, Vmcnn, Vfcnn, ccnn, scnn, flscnn = [v_reshape(setup,'Couple, C nn',f,Packed,T,0) 
                                     for f in ['V','VM','VF','c','s','fls']] 
     
-    Vmee3, Vmmee3, Vfmee3, cmee3, smee3, flsmee3 = [v_reshape(setup,'Couple, M nn',f,Packed,T,3) 
+    Vmee3, Vmmee3, Vfmee3, cmee3, smee3, flsmee3 = [v_reshape(setup,'Couple, M ee',f,Packed,T,3) 
                                     for f in ['V','VM','VF','c','s','fls']] 
     
-    Vcee3, Vmcee3, Vfcee3, ccee3, scee3, flscee3 = [v_reshape(setup,'Couple, C nn',f,Packed,T,3) 
+    Vcee3, Vmcee3, Vfcee3, ccee3, scee3, flscee3 = [v_reshape(setup,'Couple, C ee',f,Packed,T,3) 
                                     for f in ['V','VM','VF','c','s','fls']] 
     
     Vmnn3, Vmmnn3, Vfmnn3, cmnn3, smnn3, flsmnn3 = [v_reshape(setup,'Couple, M nn',f,Packed,T,3) 
