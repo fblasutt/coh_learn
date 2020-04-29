@@ -29,6 +29,12 @@ class ModelSetup(object):
         Tren =  int(47/period_year)#int(42/period_year) # period starting which people do not renegotiate/divroce
         Tmeet = int(47/period_year)#int(42/period_year) # period starting which you do not meet anyone
         dm=4
+        
+        #Measure of People
+        p['Nfe']=0.3
+        p['Nfn']=1-0.3
+        p['Nme']=0.25
+        p['Nmn']=1-0.25
         p['dm']=dm
         p['py']=period_year
         p['ty']=transform
@@ -46,7 +52,7 @@ class ModelSetup(object):
         p['sigma_psi_mu'] = 0.0#1.0#nthe1.1
         p['sigma_psi']   = 0.11
         p['R_t'] = [1.02**period_year]*T
-        p['n_psi_t']     = [41]*T#[11]*T
+        p['n_psi_t']     = [11]*T#[11]*T
         p['beta_t'] = [0.98**period_year]*T
         p['A'] = 1.0 # consumption in couple: c = (1/A)*[c_f^(1+rho) + c_m^(1+rho)]^(1/(1+rho))
         p['crra_power'] = 1.5
@@ -81,10 +87,10 @@ class ModelSetup(object):
         p['wtrend']=dict()
         p['wtrend']['f'],p['wtrend']['m']=dict(),dict()
        
-        p['wtrend']['f']['e'] =[0.0*(t>=Tret)+(t<Tret)*(-.44491918 +.04258303*t -.0016542*t**2+.00001775*t**3) for t in range(T)]
+        p['wtrend']['f']['e'] =[0.0*(t>=Tret)+(t<Tret)*(-.44491918 +.05258303*t -.0016542*t**2+.00001775*t**3) for t in range(T)]
         p['wtrend']['f']['n'] =[0.0*(t>=Tret)+(t<Tret)*(-.74491918 +.04258303*t -.0016542*t**2+.00001775*t**3) for t in range(T)]
         
-        p['wtrend']['m']['e'] = [0.0*(t>=Tret)+(t<Tret)*(-0.2620125  +0.06767721*t -0.00192571*t**2+ 0.00001573*t**3) for t in range(T)]
+        p['wtrend']['m']['e'] = [0.0*(t>=Tret)+(t<Tret)*(-0.2620125  +0.07767721*t -0.00192571*t**2+ 0.00001573*t**3) for t in range(T)]
         p['wtrend']['m']['n'] = [0.0*(t>=Tret)+(t<Tret)*(-0.5620125  +0.06767721*t -0.00192571*t**2+ 0.00001573*t**3) for t in range(T)]
                 
 
@@ -93,10 +99,10 @@ class ModelSetup(object):
         p['wtrendp']=dict()
         p['wtrendp']['f'],p['wtrendp']['m']=dict(),dict()
        
-        p['wtrendp']['f']['e'] =[0.0*(t>=Tret)+(t<Tret)*(-.3805060 +.04629912*t -.00160467*t**2+.00001626*t**3) for t in range(T)]
+        p['wtrendp']['f']['e'] =[0.0*(t>=Tret)+(t<Tret)*(-.3805060 +.05629912*t -.00160467*t**2+.00001626*t**3) for t in range(T)]
         p['wtrendp']['f']['n'] =[0.0*(t>=Tret)+(t<Tret)*(-.6805060 +.04629912*t -.00160467*t**2+.00001626*t**3) for t in range(T)]
         
-        p['wtrendp']['m']['e'] = [0.0*(t>=Tret)+(t<Tret)*(-.2960803  +.05829568*t -.00169143*t**2+ .00001446*t**3) for t in range(T)]
+        p['wtrendp']['m']['e'] = [0.0*(t>=Tret)+(t<Tret)*(-.2960803  +.07829568*t -.00169143*t**2+ .00001446*t**3) for t in range(T)]
         p['wtrendp']['m']['n'] = [0.0*(t>=Tret)+(t<Tret)*(-.5960803  +.05829568*t -.00169143*t**2+ .00001446*t**3) for t in range(T)]
         
         
@@ -259,7 +265,7 @@ class ModelSetup(object):
                         self.ppartc[sex][edu]=['Couple, M ee', 'Couple, M en']
                         
                         #Probabilities of meeting
-                        self.prob[sex][edu]['e']=0.5
+                        self.prob[sex][edu]['e']=self.pars['Nme']
                         self.prob[sex][edu]['n']=1-self.prob[sex][edu]['e']
                         self.probp[sex][edu]['e']={'M':'Couple, M ee','C':'Couple, C ee'}
                         self.probp[sex][edu]['n']={'M':'Couple, M en','C':'Couple, C en'}
@@ -275,7 +281,7 @@ class ModelSetup(object):
                         self.ppartc[sex][edu]=['Couple, M ne', 'Couple, M nn']
                         
                         #Probabilities of meeting
-                        self.prob[sex][edu]['e']=0.5
+                        self.prob[sex][edu]['e']=self.pars['Nme']
                         self.prob[sex][edu]['n']=1-self.prob[sex][edu]['e']
                         self.probp[sex][edu]['e']={'M':'Couple, M ne','C':'Couple, C ne'}
                         self.probp[sex][edu]['n']={'M':'Couple, M nn','C':'Couple, C nn'}
@@ -298,7 +304,7 @@ class ModelSetup(object):
                         self.ppartc[sex][edu]=['Couple, M ee', 'Couple, M ne']
                         
                         #Probabilities of meeting
-                        self.prob[sex][edu]['e']=0.5
+                        self.prob[sex][edu]['e']=self.pars['Nfe']
                         self.prob[sex][edu]['n']=1-self.prob[sex][edu]['e']
                         self.probp[sex][edu]['e']={'M':'Couple, M ee','C':'Couple, C ee'}
                         self.probp[sex][edu]['n']={'M':'Couple, M ne','C':'Couple, C ne'}
@@ -314,7 +320,7 @@ class ModelSetup(object):
                         
                         
                         #Probabilities of meeting
-                        self.prob[sex][edu]['e']=0.5
+                        self.prob[sex][edu]['e']=self.pars['Nfe']
                         self.prob[sex][edu]['n']=1-self.prob[sex][edu]['e']
                         self.probp[sex][edu]['e']={'M':'Couple, M en','C':'Couple, C en'}
                         self.probp[sex][edu]['n']={'M':'Couple, M nn','C':'Couple, C nn'}
@@ -583,7 +589,7 @@ class ModelSetup(object):
 #        
         
         # grid for theta
-        self.ntheta = 21
+        self.ntheta = 11
         self.thetamin = 0.02
         self.thetamax = 0.98
         self.thetagrid = np.linspace(self.thetamin,self.thetamax,self.ntheta,dtype=self.dtype)

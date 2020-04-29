@@ -201,12 +201,12 @@ def mdl_resid(x=None,save_to=None,load_from=None,return_format=['distance'],
     N=15000
     Nf=int(N*0.5)#age_uni['share_female'])
     Nm=N-Nf
-    Nme=int(Nm*0.5)
-    Nmn=int(Nm*0.5)
-    Nfe=int(Nf*0.5)
-    Nfn=int(Nf*0.5)
-    agents_feme = Agents( mdl_list ,age_uni['female'],female=True,edu='e',pswitchlist=transition_matricesf,verbose=False,N=Nf)
-    agents_male = Agents( mdl_list ,age_uni['male'],female=False,edu='e',pswitchlist=transition_matricesm,verbose=False,N=Nm)
+    Nme=int(Nm*mdl.setup.pars['Nme'])
+    Nmn=int(Nm*(1-mdl.setup.pars['Nme']))
+    Nfe=int(Nf*mdl.setup.pars['Nfe'])
+    Nfn=int(Nf*(1-mdl.setup.pars['Nfe']))
+    agents_feme = Agents( mdl_list ,age_uni['female'],female=True,edu='e',pswitchlist=transition_matricesf,verbose=False,N=Nfe)
+    agents_male = Agents( mdl_list ,age_uni['male'],female=False,edu='e',pswitchlist=transition_matricesm,verbose=False,N=Nme)
     agents_femn = Agents( mdl_list ,age_uni['female'],female=True,edu='n',pswitchlist=transition_matricesf,verbose=False,N=Nfn)
     agents_maln = Agents( mdl_list ,age_uni['male'],female=False,edu='n',pswitchlist=transition_matricesm,verbose=False,N=Nmn)
     agents_pooled = AgentsPooled([agents_feme,agents_male,agents_femn,agents_maln])

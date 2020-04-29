@@ -374,7 +374,7 @@ class Agents:
                         pmeet = self.Mlist[ipol].setup.pars['pmeet_t'][t] #timing checked
                         
                         
-                        matches = self.Mlist[ipol].decisions[t][dd][ss][self.edu]
+                        matches = self.Mlist[ipol].decisions[t][dd][ss][eo]
                         
                         ia = self.iassets[ind,t+1] # note that timing is slightly inconsistent  
                         

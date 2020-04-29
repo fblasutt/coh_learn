@@ -551,6 +551,14 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
             change[:,t]=irchange 
         statempsi=(state==2)
         statecpsi=(state==3)
+        
+        
+        #Get the share of assortative mating
+        samedu=(educ==edup)
+        
+        print('Share e-e (e measured) cohabitations is {}, marriage is {}'.format(np.mean(samedu[(changec) & (educ=='e')]),np.mean(samedu[(changem) & (educ=='e')])) ) 
+        print('Share n-n (n measured) cohabitations is {}, marriage is {}'.format(np.mean(samedu[(changec) & (educ=='n')]),np.mean(samedu[(changem) & (educ=='n')])) ) 
+        
     #Cut the first two periods give new 'length'    
     lenn=mdl.setup.pars['T']-mdl.setup.pars['Tbef']    
     assets_t=assets_t[:,mdl.setup.pars['Tbef']:mdl.setup.pars['T']]    
@@ -1606,9 +1614,10 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         for ist,sname in enumerate(state_codes_full): plt.plot([],[], label=sname)               
         plt.stackplot(xa,Frelt1[0,]/N,Frelt1[1,]/N,Frelt1[2,]/N,Frelt1[3,]/N,
                          Frelt1[4,]/N,Frelt1[5,]/N,Frelt1[6,]/N,Frelt1[7,]/N,
-                         Frelt1[8,]/N,Frelt1[9,]/N,Frelt1[10,]/N,Frelt1[11,]/N)               
+                         Frelt1[8,]/N,Frelt1[9,]/N,Frelt1[10,]/N,Frelt1[11,]/N,
+                         colors=['b','y','g','r','c','m','pink','k','linen','gold','crimson','coral'])               
         plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
-                  fancybox=True, shadow=True, ncol=int(len(state_codes_full)/3), fontsize='x-small')    
+                  fancybox=True,  ncol=int(len(state_codes_full)/3), fontsize='x-small')    
         plt.xlabel('Age')    
         plt.ylabel('Share')  
              
