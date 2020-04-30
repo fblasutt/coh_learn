@@ -386,6 +386,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
             data_coh_panda['age3']=data_coh_panda['age']**3   
             data_coh_panda['rel2']=data_coh_panda['rel']**2   
             data_coh_panda['rel3']=data_coh_panda['rel']**3   
+            
             #data_coh_panda=pd.get_dummies(data_coh_panda, columns=['age'])   
                
             #Standard Cox   
@@ -554,10 +555,13 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         
         
         #Get the share of assortative mating
-        samedu=(educ==edup)
+        assce=np.mean(edup[(educ=='e')  & (changec)]=='e')/(mdl.setup.pars['Nme']*mdl.setup.pars['Nfe'])
+        assme=np.mean(edup[(educ=='e')  & (changem)]=='e')/(mdl.setup.pars['Nme']*mdl.setup.pars['Nfe'])
+        asscn=np.mean(edup[(educ=='n')  & (changec)]=='n')/(mdl.setup.pars['Nmn']*mdl.setup.pars['Nfn'])
+        assmn=np.mean(edup[(educ=='n')  & (changem)]=='n')/(mdl.setup.pars['Nmn']*mdl.setup.pars['Nfn'])
         
-        print('Share e-e (e measured) cohabitations is {}, marriage is {}'.format(np.mean(samedu[(changec) & (educ=='e')]),np.mean(samedu[(changem) & (educ=='e')])) ) 
-        print('Share n-n (n measured) cohabitations is {}, marriage is {}'.format(np.mean(samedu[(changec) & (educ=='n')]),np.mean(samedu[(changem) & (educ=='n')])) ) 
+        print('A mating (e measured) cohabitations is {}, marriage is {}'.format(assce,assme) )
+        print('A mating n-n (n measured) cohabitations is {}, marriage is {}'.format(asscn,assmn)) 
         
     #Cut the first two periods give new 'length'    
     lenn=mdl.setup.pars['T']-mdl.setup.pars['Tbef']    
@@ -738,6 +742,37 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     # if (mdl.setup.pars['Tret']>=mdl.setup.pars['Tret']):            
     Ereltt=Erelt[:,:mdl.setup.pars['Tret']-mdl.setup.pars['Tbef']+1]           
     Ereltt=Ereltt[:,pos]    
+    
+    ########################################################### 
+    #Ever in a relationship by Education 2
+    ######################################################### 
+         
+    EErelt=np.zeros((2,2,lenn))    
+   
+   
+    for ed,edn in zip(['e','n'],range(len(['e','n']))):
+        for t in range(lenn):    
+                   
+                 
+             
+            #Arrays for preparation    
+            is_statem = (np.any(state[:,:t+1]==2,1)) & (educ[:,t+1]==ed)          
+            is_statec = (np.any(state[:,:t+1]==3,1)) & (educ[:,t+1]==ed)    
+            
+            if not (np.any(is_state) or np.any(is_state1)): continue    
+             
+          
+            #Relationship over time    
+            EErelt[0,edn,t]=np.sum(is_statem)   
+            EErelt[1,edn,t]=np.sum(is_statec)   
+           
+             
+                  
+    #Now, before saving the moments, take interval of 5 years    
+    # if (mdl.setup.pars['Tret']>=mdl.setup.pars['Tret']):            
+    EEreltt=EErelt[:,:,:mdl.setup.pars['Tret']-mdl.setup.pars['Tbef']+1]           
+    EEreltt=EEreltt[:,:,pos]    
+
 
  
  
@@ -1657,6 +1692,24 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         plt.xlabel('Age')    
         plt.ylabel('Share')    
         plt.margins(0,0)  
+        
+        ##########################################    
+        # Relationship by Education
+        ##########################################          
+        fig = plt.figure()    
+        f4=fig.add_subplot(2,1,1)    
+        lg=min(len(mar_d),len(relt[1,:]))    
+        xa=(5*np.array(range(lg))+20)      
+        plt.plot(xa, EEreltt[0,0,0:lg]/np.sum(educ[:,0]=='e'),'g',linestyle='--',linewidth=1.5, label='College M')      
+        plt.plot(xa, EEreltt[0,1,0:lg]/np.sum(educ[:,0]=='n'),'r',linestyle='--',linewidth=1.5, label='No College M')  
+        plt.plot(xa, EEreltt[1,0,0:lg]/np.sum(educ[:,0]=='e'),'g',linewidth=1.5, label='College C')      
+        plt.plot(xa, EEreltt[1,1,0:lg]/np.sum(educ[:,0]=='n'),'r',linewidth=1.5, label='No College C')  
+        plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
+                  fancybox=True, shadow=True, ncol=len(state_codes), fontsize='x-small')    
+        plt.ylim(ymax=1.0)    
+        plt.xlabel('Age')    
+        plt.ylabel('Share')    
+        plt.margins(0,0)  
      
              
         ##########################################    
@@ -1735,10 +1788,10 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         cumulativectn = np.cumsum(valuesctn) 
         cumulativemtn = np.cumsum(valuesmtn) 
         # plot the cumulative function 
-        plt.plot(basec[:-1], cumulativecte/max(cumulativecte), c='black',label = 'Cohabitaition - Co') 
-        plt.plot(basem[:-1], cumulativemte/max(cumulativemte), c='b',label = 'Marriage - Co') 
-        plt.plot(basec[:-1], cumulativectn/max(cumulativectn), c='y',linestyle='--',label = 'Cohabitaition - NoCo') 
-        plt.plot(basem[:-1], cumulativemtn/max(cumulativemtn), c='r',linestyle='--',label = 'Marriage - NoCo') 
+        plt.plot(basecte[:-1], cumulativecte/max(cumulativecte), c='black',label = 'Cohabitaition - Co') 
+        plt.plot(basemte[:-1], cumulativemte/max(cumulativemte), c='b',label = 'Marriage - Co') 
+        plt.plot(basectn[:-1], cumulativectn/max(cumulativectn), c='y',linestyle='--',label = 'Cohabitaition - NoCo') 
+        plt.plot(basemtn[:-1], cumulativemtn/max(cumulativemtn), c='r',linestyle='--',label = 'Marriage - NoCo') 
         plt.legend(loc='best', ncol=1, fontsize='x-small')    
         plt.xlabel('Love Shock $\psi$')    
         plt.ylabel('Probability')  

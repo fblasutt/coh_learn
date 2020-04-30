@@ -35,6 +35,7 @@ class ModelSetup(object):
         p['Nfn']=1-0.3
         p['Nme']=0.25
         p['Nmn']=1-0.25
+        p['ass']=1.0
         p['dm']=dm
         p['py']=period_year
         p['ty']=transform
@@ -51,12 +52,13 @@ class ModelSetup(object):
         p['sigma_psi_mult'] = 0.28
         p['sigma_psi_mu'] = 0.0#1.0#nthe1.1
         p['sigma_psi']   = 0.11
+        p['meanpsi']   = 0.0
         p['R_t'] = [1.02**period_year]*T
         p['n_psi_t']     = [11]*T#[11]*T
         p['beta_t'] = [0.98**period_year]*T
         p['A'] = 1.0 # consumption in couple: c = (1/A)*[c_f^(1+rho) + c_m^(1+rho)]^(1/(1+rho))
         p['crra_power'] = 1.5
-        p['couple_rts'] = 0.0 
+        p['couple_rts'] = 0.6
         p['sig_partner_a'] = 0.1#0.5
         p['sig_partner_z'] = 1.2#1.0#0.4 #This is crazy powerful for the diff in diff estimate
         p['sig_partner_mult'] = 1.0
@@ -87,10 +89,10 @@ class ModelSetup(object):
         p['wtrend']=dict()
         p['wtrend']['f'],p['wtrend']['m']=dict(),dict()
        
-        p['wtrend']['f']['e'] =[0.0*(t>=Tret)+(t<Tret)*(-.44491918 +.05258303*t -.0016542*t**2+.00001775*t**3) for t in range(T)]
+        p['wtrend']['f']['e'] =[0.0*(t>=Tret)+(t<Tret)*(-.24491918 +.07258303*t -.0016542*t**2+.00001775*t**3) for t in range(T)]
         p['wtrend']['f']['n'] =[0.0*(t>=Tret)+(t<Tret)*(-.74491918 +.04258303*t -.0016542*t**2+.00001775*t**3) for t in range(T)]
         
-        p['wtrend']['m']['e'] = [0.0*(t>=Tret)+(t<Tret)*(-0.2620125  +0.07767721*t -0.00192571*t**2+ 0.00001573*t**3) for t in range(T)]
+        p['wtrend']['m']['e'] = [0.0*(t>=Tret)+(t<Tret)*(-0.0620125  +0.09767721*t -0.00192571*t**2+ 0.00001573*t**3) for t in range(T)]
         p['wtrend']['m']['n'] = [0.0*(t>=Tret)+(t<Tret)*(-0.5620125  +0.06767721*t -0.00192571*t**2+ 0.00001573*t**3) for t in range(T)]
                 
 
@@ -99,10 +101,10 @@ class ModelSetup(object):
         p['wtrendp']=dict()
         p['wtrendp']['f'],p['wtrendp']['m']=dict(),dict()
        
-        p['wtrendp']['f']['e'] =[0.0*(t>=Tret)+(t<Tret)*(-.3805060 +.05629912*t -.00160467*t**2+.00001626*t**3) for t in range(T)]
+        p['wtrendp']['f']['e'] =[0.0*(t>=Tret)+(t<Tret)*(-.1805060 +.07629912*t -.00160467*t**2+.00001626*t**3) for t in range(T)]
         p['wtrendp']['f']['n'] =[0.0*(t>=Tret)+(t<Tret)*(-.6805060 +.04629912*t -.00160467*t**2+.00001626*t**3) for t in range(T)]
         
-        p['wtrendp']['m']['e'] = [0.0*(t>=Tret)+(t<Tret)*(-.2960803  +.07829568*t -.00169143*t**2+ .00001446*t**3) for t in range(T)]
+        p['wtrendp']['m']['e'] = [0.0*(t>=Tret)+(t<Tret)*(-.1960803  +.09829568*t -.00169143*t**2+ .00001446*t**3) for t in range(T)]
         p['wtrendp']['m']['n'] = [0.0*(t>=Tret)+(t<Tret)*(-.5960803  +.05829568*t -.00169143*t**2+ .00001446*t**3) for t in range(T)]
         
         
@@ -265,7 +267,7 @@ class ModelSetup(object):
                         self.ppartc[sex][edu]=['Couple, M ee', 'Couple, M en']
                         
                         #Probabilities of meeting
-                        self.prob[sex][edu]['e']=self.pars['Nme']
+                        self.prob[sex][edu]['e']=self.pars['Nme']*(1-p['ass'])+p['ass']
                         self.prob[sex][edu]['n']=1-self.prob[sex][edu]['e']
                         self.probp[sex][edu]['e']={'M':'Couple, M ee','C':'Couple, C ee'}
                         self.probp[sex][edu]['n']={'M':'Couple, M en','C':'Couple, C en'}
@@ -281,7 +283,7 @@ class ModelSetup(object):
                         self.ppartc[sex][edu]=['Couple, M ne', 'Couple, M nn']
                         
                         #Probabilities of meeting
-                        self.prob[sex][edu]['e']=self.pars['Nme']
+                        self.prob[sex][edu]['e']=self.pars['Nme']*(1-p['ass'])
                         self.prob[sex][edu]['n']=1-self.prob[sex][edu]['e']
                         self.probp[sex][edu]['e']={'M':'Couple, M ne','C':'Couple, C ne'}
                         self.probp[sex][edu]['n']={'M':'Couple, M nn','C':'Couple, C nn'}
@@ -304,7 +306,7 @@ class ModelSetup(object):
                         self.ppartc[sex][edu]=['Couple, M ee', 'Couple, M ne']
                         
                         #Probabilities of meeting
-                        self.prob[sex][edu]['e']=self.pars['Nfe']
+                        self.prob[sex][edu]['e']=self.pars['Nfe']*(1-p['ass'])+p['ass']
                         self.prob[sex][edu]['n']=1-self.prob[sex][edu]['e']
                         self.probp[sex][edu]['e']={'M':'Couple, M ee','C':'Couple, C ee'}
                         self.probp[sex][edu]['n']={'M':'Couple, M ne','C':'Couple, C ne'}
@@ -320,7 +322,7 @@ class ModelSetup(object):
                         
                         
                         #Probabilities of meeting
-                        self.prob[sex][edu]['e']=self.pars['Nfe']
+                        self.prob[sex][edu]['e']=self.pars['Nfe']*(1-p['ass'])
                         self.prob[sex][edu]['n']=1-self.prob[sex][edu]['e']
                         self.probp[sex][edu]['e']={'M':'Couple, M en','C':'Couple, C en'}
                         self.probp[sex][edu]['n']={'M':'Couple, M nn','C':'Couple, C nn'}
@@ -436,6 +438,8 @@ class ModelSetup(object):
                 exogrid['zf_t_mat'][e][Tret-1] = np.diag(np.ones(len(exogrid['zf_t'][e][Tret-1])))
                 exogrid['zm_t_mat'][e][Tret-1] = np.diag(np.ones(len(exogrid['zm_t'][e][Tret-1])))
 
+
+               
             ###########################
             #Love shock grid
             ###########################
@@ -476,7 +480,12 @@ class ModelSetup(object):
                     exogrid['psi_t'][dd][t] = exogrid['psi_t'][dd][Tren-1]#np.array([np.log(p['wret'])])             
                     exogrid['psi_t_mat'][dd][t] = np.diag(np.ones(len(exogrid['psi_t'][dd][t])))
 
-            
+#            
+#            #Modify the mean
+#            for t in range(Tret):
+#                for d in range(p['dm']):
+#                    
+#                    exogrid['psi_t'][dd][t]=exogrid['psi_t'][dd][t]+p['meanpsi']
            #Now the crazy matrix for "true process"
             exogrid['noise_psi_mat'],exogrid['true_psi_mat']=exogrid['psi_t_mat'],exogrid['psi_t_mat']
             

@@ -263,6 +263,7 @@ class Model(object):
                 
                 if dd<dmax-1:
                     Vnext = self.V[0][dd+1]  if t<T-1 else None
+                   
                 else:
                     Vnext = self.V[0][dd]  if t<T-1 else None
 
@@ -279,6 +280,7 @@ class Model(object):
                             
                             V_d, dec = self.iterator(desc,dd,t,Vnext,decc)   
                         else:
+                           
                             V_d, dec = self.iterator(desc,dd,t,Vnext) 
                        
                     Vnowd.update(V_d)
