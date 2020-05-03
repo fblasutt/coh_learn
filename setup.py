@@ -35,7 +35,7 @@ class ModelSetup(object):
         p['Nfn']=1-0.3
         p['Nme']=0.25
         p['Nmn']=1-0.25
-        p['ass']=1.0
+        p['ass']=0.5
         p['dm']=dm
         p['py']=period_year
         p['ty']=transform
@@ -58,7 +58,7 @@ class ModelSetup(object):
         p['beta_t'] = [0.98**period_year]*T
         p['A'] = 1.0 # consumption in couple: c = (1/A)*[c_f^(1+rho) + c_m^(1+rho)]^(1/(1+rho))
         p['crra_power'] = 1.5
-        p['couple_rts'] = 0.6
+        p['couple_rts'] = 0.4
         p['sig_partner_a'] = 0.1#0.5
         p['sig_partner_z'] = 1.2#1.0#0.4 #This is crazy powerful for the diff in diff estimate
         p['sig_partner_mult'] = 1.0
