@@ -122,19 +122,23 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     state_codes_full = {name: i for i, name in enumerate(mdl.setup.state_names)} 
     
      ###########################################    
-    #Sample selection    
+    #Sample selection - get age at censoring   
     ###########################################    
+    with open('freq.pkl', 'rb') as file:     
+        freq_raw=pickle.load(file)     
+             
+    freq=freq_raw['freq_c']
+    aged=np.ones((state.shape))    
         
-    #Sample Selection to replicate the fact that    
-    #in NSFH wave two cohabitning couples were    
-    #excluded.    
-    #Birth cohorts: 45-55    
-    #Second wave of NLSFH:1992-1994.    
-    #    
-    #Assume that people are interviewd in 1993 and that age is uniformly    
-    #distributed. Clearly we can adjust this later on.    
+     
+    summa=0.0    
+    summa1=0.0    
+    for i in freq:    
+        summa+=freq[int(i)]    
+        aged[int(summa1*len(aged[:])/sum(freq.values())):int(summa*len(aged[:])/sum(freq.values()))]=round((i-20)/mdl.setup.pars['py'],0)    
+        summa1+=freq[int(i)]    
         
-        
+    aged=np.array(aged,dtype=np.int16)     
 
    
     ###########################################    
@@ -314,60 +318,63 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     ###################################################   
     # Second regression for the length of cohabitation   
     ###################################################   
-    if draw:
-         
-        try:
-            
-            #Build the dataset for analysis on divorce risk
-            spells_empiricalm=spells_empiricalt[(spells_empiricalt[:,0]==2),1:9]   
-            data_m_panda=pd.DataFrame(data=spells_empiricalm,columns=['age','duration','end','rel','uni','coh','edu','edup']) 
-            
-            from lifelines import CoxPHFitter   
-            cph = CoxPHFitter()   
-            data_m_panda.drop(data_m_panda[data_m_panda['age']>=15].index, inplace=True)
-            data_m_panda['ecoh']=0.0
-            data_m_panda.loc[data_m_panda['coh']>0.0,'ecoh']=1.0   
-            data_m_panda['lcoh']=np.log(data_m_panda['coh']+0.001)
-            dummy=pd.get_dummies(data_m_panda['age'])
-            data_m_panda=pd.concat([data_m_panda,dummy],axis=1)
-            #data_m_panda['age2']=data_m_panda['age']**2   
-            #data_m_panda['age3']=data_m_panda['age']**3   
-            #data_m_panda['rel2']=data_m_panda['rel']**2   
-            #data_m_panda['rel3']=data_m_panda['rel']**3   
+
+    try:
         
-               
-            #Standard Cox   
-            data_m_panda['endd']=1.0   
-            data_m_panda.loc[data_m_panda['end']==2.0,'endd']=0.0   
-            data_m_panda1=data_m_panda.drop(columns=['rel', 'uni','coh','end','rel','age',1]) 
-            cox_join=cph.fit(data_m_panda1, duration_col='duration', event_col='endd')   
-            parm=cox_join.params_
+        #Build the dataset for analysis on divorce risk
+        spells_empiricalm=spells_empiricalt[(spells_empiricalt[:,0]==2),1:9]   
+        data_m_panda=pd.DataFrame(data=spells_empiricalm,columns=['age','duration','end','rel','uni','coh','edu','edup']) 
+        
+        from lifelines import CoxPHFitter   
+        cph = CoxPHFitter()   
+        data_m_panda.drop(data_m_panda[data_m_panda['age']>=15].index, inplace=True)
+        data_m_panda['ecoh']=0.0
+        data_m_panda.loc[data_m_panda['coh']>0.0,'ecoh']=1.0   
+        data_m_panda['lcoh']=np.log(data_m_panda['coh']+0.001)
+        #dummy=pd.get_dummies(data_m_panda['age'])
+        #data_m_panda=pd.concat([data_m_panda,dummy],axis=1)
+        #data_m_panda['age2']=data_m_panda['age']**2   
+        #data_m_panda['age3']=data_m_panda['age']**3   
+        #data_m_panda['rel2']=data_m_panda['rel']**2   
+        #data_m_panda['rel3']=data_m_panda['rel']**3   
+    
+           
+        #Standard Cox   
+        data_m_panda['endd']=1.0   
+        data_m_panda.loc[data_m_panda['end']==2.0,'endd']=0.0   
+        data_m_panda1=data_m_panda.drop(columns=['rel', 'uni','coh','end','rel','edup']) 
+        cox_join=cph.fit(data_m_panda1, duration_col='duration', event_col='endd')   
+        parm=cox_join.params_
+        
+        #Get premartial cohabitation
+        Tmax=int(15/mdl.setup.pars['py'])
+        
+        raw_dut=np.zeros((Tmax))
+        ref_dut=np.zeros((Tmax))
+          
+        for i in range(Tmax):
+            isp=(allspells_beg==2) & (allspells_prec==i) & (allspells_timeb<15)
+            raw_dut[i]=np.mean(allspells_end[isp]!=2)
+            ref_dut[i]=np.exp(np.log(i+0.001)*parm['lcoh']+parm['ecoh'])/np.exp(np.log(0.001)*parm['lcoh'])
             
-            #Get premartial cohabitation
-            Tmax=int(15/mdl.setup.pars['py'])
-            
-            raw_dut=np.zeros((Tmax))
-            ref_dut=np.zeros((Tmax))
-              
-            for i in range(Tmax):
-                isp=(allspells_beg==2) & (allspells_prec==i) & (allspells_timeb<15)
-                raw_dut[i]=np.mean(allspells_end[isp]!=2)
-                ref_dut[i]=np.exp(np.log(i+0.001)*parm['lcoh']+parm['ecoh'])/np.exp(np.log(0.001)*parm['lcoh'])
-                
-            raw_dut=raw_dut/raw_dut[0]
-            ref_dut[0]=1.0
-            
-            #Get paramter for education
-            beta_div_edu_s=cox_join.hazard_ratios_['edu']
-            beta_div_edup_s=cox_join.hazard_ratios_['edup']
-            
-        except:
-            Tmax=int(15/mdl.setup.pars['py'])
-            raw_dut=np.zeros((Tmax))
-            ref_dut=np.zeros((Tmax))
-            beta_div_edup_s=0.0
-            beta_div_edu_s=0.0
-            
+        raw_dut=raw_dut/raw_dut[0]
+        ref_dut[0]=1.0
+        
+        #Get paramter for education
+        beta_div_edu_s=cox_join.hazard_ratios_['edu']
+        #beta_div_edup_s=cox_join.hazard_ratios_['edup']
+        moments['beta_edu']= beta_div_edu_s
+        moments['ref_coh']=ref_dut[1:4]
+        
+    except:
+        Tmax=int(15/mdl.setup.pars['py'])
+        raw_dut=np.zeros((Tmax))
+        ref_dut=np.zeros((Tmax))
+        beta_div_edup_s=0.0
+        beta_div_edu_s=0.0
+        moments['beta_edu']= 0.0
+        moments['ref_coh']=np.array([1.0,1.0,1.0])
+        
     ###################################################   
     # Second regression for the length of cohabitation   
     ###################################################   
@@ -588,32 +595,8 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         pick = agents.state[:,t]==3    
         if pick.any(): flsc[t] = np.array(setup.ls_levels)[agents.ils_i[pick,t]].mean()    
              
-         
-             
-    moments['flsm'] = flsm    
-    moments['flsc'] = flsc    
-     
-
-    ############ 
-    #Average FLS 
-    ############ 
-
-    mean_fls=0.0  
-    pick=(((state==2)  | (state==3)) &  (female==0))
-    if pick.any():mean_fls=np.array(setup.ls_levels)[labor[pick]].mean()  
-      
-    moments['mean_fls'] = mean_fls  
-     
-    
-      
-   
-     
-    moments['wage_ratio']=0.0
-    moments['div_ratio']=0.0
-     
-     
  
-         
+
     ################ 
     #Ratio of fls  
     ############### 
@@ -630,32 +613,24 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     labor_par=labor_par[incoupler]
      
     mean_fls_m=0.0  
-    picky=(state_par[:]==2) & (ages<=15) 
-    picko=(state_par[:]==2) & (ages>15) 
+    picky=(state_par[:]==2) & (ages==5) 
+    picko=(state_par[:]==2) & (ages==15) 
     mean_fls_m=np.zeros((2)) 
-    if picky.any():mean_fls_m[0]=np.array(setup.ls_levels)[labor_par[picky]].mean()  
-    if picko.any():mean_fls_m[1]=np.array(setup.ls_levels)[labor_par[picko]].mean()  
+    if picky.any():mean_fls_m[0]=np.mean(labor_par[picky])  
+    if picko.any():mean_fls_m[1]=np.mean(labor_par[picko])  
         
     mean_fls_c=0.0  
-    picky=(state_par[:]==3) & (ages<=15) 
-    picko=(state_par[:]==3) & (ages>15) 
+    picky=(state_par[:]==3) & (ages==5) 
+    picko=(state_par[:]==3) & (ages==15) 
     mean_fls_c=np.zeros((2)) 
-    if picky.any():mean_fls_c[0]=np.array(setup.ls_levels)[labor_par[picky]].mean()  
-    if picko.any():mean_fls_c[1]=np.array(setup.ls_levels)[labor_par[picko]].mean()  
+    if picky.any():mean_fls_c[0]=np.mean(labor_par[picky])  
+    if picko.any():mean_fls_c[1]=np.mean(labor_par[picko])   
       
     small=mean_fls_c<0.0001*np.ones((2)) 
     mean_fls_c[small]=0.0001*np.ones((2))[small] 
 
-    moments['fls_ratio']=[min(mean_fls_m[0]/mean_fls_c[0],2.0),min(mean_fls_m[1]/mean_fls_c[1],2.0)]
-     
-    grid=np.linspace(5,35,31,dtype=np.int16) 
-    storem=np.zeros(grid.shape) 
-    storec=np.zeros(grid.shape) 
-    for i in range(len(grid)): 
-        storem[i]=np.mean(labor_par[(state_par==2) & (ages==grid[i])]) 
-        storec[i]=np.mean(labor_par[(state_par==3) & (ages==grid[i])]) 
-         
-         
+    moments['flsm']=mean_fls_m
+    moments['flsc']=mean_fls_c
      
      
      
@@ -688,9 +663,12 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     #Now, before saving the moments, take interval of 5 years    
     # if (mdl.setup.pars['Tret']>=mdl.setup.pars['Tret']):            
     reltt=relt[:,:mdl.setup.pars['Tret']-mdl.setup.pars['Tbef']+1]    
-    years=np.linspace(20,50,7)    
-    years_model=np.linspace(20,50,int(30/mdl.setup.pars['py']))    
-        
+    years=np.linspace(20,35,4)    
+    years_model=np.linspace(20,35,int(15/mdl.setup.pars['py']))   
+    moments['everm']=relt[2,:]/N
+    moments['everc']=relt[3,:]/N
+                 
+         
     #Find the right entries for creating moments    
     pos=list()    
     for j in range(len(years)):    
@@ -742,6 +720,8 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     # if (mdl.setup.pars['Tret']>=mdl.setup.pars['Tret']):            
     Ereltt=Erelt[:,:mdl.setup.pars['Tret']-mdl.setup.pars['Tbef']+1]           
     Ereltt=Ereltt[:,pos]    
+    moments['everr_e']=Ereltt[0,:]/np.sum(educ[:,0]=='e')
+    moments['everr_ne']=Ereltt[1,:]/np.sum(educ[:,0]=='n')
     
     ########################################################### 
     #Ever in a relationship by Education 2
@@ -772,7 +752,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     # if (mdl.setup.pars['Tret']>=mdl.setup.pars['Tret']):            
     EEreltt=EErelt[:,:,:mdl.setup.pars['Tret']-mdl.setup.pars['Tbef']+1]           
     EEreltt=EEreltt[:,:,pos]    
-
+    
 
  
  
@@ -1335,26 +1315,31 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
             packed_data=pickle.load(file)    
              
             #Unpack Moments (see data_moments.py to check if changes)    
-            #(hazm,hazs,hazd,mar,coh,fls_ratio,W)    
-            hazm_d=packed_data['hazm']    
-            hazs_d=packed_data['hazs']    
-            hazd_d=packed_data['hazd']    
-            mar_d=packed_data['emar']    
-            coh_d=packed_data['ecoh']    
-            fls_d=packed_data['fls_ratio']   
-            wage_d=np.ones(1)*packed_data['wage_ratio'] 
-            div_d=np.ones(1)*packed_data['div_ratio'] 
-            mean_fls_d=np.ones(1)*packed_data['mean_fls']   
-            beta_unid_d=np.ones(1)*packed_data['beta_unid']    
-            hazm_i=packed_data['hazmi']    
-            hazs_i=packed_data['hazsi']    
-            hazd_i=packed_data['hazdi']    
-            mar_i=packed_data['emari']    
-            coh_i=packed_data['ecohi']    
-            fls_i=packed_data['fls_ratioi']   
-            wage_i=np.ones(1)*packed_data['wage_ratioi'] 
-            mean_fls_i=np.ones(1)*packed_data['mean_flsi']  
-            beta_unid_i=np.ones(1)*packed_data['beta_unidi']    
+     
+            
+            hazs_d=packed_data['hazs']   
+            hazm_d=packed_data['hazm']   
+            hazd_d=packed_data['hazd']   
+            everc_d=packed_data['everc']   
+            everm_d=packed_data['everm']
+            everr_e_d=packed_data['everr_e']
+            everr_ne_d=packed_data['everr_ne']
+            flsc_d=packed_data['flsc']
+            flsm_d=packed_data['flsm']
+            beta_edu_d=packed_data['beta_edu']
+            ref_coh_d=packed_data['ref_coh']
+            
+            hazs_i=packed_data['hazsi']   
+            hazm_i=packed_data['hazmi']   
+            hazd_i=packed_data['hazdi']   
+            everc_i=packed_data['everci']   
+            everm_i=packed_data['evermi']
+            everr_e_i=packed_data['everr_ei']
+            everr_ne_i=packed_data['everr_nei']
+            flsc_i=packed_data['flsci']
+            flsm_i=packed_data['flsmi']
+            beta_edu_i=packed_data['beta_edui']
+            ref_coh_i=packed_data['ref_cohi']  
      
              
              
@@ -1372,9 +1357,10 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
             two='b'    
         plt.plot(np.array(range(lg))+1, hazd[0:lg],one, linestyle='--',linewidth=1.5, label='Hazard of Divorce - S')    
         plt.plot(np.array(range(lg))+1, hazd_d[0:lg],two,linewidth=1.5, label='Hazard of Divorce - D')    
-        plt.fill_between(np.array(range(lg))+1, hazd_i[0,0:lg], hazd_i[1,0:lg],alpha=0.2,facecolor='b')    
-        plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
-                  fancybox=True, shadow=True, ncol=3, fontsize='x-small')    
+        plt.fill_between(np.array(range(lg))+1, hazd_i[0,0:lg], hazd_i[1,0:lg],alpha=0.2,facecolor='b') 
+        plt.legend(loc='best', ncol=1, fontsize='x-small',frameon=False)
+        #plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
+         #         fancybox=True, shadow=True, ncol=3, fontsize='x-small')    
         plt.ylim(ymin=0)    
         #plt.legend(loc='upper left', shadow=True, fontsize='x-small')    
         plt.xlabel('Duration - Years')    
@@ -1389,9 +1375,10 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         lg=min(len(hazs_d),len(hazs))  
         plt.plot(np.array(range(lg))+1, hazs[0:lg],one, linestyle='--',linewidth=1.5, label='Hazard of Separation - S')    
         plt.plot(np.array(range(lg))+1, hazs_d[0:lg],two,linewidth=1.5, label='Hazard of Separation - D')    
-        plt.fill_between(np.array(range(lg))+1, hazs_i[0,0:lg], hazs_i[1,0:lg],alpha=0.2,facecolor='b')    
-        plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
-                  fancybox=True, shadow=True, ncol=3, fontsize='x-small')    
+        plt.fill_between(np.array(range(lg))+1, hazs_i[0,0:lg], hazs_i[1,0:lg],alpha=0.2,facecolor='b')  
+        plt.legend(loc='best', ncol=1, fontsize='x-small',frameon=False)
+        #plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
+         #         fancybox=True, shadow=True, ncol=3, fontsize='x-small')    
         plt.ylim(ymin=0)    
         #plt.legend(loc='upper left', shadow=True, fontsize='x-small')    
         plt.xlabel('Duration - Years')    
@@ -1408,9 +1395,10 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     
         plt.plot(np.array(range(lg))+1, hazm[0:lg],one, linestyle='--',linewidth=1.5, label='Hazard of Marriage - S')    
         plt.plot(np.array(range(lg))+1, hazm_d[0:lg],two,linewidth=1.5, label='Hazard of Marriage - D')    
-        plt.fill_between(np.array(range(lg))+1, hazm_i[0,0:lg], hazm_i[1,0:lg],alpha=0.2,facecolor='b')    
-        plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
-                  fancybox=True, shadow=True, ncol=3, fontsize='x-small')    
+        plt.fill_between(np.array(range(lg))+1, hazm_i[0,0:lg], hazm_i[1,0:lg],alpha=0.2,facecolor='b') 
+        plt.legend(loc='best', ncol=1, fontsize='x-small',frameon=False)
+        #plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
+         #         fancybox=True, shadow=True, ncol=3, fontsize='x-small')    
         plt.ylim(ymin=0)    
         #plt.legend(loc='upper left', shadow=True, fontsize='x-small')    
         plt.xlabel('Duration - Years')    
@@ -1426,7 +1414,8 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         for ist,sname in enumerate(state_codes):    
             plt.plot(np.array(range(lenn)), ass_rel[ist,:,0],markersize=6, label=sname)    
         plt.plot(np.array(range(lenn)), ass_rel[2,:,1], linestyle='--',color='r',markersize=6, label='Marriage male') 
-        plt.plot(np.array(range(lenn)), ass_rel[3,:,1], linestyle='--',color='b',markersize=6, label='Cohabitation other') 
+        plt.plot(np.array(range(lenn)), ass_rel[3,:,1], linestyle='--',color='b',markersize=6, label='Cohabitation other')
+        plt.legend(loc='best', ncol=1, fontsize='x-small')
         plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
                   fancybox=True, shadow=True, ncol=len(state_codes), fontsize='x-small')    
         #plt.legend(loc='upper left', shadow=True, fontsize='x-small')    
@@ -1594,12 +1583,14 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
          
         gridcd=np.linspace(1,Tmax,Tmax)
         
-        plt.plot(gridcd, raw_dut,color='r',markersize=3, label='Raw Data') 
-        plt.plot(gridcd, ref_dut,color='b',markersize=3, label='Cox Prediction') 
+        plt.plot(gridcd[1:4], ref_coh_d,color='b',markersize=3, label='Data') 
+        plt.fill_between(gridcd[1:4], ref_coh_i[0,:], ref_coh_i[1,:],alpha=0.2,facecolor='g')
+        plt.plot(gridcd[0:4], ref_dut[0:4],linestyle='--',color='r',markersize=3, label='Simulation') 
         plt.yticks(np.arange(0, 2, 0.2))
-        plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
-                  fancybox=True, shadow=True, ncol=len(state_codes), fontsize='x-small')    
-        plt.xlabel('Premarital Cohabitation Duration')    
+        plt.legend(loc='best', ncol=1, fontsize='x-small',frameon=False)
+        #plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
+         #         fancybox=True, shadow=True, ncol=len(state_codes), fontsize='x-small')    
+        plt.xlabel('Premarital Cohabitation (years)')    
         plt.ylabel('Relative Hazard of Divorce')  
         
          
@@ -1658,19 +1649,22 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
              
         ##########################################    
         # Relationship and Data    
-        ##########################################          
+        ##########################################  
+
+      
         fig = plt.figure()    
         f4=fig.add_subplot(2,1,1)    
-        lg=min(len(mar_d),len(relt[1,:]))    
+        lg=min(len(everm_d),len(relt[1,:]))    
         xa=(5*np.array(range(lg))+20)   
-        plt.plot(xa, mar_d[0:lg],'g',linewidth=1.5, label='Married - D')    
-        plt.fill_between(xa, mar_i[0,0:lg], mar_i[1,0:lg],alpha=0.2,facecolor='g')    
+        plt.plot(xa, everm_d[0:lg],'g',linewidth=1.5, label='Married - D')    
+        plt.fill_between(xa, everm_i[0,0:lg], everm_i[1,0:lg],alpha=0.2,facecolor='g')    
         plt.plot(xa, reltt[2,0:lg]/N,'g',linestyle='--',linewidth=1.5, label='Married - S')    
-        plt.plot(xa, coh_d[0:lg],'r',linewidth=1.5, label='Cohabiting - D')    
-        plt.fill_between(xa, coh_i[0,0:lg], coh_i[1,0:lg],alpha=0.2,facecolor='r')    
+        plt.plot(xa, everc_d[0:lg],'r',linewidth=1.5, label='Cohabiting - D')    
+        plt.fill_between(xa, everc_i[0,0:lg], everc_i[1,0:lg],alpha=0.2,facecolor='r')    
         plt.plot(xa, reltt[3,0:lg]/N,'r',linestyle='--',linewidth=1.5, label='Cohabiting - S')    
-        plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
-                  fancybox=True, shadow=True, ncol=len(state_codes), fontsize='x-small')    
+        plt.legend(loc='best', fontsize='x-small',frameon=False)
+        #plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
+         #         fancybox=True, shadow=True, ncol=len(state_codes), fontsize='x-small')    
         plt.ylim(ymax=1.0)    
         plt.xlabel('Age')    
         plt.ylabel('Share')    
@@ -1679,33 +1673,42 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         
         ##########################################    
         # Relationship by Education
-        ##########################################          
+        ##########################################   
         fig = plt.figure()    
         f4=fig.add_subplot(2,1,1)    
-        lg=min(len(mar_d),len(relt[1,:]))    
-        xa=(5*np.array(range(lg))+20)      
-        plt.plot(xa, Ereltt[0,0:lg]/np.sum(educ[:,0]=='e'),'g',linewidth=1.5, label='College')      
-        plt.plot(xa, Ereltt[1,0:lg]/np.sum(educ[:,0]=='n'),'r',linewidth=1.5, label='No College')    
-        plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
-                  fancybox=True, shadow=True, ncol=len(state_codes), fontsize='x-small')    
+        lg=min(len(everm_d),len(relt[1,:]))    
+        xa=(5*np.array(range(lg))+20)   
+        plt.plot(xa, everr_e_d,'g',linewidth=1.5, label='Rel College - D')    
+        plt.fill_between(xa, everr_e_i[0,:], everr_e_i[1,:],alpha=0.2,facecolor='g')    
+        plt.plot(xa, Ereltt[0,0:lg]/np.sum(educ[:,0]=='e'),'g',linestyle='--',linewidth=1.5, label='Rel College - S')    
+        plt.plot(xa, everr_ne_d,'r',linewidth=1.5, label='Rel NoCollege - D')    
+        plt.fill_between(xa, everr_ne_i[0,:], everr_ne_i[1,:],alpha=0.2,facecolor='r')    
+        plt.plot(xa, Ereltt[1,0:lg]/np.sum(educ[:,0]=='n'),'r',linestyle='--',linewidth=1.5, label='Rel NoCollege - S')   
+        plt.legend(loc='best', fontsize='x-small',frameon=False)
+        #plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
+         #         fancybox=True, shadow=True, ncol=len(state_codes), fontsize='x-small')  
+
         plt.ylim(ymax=1.0)    
         plt.xlabel('Age')    
         plt.ylabel('Share')    
         plt.margins(0,0)  
+        plt.savefig('erel_edu.pgf', bbox_inches = 'tight',pad_inches = 0) 
+       
         
         ##########################################    
         # Relationship by Education
         ##########################################          
         fig = plt.figure()    
         f4=fig.add_subplot(2,1,1)    
-        lg=min(len(mar_d),len(relt[1,:]))    
+        lg=min(len(everm_d),len(relt[1,:]))    
         xa=(5*np.array(range(lg))+20)      
         plt.plot(xa, EEreltt[0,0,0:lg]/np.sum(educ[:,0]=='e'),'g',linestyle='--',linewidth=1.5, label='College M')      
         plt.plot(xa, EEreltt[0,1,0:lg]/np.sum(educ[:,0]=='n'),'r',linestyle='--',linewidth=1.5, label='No College M')  
         plt.plot(xa, EEreltt[1,0,0:lg]/np.sum(educ[:,0]=='e'),'g',linewidth=1.5, label='College C')      
         plt.plot(xa, EEreltt[1,1,0:lg]/np.sum(educ[:,0]=='n'),'r',linewidth=1.5, label='No College C')  
-        plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
-                  fancybox=True, shadow=True, ncol=len(state_codes), fontsize='x-small')    
+        plt.legend(loc='best', fontsize='x-small',frameon=False)
+        #plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
+         #         fancybox=True, shadow=True, ncol=len(state_codes), fontsize='x-small')    
         plt.ylim(ymax=1.0)    
         plt.xlabel('Age')    
         plt.ylabel('Share')    
@@ -1719,9 +1722,10 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         f5=fig.add_subplot(2,1,1)    
         xa=(mdl.setup.pars['py']*np.array(range(mdl.setup.pars['Tret']))+20)   
         plt.plot(xa, flsm,color='r', label='Marriage')    
-        plt.plot(xa, flsc,color='k', label='Cohabitation')             
-        plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
-                  fancybox=True, shadow=True, ncol=len(state_codes), fontsize='x-small')    
+        plt.plot(xa, flsc,color='k', label='Cohabitation')        
+        plt.legend(loc='best', fontsize='x-small',frameon=False)
+        #plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
+         #         fancybox=True, shadow=True, ncol=len(state_codes), fontsize='x-small')    
         plt.xlabel('Age')    
         plt.ylabel('FLS')    
          
@@ -1736,8 +1740,9 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         sns.kdeplot(psi_check[statempsi], shade=True,shade_lowest=False,linewidth=0.01, color="b", bw=.05,label = 'Marriage') 
         sns.kdeplot(psi_check[changec], color="r", bw=.05,label = 'Cohabitaition Beg') 
         sns.kdeplot(psi_check[changem], color="b", bw=.05,label = 'Marriage Beg')   
-        plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
-                  fancybox=True, shadow=True, ncol=len(state_codes), fontsize='x-small')    
+        plt.legend(loc='best', fontsize='x-small',frameon=False)
+        #plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
+         #         fancybox=True, shadow=True, ncol=len(state_codes), fontsize='x-small')    
         plt.xlabel('Love Shock')    
         plt.ylabel('Denisty') 
         
@@ -1763,7 +1768,8 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         # plot the cumulative function 
         plt.plot(basec[:-1], cumulativec/max(cumulativec), c='red',label = 'Cohabitaition') 
         plt.plot(basem[:-1], cumulativem/max(cumulativem), c='blue',label = 'Marriage') 
-        plt.legend(loc='best', ncol=1, fontsize='x-small')    
+        plt.legend(loc='best', fontsize='x-small',frameon=False)
+        #plt.legend(loc='best', ncol=1, fontsize='x-small')    
         plt.xlabel('Love Shock $\psi$')    
         plt.ylabel('Probability')  
         plt.savefig('psidist.pgf', bbox_inches = 'tight',pad_inches = 0)  
@@ -1792,7 +1798,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         plt.plot(basemte[:-1], cumulativemte/max(cumulativemte), c='b',label = 'Marriage - Co') 
         plt.plot(basectn[:-1], cumulativectn/max(cumulativectn), c='y',linestyle='--',label = 'Cohabitaition - NoCo') 
         plt.plot(basemtn[:-1], cumulativemtn/max(cumulativemtn), c='r',linestyle='--',label = 'Marriage - NoCo') 
-        plt.legend(loc='best', ncol=1, fontsize='x-small')    
+        plt.legend(loc='best', fontsize='x-small',frameon=False)  
         plt.xlabel('Love Shock $\psi$')    
         plt.ylabel('Probability')  
         plt.savefig('psidist_edu.pgf', bbox_inches = 'tight',pad_inches = 0) 
@@ -1808,8 +1814,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         sns.kdeplot(theta_t[statempsi], shade=True,shade_lowest=False,linewidth=0.01, color="b", bw=.05,label = 'Marriage') 
         sns.kdeplot(theta_t[changec], color="r", bw=.05,label = 'Cohabitaition Beg') 
         sns.kdeplot(theta_t[changem], color="b", bw=.05,label = 'Marriage Beg')  
-        plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
-                  fancybox=True, shadow=True, ncol=len(state_codes), fontsize='x-small')    
+        plt.legend(loc='best', fontsize='x-small',frameon=False)   
         plt.xlabel('Female Pareto Weight')    
         plt.ylabel('Denisty')  
          
@@ -1827,54 +1832,22 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
          
         lg=2 
         # create plot    
-        plt.plot(np.array(range(lg))+1, moments['fls_ratio'], linestyle='--',linewidth=1.5, label='Simulated')    
-        plt.plot(np.array(range(lg))+1, fls_d,linewidth=1.5, label='Data')    
-        plt.fill_between(np.array(range(lg))+1, fls_i[0,0:lg], fls_i[1,0:lg],alpha=0.2,facecolor='b')    
-        plt.ylabel('Ratio of Female Hrs: Mar/Coh') 
-        plt.legend(loc='best', bbox_to_anchor=(0.5, -0.3),    
-                  fancybox=True, shadow=True, ncol=2, fontsize='x-small')   
+        plt.plot(np.array([25,35]), moments['flsc'], linestyle='--',linewidth=1.5,color="b", label='Simulated-C')    
+        plt.plot(np.array([25,35]), flsc_d,linewidth=1.5,color="b", label='Data-C')  
+        plt.plot(np.array([25,35]), moments['flsm'], linestyle='--',linewidth=1.5,color="r", label='Simulated-S')    
+        plt.plot(np.array([25,35]), flsm_d,linewidth=1.5,color="r", label='Data-S')  
+        plt.fill_between(np.array([25,35]), flsc_i[0,0:lg], flsc_i[1,0:lg],alpha=0.2,facecolor='b')   
+        plt.fill_between(np.array([25,35]), flsm_i[0,0:lg], flsm_i[1,0:lg],alpha=0.2,facecolor='r')   
+        plt.ylabel('FLS mar and coh')
+        plt.xlabel('Age')
+        plt.legend(loc='best', fontsize='x-small',frameon=False)  
         
         #plt.ylim(ymax=0.1)    
         #plt.xlim(xmax=1.0,xmin=0.0)    
          
-        ##########################################    
-        # Wage: Marriage vs. cohabitation  
-        ##########################################     
-        fig = plt.figure()    
-        f6=fig.add_subplot(2,1,1)    
-             
-            
-        # create plot    
-        x=np.array([0.25,0.75])   
-        y=np.array([wage_d,moments['wage_ratio']])    
-        yerr=np.array([(wage_i[1]-wage_i[0])/2.0,0.0])    
-        plt.axhline(y=1.0,linewidth=0.1, color='r')    
-        plt.errorbar(x, y, yerr=yerr, fmt='o', elinewidth=0.03)    
-        plt.ylabel('Difference of Male Log wages: Mar-Coh')    
-        plt.xticks(x, ["Data","Simulation"] )   
-        #plt.ylim(ymax=0.1)    
-        #plt.xlim(xmax=1.0,xmin=0.0)    
-         
-         
+   
   
-          
-          
-        ##########################################    
-        # FLS  
-        ##########################################      
-        fig = plt.figure()    
-        f6=fig.add_subplot(2,1,1)    
-             
-            
-        # create plot    
-        x=np.array([0.25,0.75])   
-        y=np.array([mean_fls_d,mean_fls])    
-        yerr=np.array([(mean_fls_i[1]-mean_fls_i[0])/2.0,0.0])    
-        plt.errorbar(x, y, yerr=yerr, fmt='o', elinewidth=0.03)    
-        plt.ylabel('Female Labor Hours')    
-        plt.xticks(x, ["Data","Simulation"] )   
-        #plt.ylim(ymax=0.1)    
-        plt.xlim(xmax=1.0,xmin=0.0)    
+        
           
             
         ##########################################################  
@@ -1913,24 +1886,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         #plt.ylim(ymax=1.2,ymin=0.7)   
         plt.xlim(xmax=1.0,xmin=0.0)   
         
-        ##########################################   
-        # Entering in a relationship by Edu
-        ##########################################   
-        fig = plt.figure()   
-        f6=fig.add_subplot(2,1,1)   
-            
-        beta_edu_d=0.0
-        beta_edu_i=np.array([0.0,0.0])
-        # create plot   
-        x=np.array([0.25,0.75])  
-        y=np.array([beta_edu_d,beta_edu_s])   
-        yerr=np.array([(beta_edu_i[1]-beta_edu_i[0])/2.0,0.0])   
-        plt.axhline(y=1.0,linewidth=0.1, color='r')   
-        plt.errorbar(x, y, yerr=yerr, fmt='o', elinewidth=0.03)   
-        plt.ylabel('Enter rel by Edu')   
-        plt.xticks(x, ["Data","Simulation"] )  
-        plt.ylim(ymax=0.5)   
-        plt.xlim(xmax=1.0,xmin=0.0)   
+      
         
         
         ##########################################   
@@ -1940,12 +1896,11 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         f6=fig.add_subplot(2,1,1)   
             
         
-        beta_div_edu_d=1.0
-        beta_div_edu_i=np.array([1.0,1.0])
+
         # create plot   
         x=np.array([0.25,0.75])  
-        y=np.array([beta_div_edu_d,beta_div_edu_s])   
-        yerr=np.array([(beta_div_edu_i[1]-beta_div_edu_i[0])/2.0,0.0])   
+        y=np.array([beta_edu_d,beta_div_edu_s])   
+        yerr=np.array([(beta_edu_i[1]-beta_edu_i[0])/2.0,0.0])   
         plt.axhline(y=1.0,linewidth=0.1, color='r')   
         plt.errorbar(x, y, yerr=yerr, fmt='o', elinewidth=0.03)   
         plt.ylabel('Divorce-Education')   
@@ -1954,28 +1909,45 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         plt.xlim(xmax=1.0,xmin=0.0)   
         
         
-        ##########################################   
+#        ##########################################   
+#        # Divorce by Edu P  
+#        ##########################################   
+#        fig = plt.figure()   
+#        f6=fig.add_subplot(2,1,1)   
+#            
+#        
+#        beta_div_edup_d=1.0
+#        beta_div_edup_i=np.array([1.0,1.0])
+#        # create plot   
+#        x=np.array([0.25,0.75])  
+#        y=np.array([beta_div_edup_d,beta_div_edup_s])   
+#        yerr=np.array([(beta_div_edup_i[1]-beta_div_edup_i[0])/2.0,0.0])   
+#        plt.axhline(y=1.0,linewidth=0.1, color='r')   
+#        plt.errorbar(x, y, yerr=yerr, fmt='o', elinewidth=0.03)   
+#        plt.ylabel('Divorce-Education P')   
+#        plt.xticks(x, ["Data","Simulation"] )  
+#        plt.ylim(ymax=1.4)   
+#        plt.xlim(xmax=1.0,xmin=0.0)   
+     
+          
+                ##########################################   
         # Divorce by Edu P  
         ##########################################   
         fig = plt.figure()   
         f6=fig.add_subplot(2,1,1)   
             
         
-        beta_div_edup_d=1.0
-        beta_div_edup_i=np.array([1.0,1.0])
+        beta_div_edup_d=0.0
+        beta_div_edup_i=np.array([0.0,0.0])
         # create plot   
         x=np.array([0.25,0.75])  
-        y=np.array([beta_div_edup_d,beta_div_edup_s])   
-        yerr=np.array([(beta_div_edup_i[1]-beta_div_edup_i[0])/2.0,0.0])   
-        plt.axhline(y=1.0,linewidth=0.1, color='r')   
+        y=np.array([beta_div_edup_d,beta_edu_s])         
+        plt.axhline(y=0.0,linewidth=0.1, color='r')   
         plt.errorbar(x, y, yerr=yerr, fmt='o', elinewidth=0.03)   
-        plt.ylabel('Divorce-Education P')   
-        plt.xticks(x, ["Data","Simulation"] )  
+        plt.ylabel('Marriage-Education')   
+        plt.xticks(x, ["-","Simulation"] )  
         plt.ylim(ymax=1.4)   
         plt.xlim(xmax=1.0,xmin=0.0)   
-     
-          
-     
         ##########################################    
         # Put graphs together    
         ##########################################    

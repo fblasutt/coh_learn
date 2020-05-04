@@ -15,7 +15,7 @@ from renegotiation_bilateral import v_ren_bil
 from renegotiation_vartheta import v_ren_vt
 #from ren_mar_pareto import v_ren_new as ren_pareto
 
-def ev_couple_m_c(setup,Vpostren,edu,desc,dd,t,marriage,use_sparse=True):
+def ev_couple_m_c(setup,Vpostren,edu,desc,dd,t,marriage,use_sparse=True,draw=False):
     # computes expected value of couple entering the next period with an option
     # to renegotiate or to break up
     
@@ -29,8 +29,8 @@ def ev_couple_m_c(setup,Vpostren,edu,desc,dd,t,marriage,use_sparse=True):
         
     else:
         out = v_no_ren(setup,Vpostren,edu,desc,marriage,dd,t)
-    _Vren2 = out['Values']#out.pop('Values') 
-    #_Vren2=out['Values']
+    _Vren2 =out['Values'] if draw else out.pop('Values') #o#
+   
     dec = out
     
     if _Vren2[0].ndim>2:

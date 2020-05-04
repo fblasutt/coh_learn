@@ -68,78 +68,103 @@ def compute(dpi,dco,dma,period=3,transform=1):
     # RELATIONSHIP BY AGE
     ##########################
 
+    #Filter Data to make it faster
+    filter_c = [col for col in dpi if col.startswith('MAr_C')]
+    filter_s = [col for col in dpi if col.startswith('MAr_st')]
+       
+    coh=dpi[filter_c]
+    sta=dpi[filter_s]
+    listc= [x for x in list(coh.columns.values) if '1994' not in x and
+                                                      '1995' not in x and
+                                                      '1996' not in x and
+                                                      '2018' not in x]
     
-    #Get if ever cohabited or married or any by month
-    for y in range(1997,2018):
-        print(111,y)
-        for m in range(1,13):
-            
-            
-            dpi['mar'+str(12*(y-1997)+m)]=0.0
-            dpi['coh'+str(12*(y-1997)+m)]=0.0
-            
-            
-#            dpi.loc[dpi['MAr_stAtus_'+str(y)+'_'+str(m)+'_XrND']=='Married','mar'+str(12*(y-1997)+m)]=1.0
-#            dpi.loc[dpi['MAr_stAtus_'+str(y)+'_'+str(m)+'_XrND']=='Never Married, Cohabiting','coh'+str(12*(y-1997)+m)]=
-            
-            string='MAr_COHABItAtION_'+str(y)+'_'+str(m)+'_XrND'
-            dpi.loc[(dpi[string]>=200),'mar'+str(12*(y-1997)+m)]=1.0
-            dpi.loc[((dpi[string]>=100) & (dpi[string]<200)),'coh'+str(12*(y-1997)+m)]=1.0            
-            
-           
-    #Create the variables ever cohabited and ever married   
-    for y in range(1997,2018):
-        print(222,y)
-        for m in range(1,13): 
-            
-            
-            #Create the variable of ever married or cohabit   
-            string='MAr_stAtus_'+str(y)+'_'+str(m)+'_XrND'
-            stringm='everm'+str(12*(y-1997)+m)
-            stringc='everc'+str(12*(y-1997)+m)
-            
-            dpi.loc[(dpi[string]!=-4) & (dpi[string]!=-3),stringm]=0.0   
-            dpi.loc[(dpi[string]!=-4) & (dpi[string]!=-3),stringc]=0.0    
+    lists= [x for x in list(sta.columns.values) if '1994' not in x and
+                                                      '1995' not in x and
+                                                      '1996' not in x and
+                                                      '2018' not in x]
 
-
-            dpi.loc[(dpi['everc'+str(max(12*(y-1997)+m-1,1))]>=0.1) | (dpi['coh'+str(12*(y-1997)+m)]>=0.1),stringc]=1.0  
-            dpi.loc[(dpi['everm'+str(max(12*(y-1997)+m-1,1))]>=0.1) | (dpi['mar'+str(12*(y-1997)+m)]>=0.1),stringm]=1.0  
-            
-    #Get ever in a relationship at the "right" time
-    for j in range(20,40,5):
-        dpi['agec'+str(j)]=np.nan
-        dpi['agem'+str(j)]=np.nan
-        
-    for y in range(1997,2018):
-        print(333,y)
-        for m in range(1,13): 
-            for j in range(20,40,5):
-                            
-                dpi.loc[12*y+m-(12*dpi['birthy']+dpi['birthm'])==j*12,'agec'+str(j)]=dpi['everc'+str(12*(y-1997)+m)]
-                dpi.loc[12*y+m-(12*dpi['birthy']+dpi['birthm'])==j*12,'agem'+str(j)]=dpi['everm'+str(12*(y-1997)+m)]
-            
-    for j in range(20,40,5):
-        dpi['ager'+str(j)]=dpi['agem'+str(j)]+dpi['agec'+str(j)]
-        big=(dpi['ager'+str(j)]>1.0)
-        dpi['ager'+str(j)][big]=1.0
-        
-        
-    
-        
-    #get the moments
-    everc=[np.average(dpi['agec'+str(j)][np.isnan(dpi['agec'+str(j)])==False],
-     weights=np.array(dpi['weight'])[np.isnan(dpi['agec'+str(j)])==False])   for j in range(20,40,5)]
-                
-    everm=[np.average(dpi['agem'+str(j)][np.isnan(dpi['agem'+str(j)])==False],
-     weights=np.array(dpi['weight'])[np.isnan(dpi['agem'+str(j)])==False])   for j in range(20,40,5)]
-                
-    everr_e=[np.average(dpi['ager'+str(j)][(np.isnan(dpi['ager'+str(j)])==False) & (dpi['college']==1)],
-     weights=np.array(dpi['weight'])[(np.isnan(dpi['ager'+str(j)])==False) & (dpi['college']==1)])   for j in range(20,40,5)]
-                
-    everr_ne=[np.average(dpi['ager'+str(j)][(np.isnan(dpi['ager'+str(j)])==False) & (dpi['college']==0)],
-     weights=np.array(dpi['weight'])[(np.isnan(dpi['ager'+str(j)])==False) & (dpi['college']==0)])   for j in range(20,40,5)]
-                
+       
+    coh=np.array(coh[listc])
+    sta=np.array(sta[lists])
  
+    coht=np.zeros(coh.shape)
+    mart=np.zeros(coh.shape)    
+    ecoh=np.ones(coh.shape)*-100
+    emar=np.ones(coh.shape)*-100
+
+    
+    
+    #get if ever cohabited each month
+    mart[coh>=200]=1.0
+    coht[(coh>=100) & (coh<200)]=1.0
+   
+    #Create cariavle evercohabited and married
+    ecoh[(sta!=-4) & (sta!=-3)]=0.0
+    emar[(sta!=-4) & (sta!=-3)]=0.0
+    
+    tmax=12*(2018-1997)
+    
+    for i in range(tmax):
+        
+        ecoh[:,i][(ecoh[:,max(i-1,0)]>0.1) | (coht[:,i]>0.1)]=1.0
+        emar[:,i][(emar[:,max(i-1,0)]>0.1) | (mart[:,i]>0.1)]=1.0
+        
+        
+    ecoh[(sta==-4) | (sta==-3)]=np.nan
+    emar[(sta==-4) | (sta==-3)]=np.nan
+    #Get age forearch column
+    agei=np.array(12*(1997-dpi['birthy'])-dpi['birthm'],dtype=np.int16)
+    dime=np.array(len(np.array(ecoh)[0,:]),dtype=np.int16)
+    ageb=np.reshape(np.repeat(agei,dime),(len(agei),dime))+np.linspace(1,dime,dime,dtype=np.int16)
+    
+    #Get weights
+    weightsa=np.array(dpi['weight'])
+    wgt=np.reshape(np.repeat(weightsa,dime),(len(weightsa),dime))
+    
+    #get education
+    colla=np.array(dpi['college'])
+    coll=np.reshape(np.repeat(colla,dime),(len(colla),dime))
+   
+    
+    #Cohabitation
+    wgt_c=wgt[np.isnan(ecoh)==False]
+    agebc_c=ageb[np.isnan(ecoh)==False]
+    ecoh_c=ecoh[np.isnan(ecoh)==False]
+    
+    everc=np.zeros(4)
+    for i in range(4): everc[i]=np.average(ecoh_c[(agebc_c==240+i*60)],weights=wgt_c[(agebc_c==240+i*60)])
+    
+    
+    #Marriage
+    wgt_m=wgt[np.isnan(emar)==False]
+    agebc_m=ageb[np.isnan(emar)==False]
+    emar_m=emar[np.isnan(emar)==False]
+    
+    everm=np.zeros(4)
+    for i in range(4): everm[i]=np.average(emar_m[(agebc_m==240+i*60)],weights=wgt_m[(agebc_m==240+i*60)])
+    
+    #Relationship educated
+    wgt_e=wgt[(np.isnan(emar)==False) & (np.isnan(ecoh)==False)]
+    agebc_e=ageb[(np.isnan(emar)==False) & (np.isnan(ecoh)==False)]
+    emar_e=emar[(np.isnan(emar)==False) & (np.isnan(ecoh)==False)]
+    ecoh_e=ecoh[(np.isnan(emar)==False) & (np.isnan(ecoh)==False)]
+    coll=coll[(np.isnan(emar)==False) & (np.isnan(ecoh)==False)]
+    
+    everr_e=np.zeros(4)
+    everr_ne=np.zeros(4)
+    for i in range(4): 
+        
+        summ=emar_e[(agebc_e==240+i*60) & (coll==1)]+ecoh_e[(agebc_e==240+i*60) & (coll==1)]
+        summ[summ>=1]=1
+        everr_e[i]=np.average(summ,weights=wgt_e[(agebc_e==240+i*60) & (coll==1)])
+        
+        summ=emar_e[(agebc_e==240+i*60) & (coll==0)]+ecoh_e[(agebc_e==240+i*60) & (coll==0)]
+        summ[summ>=1]=1
+        everr_ne[i]=np.average(summ,weights=wgt_e[(agebc_e==240+i*60) & (coll==0)])
+    
+    
+   
     ##########################   
     #BUILD HAZARD RATES   
     #########################    

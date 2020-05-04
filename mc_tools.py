@@ -162,7 +162,7 @@ def cut_matrix(M,kill_diag=False):
     return MM
     
     
-def combine_matrices(a,b,Pia,Pib,check=True,trim=True,trim_level=0.00001):
+def combine_matrices(a,b,Pia,Pib,check=False,trim=True,trim_level=0.00001):
     # this combines INDEPENDENT transition matrices Pia and Pib
     grid = mat_combine(a,b)
     

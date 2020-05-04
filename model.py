@@ -15,8 +15,8 @@ import numpy as np
 from timeit import default_timer
 import os
 import psutil
-
-
+import gc
+gc.disable()
 #if system() != 'Darwin':
 from setup import ModelSetup
 from graph import graphs
@@ -28,7 +28,7 @@ from integrator_couples import ev_couple_m_c
 
 class Model(object):
     def __init__(self,iterator_name='default-timed',verbose=False,
-                 solve_till=None,display_v=False,**kwargs):
+                 solve_till=None,display_v=False,draw=False,**kwargs):
         self.mstart = self.get_mem()
         self.mlast = self.get_mem()
         self.verbose = verbose
@@ -46,7 +46,7 @@ class Model(object):
             print('T is {}, but solving till T = {}'.format(T,solve_till))
         
         
-        self.solve(till=solve_till)
+        self.solve(till=solve_till,draw=draw)
         
     def get_mem(self):
         return psutil.Process(os.getpid()).memory_info().rss/1e6
@@ -142,8 +142,8 @@ class Model(object):
             
         # and the integrator   
         
-        def v_integrator(setup,desc,dd,t,V_next,decc=None):
-            
+        def v_integrator(setup,desc,dd,t,V_next,decc=None,draw=False):
+           
             #Get education
             edu=setup.edu[desc]
             
@@ -170,9 +170,9 @@ class Model(object):
                     EV['expected']=setup.prob['m'][edu]['e']*EV['e']+setup.prob['m'][edu]['n']*EV['n']
                 
             elif self.setup.desc[desc] == 'Couple, M':
-                EV, dec = ev_couple_m_c(setup,V_next,edu,desc,dd,t,True)
+                EV, dec = ev_couple_m_c(setup,V_next,edu,desc,dd,t,True,draw=draw)
             elif self.setup.desc[desc] == 'Couple, C':
-                EV, dec = ev_couple_m_c(setup,V_next,edu,desc,dd,t,False)
+                EV, dec = ev_couple_m_c(setup,V_next,edu,desc,dd,t,False,draw=draw)
                 
                 
             if type(EV) is tuple:
@@ -190,8 +190,8 @@ class Model(object):
         
         if name == 'default' or name == 'default-timed':
             timed = (name == 'default-timed')
-            def iterate(desc,dd,t,Vnext,decc=None):
-                EV, dec = v_integrator(self.setup,desc,dd,t,Vnext,decc=decc)
+            def iterate(desc,dd,t,Vnext,decc=None,draw=False):
+                EV, dec = v_integrator(self.setup,desc,dd,t,Vnext,decc=decc,draw=draw)
                 if timed: self.time('Integration for {}'.format(desc))
                 vout = v_iterator(self.setup,desc,dd,t,EV)
                 if timed: self.time('Optimization for {}'.format(desc))
@@ -219,7 +219,7 @@ class Model(object):
         v = vout[desc]
         if self.setup.desc[desc] == 'Couple, M' or self.setup.desc[desc] == 'Couple, C':
             
-            #cint = self.setup.v_thetagrid_fine.apply(v['c'],axis=2)
+            
             sint = self.setup.v_thetagrid_fine.apply(v['s'],axis=2).astype(self.dtype)
             cint = self.setup.v_thetagrid_fine.apply(v['c'],axis=2).astype(self.dtype)
             xint = self.setup.v_thetagrid_fine.apply(v['x'],axis=2).astype(self.dtype)
@@ -236,14 +236,14 @@ class Model(object):
             dec.update({'s':sint,'fls':fls,'c':cint,'x':xint})
             del sint,fls
         else:
-            dec.update({'s':v['s'],'c':v['c'],'x':v['x']})
+            #dec.update({'s':v['s'],'c':v['c'],'x':v['x']})
             del v
         
     
-    def solve(self,till=None,save=False):
+    def solve(self,till=None,save=False,draw=False):
         
         show_mem = self.verbose
-        
+       
         T = self.setup.pars['T']
         dmax=self.setup.pars['dm']
         self.V = list()
@@ -253,7 +253,8 @@ class Model(object):
         if till is None: till = 0
         
         for t in reversed(range(T)):
-            
+           
+            #print( psutil.Process(os.getpid()).memory_info().rss/1e6)
             Vnow = list()
             decnow = list()
             
@@ -278,27 +279,33 @@ class Model(object):
                                   'n':{'e':decnowd['Couple, C ne'],'n':decnowd['Couple, C nn']}}
                             
                             
-                            V_d, dec = self.iterator(desc,dd,t,Vnext,decc)   
+                            V_d, dec = self.iterator(desc,dd,t,Vnext,decc,draw=draw)  
+                            #Take out some stuff if now draw
+                            if t<T-1:
+                                if not draw:del dec['e']['ia'],dec['n']['ia']
                         else:
                            
-                            V_d, dec = self.iterator(desc,dd,t,Vnext) 
+                            V_d, dec = self.iterator(desc,dd,t,Vnext,draw=draw) 
+                            if t<T-1:
+                               if not draw:del dec['c'],dec['s'],dec['x']
                        
+                    
                     Vnowd.update(V_d)
                     decnowd.update({desc:dec})
+                    #del V_d,dec
+                   
                     
-                Vnow=[Vnowd]+Vnow
-                decnow=[decnowd]+decnow
+                Vnow=[Vnowd]+Vnow.copy()
+                decnow=[decnowd]+decnow.copy()
+                
                     
             self.V = [Vnow] + self.V
             self.decisions = [decnow] + self.decisions
+            if (t<T-3) & (not draw):del self.V[2]  
             
-            
-            #if show_mem:
-             #   print('The size of V is {} giga'.format(asizeof(self.V)/1000000000))
-              #  print('The size of decisions is {} giga'.format(asizeof(self.decisions)/1000000000))
-                
             if t == till: break
             
+    
         if save:
             import pickle
             pickle.dump(self,open('model_save.pkl','wb+'))

@@ -17,9 +17,15 @@ from scipy import optimize
 from scipy import sparse
 
 
+import gc
+import os 
+import psutil
+
+gc.disable()
+
 
 class ModelSetup(object):
-    def __init__(self,nogrid=False,divorce_costs='Default',separation_costs='Default',**kwargs): 
+    def __init__(self,nogrid=False,divorce_costs='Default',separation_costs='Default',draw=False,**kwargs): 
         p = dict()       
         period_year=1#this can be 1,2,3 or 6
         transform=1#this tells how many periods to pull together for duration moments
@@ -35,7 +41,7 @@ class ModelSetup(object):
         p['Nfn']=1-0.3
         p['Nme']=0.25
         p['Nmn']=1-0.25
-        p['ass']=0.5
+        p['ass']=0.4
         p['dm']=dm
         p['py']=period_year
         p['ty']=transform
@@ -52,17 +58,17 @@ class ModelSetup(object):
         p['sigma_psi_mult'] = 0.28
         p['sigma_psi_mu'] = 0.0#1.0#nthe1.1
         p['sigma_psi']   = 0.11
-        p['meanpsi']   = 0.0
+        p['meanpsi']   = 0.0#-1.0
         p['R_t'] = [1.02**period_year]*T
         p['n_psi_t']     = [11]*T#[11]*T
         p['beta_t'] = [0.98**period_year]*T
         p['A'] = 1.0 # consumption in couple: c = (1/A)*[c_f^(1+rho) + c_m^(1+rho)]^(1/(1+rho))
         p['crra_power'] = 1.5
-        p['couple_rts'] = 0.4
+        p['couple_rts'] = 0.0
         p['sig_partner_a'] = 0.1#0.5
         p['sig_partner_z'] = 1.2#1.0#0.4 #This is crazy powerful for the diff in diff estimate
         p['sig_partner_mult'] = 1.0
-        p['dump_factor_z'] = 0.85#0.82
+        p['dump_factor_z'] = 0.78#0.85#0.82
         p['mean_partner_z_female'] = 0.02#+0.03
         p['mean_partner_z_male'] =  -0.02#-0.03
         p['mean_partner_a_female'] = 0.0#0.1
@@ -82,31 +88,30 @@ class ModelSetup(object):
         
         
         p['u_shift_mar'] = 0.0
-        p['u_shift_coh'] =0.00
+        p['u_shift_coh'] =0.0
         
          
         #Wages over time
         p['wtrend']=dict()
         p['wtrend']['f'],p['wtrend']['m']=dict(),dict()
        
-        p['wtrend']['f']['e'] =[0.0*(t>=Tret)+(t<Tret)*(-.24491918 +.07258303*t -.0016542*t**2+.00001775*t**3) for t in range(T)]
-        p['wtrend']['f']['n'] =[0.0*(t>=Tret)+(t<Tret)*(-.74491918 +.04258303*t -.0016542*t**2+.00001775*t**3) for t in range(T)]
+        p['wtrend']['f']['e'] =[0.0*(t>=Tret)+(t<Tret)*(.0+0.0685814*t -.0038631*t**2+0.0000715*t**3) for t in range(T)]
+        p['wtrend']['f']['n'] =[0.0*(t>=Tret)+(t<Tret)*(-0.3668214 +0.0264887*t -0.0012464*t**2+0.0000251*t**3) for t in range(T)]
         
-        p['wtrend']['m']['e'] = [0.0*(t>=Tret)+(t<Tret)*(-0.0620125  +0.09767721*t -0.00192571*t**2+ 0.00001573*t**3) for t in range(T)]
-        p['wtrend']['m']['n'] = [0.0*(t>=Tret)+(t<Tret)*(-0.5620125  +0.06767721*t -0.00192571*t**2+ 0.00001573*t**3) for t in range(T)]
+        p['wtrend']['m']['e'] = [0.0*(t>=Tret)+(t<Tret)*(0.0818515 + 0.0664369*t -.0032096*t**2+ 0.0000529*t**3) for t in range(T)]
+        p['wtrend']['m']['n'] = [0.0*(t>=Tret)+(t<Tret)*(-0.2424105 + 0.037659*t -0.0015337*t**2+  + 0.000026*t**3) for t in range(T)]
                 
 
 
         #Wages over time-partner
         p['wtrendp']=dict()
         p['wtrendp']['f'],p['wtrendp']['m']=dict(),dict()
-       
-        p['wtrendp']['f']['e'] =[0.0*(t>=Tret)+(t<Tret)*(-.1805060 +.07629912*t -.00160467*t**2+.00001626*t**3) for t in range(T)]
-        p['wtrendp']['f']['n'] =[0.0*(t>=Tret)+(t<Tret)*(-.6805060 +.04629912*t -.00160467*t**2+.00001626*t**3) for t in range(T)]
+        p['wtrendp']['f']['e'] =[0.0*(t>=Tret)+(t<Tret)*(.0+0.0685814*t -.0038631*t**2+0.0000715*t**3) for t in range(T)]
+        p['wtrendp']['f']['n'] =[0.0*(t>=Tret)+(t<Tret)*(-0.3668214 +0.0264887*t -0.0012464*t**2+0.0000251*t**3) for t in range(T)]
         
-        p['wtrendp']['m']['e'] = [0.0*(t>=Tret)+(t<Tret)*(-.1960803  +.09829568*t -.00169143*t**2+ .00001446*t**3) for t in range(T)]
-        p['wtrendp']['m']['n'] = [0.0*(t>=Tret)+(t<Tret)*(-.5960803  +.05829568*t -.00169143*t**2+ .00001446*t**3) for t in range(T)]
-        
+        p['wtrendp']['m']['e'] = [0.0*(t>=Tret)+(t<Tret)*(0.0818515 + 0.0664369*t -.0032096*t**2+ 0.0000529*t**3) for t in range(T)]
+        p['wtrendp']['m']['n'] = [0.0*(t>=Tret)+(t<Tret)*(-0.2424105 + 0.037659*t -0.0015337*t**2+  + 0.000026*t**3) for t in range(T)]
+                
         
         
 #        #Wages over time
@@ -247,7 +252,7 @@ class ModelSetup(object):
         
         
         self.ppart,self.ppartc,self.prob,self.probp=dict(),dict(),dict(),dict()
-            
+       
         for sex in ['f','m']:
             
             if sex=='f' :
@@ -341,7 +346,7 @@ class ModelSetup(object):
         
         
         
-        
+       
         #Cost of Divorce
         if divorce_costs == 'Default':
             # by default the costs are set in the bottom
@@ -480,75 +485,101 @@ class ModelSetup(object):
                     exogrid['psi_t'][dd][t] = exogrid['psi_t'][dd][Tren-1]#np.array([np.log(p['wret'])])             
                     exogrid['psi_t_mat'][dd][t] = np.diag(np.ones(len(exogrid['psi_t'][dd][t])))
 
-#            
-#            #Modify the mean
-#            for t in range(Tret):
-#                for d in range(p['dm']):
-#                    
-#                    exogrid['psi_t'][dd][t]=exogrid['psi_t'][dd][t]+p['meanpsi']
+            
+            #Modify the mean
+            for t in range(Tret):
+                for d in range(p['dm']):
+                    
+                    exogrid['psi_t'][dd][t]=exogrid['psi_t'][dd][t]+p['meanpsi']
            #Now the crazy matrix for "true process"
             exogrid['noise_psi_mat'],exogrid['true_psi_mat']=exogrid['psi_t_mat'],exogrid['psi_t_mat']
+#            
+#            from mc_tools import mc_simulate
+#            zero=np.ones((100000),dtype=np.int32)*5
+#            s1=mc_simulate(zero,exogrid['psi_t_mat'][0][0])
+#            s1e=exogrid['psi_t'][0][1][s1]
+#            s2=mc_simulate(s1,exogrid['psi_t_mat'][0][1])
+#            s2e=exogrid['psi_t'][1][2][s2]
+#            diffe=s2e-s1e
             
-            from mc_tools import mc_simulate
-            zero=np.ones((100000),dtype=np.int32)*5
-            s1=mc_simulate(zero,exogrid['psi_t_mat'][0][0])
-            s1e=exogrid['psi_t'][0][1][s1]
-            s2=mc_simulate(s1,exogrid['psi_t_mat'][0][1])
-            s2e=exogrid['psi_t'][1][2][s2]
-            diffe=s2e-s1e
-
             exogrid['all_t_mat_by_l'], exogrid['all_t_mat_by_l_spt'],exogrid['all_t']=dict(),dict(),dict()
             for e in ['e','n']:
                 exogrid['all_t_mat_by_l'][e], exogrid['all_t_mat_by_l_spt'][e],exogrid['all_t'][e]=dict(),dict(),dict()
                 for eo in ['e','n']:
                     exogrid['all_t_mat_by_l'][e][eo],  exogrid['all_t_mat_by_l_spt'][e][eo],exogrid['all_t'][e][eo]=list(np.ones((p['dm']))),list(np.ones((p['dm']))),list(np.ones((p['dm'])))
             
+            
+            
             for e in ['e','n']:
                 
                 #FBad shock women
-                zf_bad = [tauchen_drift(exogrid['zf_t'][e][t], exogrid['zf_t'][e][t+1], 
+                zf_bad = [tauchen_drift(exogrid['zf_t'][e][t].copy(), exogrid['zf_t'][e][t+1].copy(), 
                                                 1.0, p['sig_zf'][e], p['z_drift'])
                                     for t in range(self.pars['Tret']-1) ]
                         
                 #Account for retirement here
-                zf_bad = zf_bad+[exogrid['zf_t_mat'][e][t] for t in range(self.pars['Tret']-1,self.pars['T']-1)]+ [None]
+                zf_bad = zf_bad.copy()+[exogrid['zf_t_mat'][e][t] for t in range(self.pars['Tret']-1,self.pars['T']-1)]+ [None]
                 
                 for eo in ['e','n']:
                     
                     for dd in range(p['dm']):
-                        zfzm, zfzmmat = combine_matrices_two_lists(exogrid['zf_t'][e], exogrid['zm_t'][eo], exogrid['zf_t_mat'][e], exogrid['zm_t_mat'][eo])
-                        all_t, all_t_mat = combine_matrices_two_lists(zfzm,exogrid['psi_t'][dd],zfzmmat,exogrid['psi_t_mat'][dd])
-                        all_t_mat_sparse_T = [sparse.csc_matrix(D.T) if D is not None else None for D in all_t_mat]
-                    
-                        
-                        zf_t_mat_down = zf_bad
-                        zfzm, zfzmmat = combine_matrices_two_lists(exogrid['zf_t'][e], exogrid['zm_t'][eo], zf_t_mat_down, exogrid['zm_t_mat'][eo])
-                        all_t_down, all_t_mat_down = combine_matrices_two_lists(zfzm,exogrid['psi_t'][dd],zfzmmat,exogrid['psi_t_mat'][dd])
-                        all_t_mat_down_sparse_T = [sparse.csc_matrix(D.T) if D is not None else None for D in all_t_mat_down]
                         
                         
+                        zfzm, zfzmmat = combine_matrices_two_lists(exogrid['zf_t'][e].copy(), exogrid['zm_t'][eo].copy(), exogrid['zf_t_mat'][e].copy(), exogrid['zm_t_mat'][eo].copy())
+                       
+                        all_t, all_t_mat = combine_matrices_two_lists(zfzm.copy(),exogrid['psi_t'][dd].copy(),zfzmmat.copy(),exogrid['psi_t_mat'][dd].copy())
                         
-                        all_t_mat_by_l = [ [(1-p)*m + p*md if m is not None else None 
-                                            for m , md in zip(all_t_mat,all_t_mat_down)]
-                                           for p in self.ls_pdown ]
+                        all_t_mat_sparse_T = [sparse.csc_matrix(D.T) if D is not None else None for D in all_t_mat.copy()]
+                      
                         
+                        zf_t_mat_down = zf_bad.copy()
+                        zfzm2, zfzmmat2 = combine_matrices_two_lists(exogrid['zf_t'][e].copy(), exogrid['zm_t'][eo].copy(), zf_t_mat_down.copy(), exogrid['zm_t_mat'][eo].copy())
+                       
+                        all_t_down, all_t_mat_down = combine_matrices_two_lists(zfzm2.copy(),exogrid['psi_t'][dd].copy(),zfzmmat2.copy(),exogrid['psi_t_mat'][dd].copy())
+                        
+                        all_t_mat_down_sparse_T = [sparse.csc_matrix(D.T) if D is not None else None for D in all_t_mat_down.copy()]
+                       
+                        
+                        
+#                        all_t_mat_by_l = [ [(1-p)*m + p*md if m is not None else None 
+#                                            for m , md in zip(all_t_mat.copy(),all_t_mat_down.copy())]
+#                                           for p in self.ls_pdown.copy() ]
+#                        
                         all_t_mat_by_l_spt = [ [(1-p)*m + p*md if m is not None else None
-                                                for m, md in zip(all_t_mat_sparse_T,all_t_mat_down_sparse_T)]
-                                           for p in self.ls_pdown ]
+                                                for m, md in zip(all_t_mat_sparse_T.copy(),all_t_mat_down_sparse_T.copy())]
+                                           for p in self.ls_pdown.copy() ]
                         
                         
                         
-                        exogrid['all_t_mat_by_l'][e][eo][dd] = all_t_mat_by_l
-                        exogrid['all_t_mat_by_l_spt'][e][eo][dd] = all_t_mat_by_l_spt
+                       
+                        exogrid['all_t_mat_by_l_spt'][e][eo][dd] = all_t_mat_by_l_spt.copy()                        
+                        exogrid['all_t'][e][eo][dd] = all_t.copy()
                         
-                        exogrid['all_t'][e][eo][dd] = all_t
-            
+
+                        
+                        del all_t_mat_by_l_spt
+                        del all_t_mat_down_sparse_T
+                        del all_t_down
+                        del zfzmmat
+                        del all_t_mat_down
+                        del zfzm
+                        
+                        del all_t_mat
+                        del all_t_mat_sparse_T
+                        
+                        
+                        gc.collect()
+                       
+                       
+                        
             Exogrid_nt = namedtuple('Exogrid_nt',exogrid.keys())
             
             self.exogrid = Exogrid_nt(**exogrid)
-            self.pars['nexo_t'] = [v.shape[0] for v in all_t]
+            self.pars['nexo_t'] = [v.shape[0] for v in all_t.copy()]
+            del all_t
             
-
+            
+        
             
             
         #Grid Couple
@@ -648,14 +679,14 @@ class ModelSetup(object):
                   'Male, single e':exogrid['zm_t_mat']['e'],
                   'Female, single n':exogrid['zf_t_mat']['n'],
                   'Male, single n':exogrid['zm_t_mat']['n'],
-                  'Couple, M ee':exogrid['all_t_mat_by_l']['e']['e'],
-                  'Couple, C ee':exogrid['all_t_mat_by_l']['e']['e'],
-                  'Couple, M en':exogrid['all_t_mat_by_l']['e']['n'],
-                  'Couple, C en':exogrid['all_t_mat_by_l']['e']['n'],
-                  'Couple, M ne':exogrid['all_t_mat_by_l']['n']['e'],
-                  'Couple, C ne':exogrid['all_t_mat_by_l']['n']['e'],
-                  'Couple, M nn':exogrid['all_t_mat_by_l']['n']['n'],
-                  'Couple, C nn':exogrid['all_t_mat_by_l']['n']['n']}
+                  'Couple, M ee':exogrid['all_t_mat_by_l_spt']['e']['e'],
+                  'Couple, C ee':exogrid['all_t_mat_by_l_spt']['e']['e'],
+                  'Couple, M en':exogrid['all_t_mat_by_l_spt']['e']['n'],
+                  'Couple, C en':exogrid['all_t_mat_by_l_spt']['e']['n'],
+                  'Couple, M ne':exogrid['all_t_mat_by_l_spt']['n']['e'],
+                  'Couple, C ne':exogrid['all_t_mat_by_l_spt']['n']['e'],
+                  'Couple, M nn':exogrid['all_t_mat_by_l_spt']['n']['n'],
+                  'Couple, C nn':exogrid['all_t_mat_by_l_spt']['n']['n']}
                           
  
         self.utility_shifters = {'Female, single e':0.0,
@@ -807,7 +838,7 @@ class ModelSetup(object):
             zmat_own = setup.exogrid.zf_t_mat[e][t]
             trend=setup.pars['wtrendp'][go][eo][t]
             mean=setup.pars['mean_partner_z_female']-setup.pars['wtrend'][go][eo][t]+setup.pars['wtrendp'][go][eo][t]
-            sig_z_partner=(setup.pars['sig_zm_0'][e]**2+(t+1)*setup.pars['sig_zm'][e]**2)**0.5
+            sig_z_partner=(setup.pars['sig_zm_0'][eo]**2+(t+1)*setup.pars['sig_zm'][eo]**2)**0.5
         else:
             nz_single = setup.exogrid.zm_t[e][t].shape[0]
             p_mat = np.empty((nexo,nz_single))
@@ -817,13 +848,13 @@ class ModelSetup(object):
             zmat_own = setup.exogrid.zm_t_mat[e][t]    
             trend=setup.pars['wtrendp'][go][eo][t]
             mean=setup.pars['mean_partner_z_male']-setup.pars['wtrend'][go][eo][t]+setup.pars['wtrendp'][go][eo][t]
-            sig_z_partner=(setup.pars['sig_zf_0'][e]**2+(t+1)*setup.pars['sig_zf'][e]**2)**0.5
+            sig_z_partner=(setup.pars['sig_zf_0'][eo]**2+(t+1)*setup.pars['sig_zf'][eo]**2)**0.5
             
         def ind_conv(a,b,c): return setup.all_indices(t,(a,b,c))[0]
         
         
         for iz in range(n_zown):
-            p_psi = int_prob(psi_couple,mu=0,sig=sigma_psi_init)
+            p_psi = int_prob(psi_couple,mu=setup.pars['meanpsi'],sig=sigma_psi_init)
             if female:
                 p_zm  = int_prob(z_partner, mu=setup.pars['dump_factor_z']*z_partner[iz]+
                                   mean+setup.pars['mean_partner_z_female'],sig=(1-setup.pars['dump_factor_z'])**

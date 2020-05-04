@@ -13,7 +13,7 @@ from gridvec import VecOnGrid
 
 class Agents:
 
-    def __init__(self,Mlist,age_uni,female=False,edu=None,pswitchlist=None,N=15000,T=None,verbose=True,nosim=False):
+    def __init__(self,Mlist,age_uni,female=False,edu=None,pswitchlist=None,N=15000,T=None,verbose=True,nosim=False,draw=False):
             
             
         np.random.seed(8)
@@ -25,7 +25,8 @@ class Agents:
             Mlist = [Mlist]
             
         
-        
+        #Draw graphs?
+        self.draw=draw
         
         #Unilateral Divorce
         self.Mlist = Mlist
@@ -173,8 +174,9 @@ class Agents:
         zeros = np.zeros((N,),dtype=np.int8)
         mat_init = pswitchlist[0]
         
-        self.policy_ind[:,0] = mc_simulate(zeros,mat_init,shocks=self.shocks_transition[:,0]) # everyone starts with 0
+        
         if self.npol > 1:
+            self.policy_ind[:,0] = mc_simulate(zeros,mat_init,shocks=self.shocks_transition[:,0]) # everyone starts with 0
             for t in range(T-1):    
                 mat = pswitchlist[t+1]
                 self.policy_ind[:,t+1] = mc_simulate(self.policy_ind[:,t],mat,shocks=self.shocks_transition[:,t+1])
@@ -240,8 +242,8 @@ class Agents:
                         self.iassets[ind,t+1] = VecOnGrid(self.setup.agrid_s,anext).roll(shocks=self.shocks_single_a[ind,t])
                         self.iassetss[ind,t+1] = self.iassets[ind,t+1].copy()
                     self.s[ind,t] = anext
-                    self.c[ind,t] = pol['c'][self.iassets[ind,t],self.iexo[ind,t]]
-                    self.x[ind,t] = pol['x'][self.iassets[ind,t],self.iexo[ind,t]]
+                    if self.draw:self.c[ind,t] = pol['c'][self.iassets[ind,t],self.iexo[ind,t]]
+                    if self.draw:self.x[ind,t] = pol['x'][self.iassets[ind,t],self.iexo[ind,t]]
                    
                 else:
                     
@@ -252,8 +254,8 @@ class Agents:
                     
                     anext = pol['s'][self.iassets[ind,t],self.iexo[ind,t],self.itheta[ind,t]]
                     self.s[ind,t] = anext
-                    self.x[ind,t] = pol['x'][self.iassets[ind,t],self.iexo[ind,t],self.itheta[ind,t]]
-                    self.c[ind,t] = pol['c'][self.iassets[ind,t],self.iexo[ind,t],self.itheta[ind,t]]
+                    if self.draw:self.x[ind,t] = pol['x'][self.iassets[ind,t],self.iexo[ind,t],self.itheta[ind,t]]
+                    if self.draw:self.c[ind,t] = pol['c'][self.iassets[ind,t],self.iexo[ind,t],self.itheta[ind,t]]
                     if t+1<self.T:
                         self.iassets[ind,t+1] = VecOnGrid(self.setup.agrid_c,anext).roll(shocks=self.shocks_couple_a[ind,t])
                         self.iassetss[ind,t+1] = self.iassets[ind,t+1].copy()
@@ -309,7 +311,7 @@ class Agents:
                         
                         #Following line takes 94% of the time for this funciton
                         self.truel[ind[this_ls],t+1]=self.truel[ind[this_ls],t]+self.shocke[ind[this_ls],t+1]
-                        iexo_next_this_ls = mc_simulate(iexo_now[this_ls],mat,shocks=shks)
+                        iexo_next_this_ls = mc_simulate(iexo_now[this_ls],mat.todense().T,shocks=shks)
                         self.iexo[ind[this_ls],t+1] = iexo_next_this_ls
                         self.iexos[ind[this_ls],t+1] = iexo_next_this_ls
                         self.duf[ind[this_ls],t+1] = durf[this_ls]+1
@@ -393,7 +395,7 @@ class Agents:
                         i_pmat = (v[:,None] > pmat_cum).sum(axis=1)  # index of the position in pmat
                         
                         ic_out = matches['iexo'][ia,iznow,i_pmat]
-                        ia_out = matches['ia'][ia,iznow,i_pmat]
+                        if self.draw:ia_out = matches['ia'][ia,iznow,i_pmat] #TODO change if assets (not drop in model)
                         it_out = matches['theta'][ia,iznow,i_pmat]
                         
                         # potential assets position of couple
@@ -401,7 +403,7 @@ class Agents:
                         iall, izf, izm, ipsi = self.Mlist[ipol].setup.all_indices(t,ic_out)
                         
                         #Modify grid according to the shock
-                        mean=np.zeros(ind.shape,dtype=np.float32)
+                        mean=np.zeros(ind.shape,dtype=np.float32)+self.setup.pars['meanpsi']
                         grid=self.setup.exogrid.psi_t[0][t+1]
                         shocks=self.setup.K[0]*(self.shocke0[ind,t+1]+self.shockmu[ind,t+1])
                         target=self.setup.pars['sigma_psi_init']
@@ -448,7 +450,7 @@ class Agents:
                         i_pot_agree = matches['Decision'][ia,iznow,i_pmat]
                         i_m_preferred = matches['M or C'][ia,iznow,i_pmat]
                         it_out = matches['theta'][ia,iznow,i_pmat] 
-                        ia_out = matches['ia'][ia,iznow,i_pmat]
+                        if self.draw:ia_out = matches['ia'][ia,iznow,i_pmat]
                         
                         i_disagree = (~i_pot_agree)
                         i_disagree_or_nomeet = (i_disagree) | (i_nomeet)
@@ -483,7 +485,7 @@ class Agents:
                             self.iexo[ind[i_agree_mar],t+1] = iall[i_agree_mar]#*0+199
                             self.iexos[ind[i_agree_mar],t+1] = iall[i_agree_mar]#*0+199
                             self.state[ind[i_agree_mar],t+1] = self.state_codes[self.setup.desc_i[ef][em]['M']]
-                            self.iassets[ind[i_agree_mar],t+1] = ia_out[i_agree_mar]
+                            if self.draw:self.iassets[ind[i_agree_mar],t+1] = ia_out[i_agree_mar]
                             self.partneredu[ind[i_agree_mar],t+1]=eo
                             
                             # FLS decision
@@ -505,7 +507,7 @@ class Agents:
                             self.iexo[ind[i_agree_coh],t+1] = iall[i_agree_coh]#*0+199
                             self.iexos[ind[i_agree_coh],t+1] = iall[i_agree_coh]#*0+199
                             self.state[ind[i_agree_coh],t+1] = self.state_codes[self.setup.desc_i[ef][em]['C']]
-                            self.iassets[ind[i_agree_coh],t+1] = ia_out[i_agree_coh]
+                            if self.draw:self.iassets[ind[i_agree_coh],t+1] = ia_out[i_agree_coh]
                             self.partneredu[ind[i_agree_coh],t+1]=eo
                             
                             # FLS decision
@@ -669,7 +671,7 @@ class Agents:
                             shks = 1-self.shocks_div_a[ind[i_div],t+1]
     
                             # if bribing happens we overwrite this
-                            self.iassets[ind[i_div],t+1] = VecOnGrid(self.Mlist[ipol].setup.agrid_s,s).roll(shocks=shks)
+                            if self.draw:self.iassets[ind[i_div],t+1] = VecOnGrid(self.Mlist[ipol].setup.agrid_s,s).roll(shocks=shks)
                             
                             
                             if bil_bribing:
@@ -686,7 +688,7 @@ class Agents:
                                     #n_tot = np.sum(i_div)
                                     #share_b = int(100*n_b/n_tot)
                                     #print('bribing happens in {} cases, that is {}% of all divorces'.format(n_b,share_b))
-                                    self.iassets[ind[i_div][do_b],t+1] = iassets_ifdiv[do_b]
+                                    if self.draw:self.iassets[ind[i_div][do_b],t+1] = iassets_ifdiv[do_b]
                                     
                                     #print(np.mean(agrid[isc[i_div][do_b]]/(agrids[decision['Bribing'][1][isc[i_div][do_b],iall[i_div][do_b],itht[i_div][do_b]]]+
                                      #                                      agrids[decision['Bribing'][2][isc[i_div][do_b],iall[i_div][do_b],itht[i_div][do_b]]])))
@@ -813,9 +815,9 @@ class AgentsPooled:
         self.x = combine([a.x for a in AgentsList])
         self.du = combine([a. du for a in AgentsList])
         self.duf = combine([a. duf for a in AgentsList])
-        self.shocks_single_iexo=combine([a.shocks_single_iexo for a in AgentsList])
-        self.shocks_couple_a=combine([a.shocks_couple_a for a in AgentsList])
-        self.shocks_single_a=combine([a.shocks_single_a for a in AgentsList])
+        #self.shocks_single_iexo=combine([a.shocks_single_iexo for a in AgentsList])
+        #self.shocks_couple_a=combine([a.shocks_couple_a for a in AgentsList])
+        #self.shocks_single_a=combine([a.shocks_single_a for a in AgentsList])
         self.policy_ind = combine([a.policy_ind for a in AgentsList])
         self.agents_ind = combine([i*np.ones_like(a.state) for i, a in enumerate(AgentsList)])
         self.is_female = combine([a.female*np.ones_like(a.state) for a in AgentsList])
