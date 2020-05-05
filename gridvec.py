@@ -17,7 +17,7 @@ import numpy as np
 # TODO: this should have nan-like values and throw errors
 
 class VecOnGrid(object):
-    def __init__(self,grid,values,iwn=None,trim=True):
+    def __init__(self,grid,values,iwn=None,trim=False):
         # this assumes grid is strictly increasing o/w unpredictable
         self.val = values
         self.val_trimmed = np.clip(values,grid[0],grid[-1])

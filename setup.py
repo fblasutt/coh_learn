@@ -8,7 +8,7 @@ import numpy as np
 
 from rw_approximations import rouw_nonst, normcdf_tr,tauchen_nonst#,tauchen_nonstm
 from rw_approximations import rouw_nonstm as tauchen_nonstm
-from mc_tools import combine_matrices_two_lists, int_prob,cut_matrix
+from mc_tools import combine_matrices_two_lists,combine_matrices_two_listsf, int_prob,cut_matrix
 from scipy.stats import norm
 from collections import namedtuple
 from gridvec import VecOnGrid
@@ -522,56 +522,39 @@ class ModelSetup(object):
                 
                 for eo in ['e','n']:
                     
+                    #Preliminaries
+                    zfzm, zfzmmat = combine_matrices_two_lists(exogrid['zf_t'][e].copy(), exogrid['zm_t'][eo].copy(), exogrid['zf_t_mat'][e].copy(), exogrid['zm_t_mat'][eo].copy())
+                    
+                    zf_t_mat_down = zf_bad.copy()
+                    zfzm2, zfzmmat2 = combine_matrices_two_lists(exogrid['zf_t'][e].copy(), exogrid['zm_t'][eo].copy(), zf_t_mat_down.copy(), exogrid['zm_t_mat'][eo].copy())
+                   
                     for dd in range(p['dm']):
-                        
-                        
-                        zfzm, zfzmmat = combine_matrices_two_lists(exogrid['zf_t'][e].copy(), exogrid['zm_t'][eo].copy(), exogrid['zf_t_mat'][e].copy(), exogrid['zm_t_mat'][eo].copy())
-                       
-                        all_t, all_t_mat = combine_matrices_two_lists(zfzm.copy(),exogrid['psi_t'][dd].copy(),zfzmmat.copy(),exogrid['psi_t_mat'][dd].copy())
-                        
+                     
+                        print(111111111)
+                        all_t, all_t_mat = combine_matrices_two_listsf(zfzm.copy(),exogrid['psi_t'][dd].copy(),zfzmmat.copy(),exogrid['psi_t_mat'][dd].copy(),check=False,trim=True)                       
+                        print(22222222)
                         all_t_mat_sparse_T = [sparse.csc_matrix(D.T) if D is not None else None for D in all_t_mat.copy()]
-                      
-                        
-                        zf_t_mat_down = zf_bad.copy()
-                        zfzm2, zfzmmat2 = combine_matrices_two_lists(exogrid['zf_t'][e].copy(), exogrid['zm_t'][eo].copy(), zf_t_mat_down.copy(), exogrid['zm_t_mat'][eo].copy())
+                        print(3333333333333)                 
                        
-                        all_t_down, all_t_mat_down = combine_matrices_two_lists(zfzm2.copy(),exogrid['psi_t'][dd].copy(),zfzmmat2.copy(),exogrid['psi_t_mat'][dd].copy())
-                        
+                        all_t_down, all_t_mat_down = combine_matrices_two_listsf(zfzm2.copy(),exogrid['psi_t'][dd].copy(),zfzmmat2.copy(),exogrid['psi_t_mat'][dd].copy(),check=False,trim=True)                        
                         all_t_mat_down_sparse_T = [sparse.csc_matrix(D.T) if D is not None else None for D in all_t_mat_down.copy()]
+                        
+                        
+                        all_t_mat_by_l_spt =[all_t_mat_down_sparse_T.copy(),all_t_mat_sparse_T.copy()] 
                        
-                        
-                        
-#                        all_t_mat_by_l = [ [(1-p)*m + p*md if m is not None else None 
-#                                            for m , md in zip(all_t_mat.copy(),all_t_mat_down.copy())]
-#                                           for p in self.ls_pdown.copy() ]
-#                        
-                        all_t_mat_by_l_spt = [ [(1-p)*m + p*md if m is not None else None
-                                                for m, md in zip(all_t_mat_sparse_T.copy(),all_t_mat_down_sparse_T.copy())]
-                                           for p in self.ls_pdown.copy() ]
-                        
-                        
-                        
-                       
+                                              
                         exogrid['all_t_mat_by_l_spt'][e][eo][dd] = all_t_mat_by_l_spt.copy()                        
                         exogrid['all_t'][e][eo][dd] = all_t.copy()
                         
+                        del all_t_mat_by_l_spt,all_t_mat_down_sparse_T,all_t_down,all_t_mat_down,all_t_mat,all_t_mat_sparse_T
+                        
+                        
+                        print(psutil.Process(os.getpid()).memory_info().rss/1e6)
+                       
+                    del zfzm,zfzmmat,zfzm2,zfzmmat2    
+                    gc.collect()
 
-                        
-                        del all_t_mat_by_l_spt
-                        del all_t_mat_down_sparse_T
-                        del all_t_down
-                        del zfzmmat
-                        del all_t_mat_down
-                        del zfzm
-                        
-                        del all_t_mat
-                        del all_t_mat_sparse_T
-                        
-                        
-                        gc.collect()
-                       
-                       
-                        
+            
             Exogrid_nt = namedtuple('Exogrid_nt',exogrid.keys())
             
             self.exogrid = Exogrid_nt(**exogrid)

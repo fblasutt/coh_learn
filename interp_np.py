@@ -43,7 +43,7 @@ def interp_np(grid,xnew,return_wnext=True,trim=False):
     return j, (wnext if return_wnext else 1-wnext) 
 
 
-def interp_tu(grid,xnew,return_wnext=True,trim=True):
+def interp_tu(grid,xnew,return_wnext=True,trim=False):
     # this is based on trans_unif.py code
     # this is kept as this can be ran on GPU using cupy
     

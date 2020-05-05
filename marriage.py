@@ -57,7 +57,7 @@ def v_mar_igrid(setup,t,V,icouple,ind_or_inds,desc,ef,em,*,female,marriage,inter
     
     
     # this implicitly trims negative or too large values
-    s_partner_v = VecOnGrid(agrid_s,s_partner,trim=True) if len(agrid_s)>1 else s_partner 
+    s_partner_v = VecOnGrid(agrid_s,s_partner,trim=False) if len(agrid_s)>1 else s_partner 
     
     
     # this applies them

@@ -5,6 +5,7 @@ from numba import jit
 from scipy.stats import norm
 from scipy import optimize
 
+
 def mc_simulate(statein,Piin,shocks=None):
     # this simulates transition one period ahead for a Markov chain
     import numpy as np
@@ -110,7 +111,7 @@ def mc_init_normal_array(mean,X,shocks=None,adjust=None):
     
     return abs(ran[:,np.newaxis]-X).argmin(axis=1)  
 
-def trim_matrix(M,level=0.001):
+def trim_matrix(M,level=0.000001):
     # this eliminates transition probabilities that are lower than level, 
     # renormalizing remaining probabilities to add up to one
     
@@ -124,7 +125,7 @@ def trim_matrix(M,level=0.001):
     return Mout
 
 #@jit
-def trim_one_matrix(M,level=0.001):
+def trim_one_matrix(M,level=0.000001):
     
     Mout = M
     Mout[np.where(M<level)] = 0
@@ -161,13 +162,13 @@ def cut_matrix(M,kill_diag=False):
     
     return MM
     
-    
-def combine_matrices(a,b,Pia,Pib,check=False,trim=True,trim_level=0.00001):
+#@jit
+def combine_matrices(a,b,Pia,Pib,check=False,trim=False,trim_level=0.00001):
     # this combines INDEPENDENT transition matrices Pia and Pib
     grid = mat_combine(a,b)
     
     Pi = np.kron(Pia,Pib) if ((Pia is not None) and (Pib is not None)) else None
-    
+    Pi = np.einsum('ik,jl', Pia, Pib).reshape(25,25) if ((Pia is not None) and (Pib is not None)) else None
     if Pi is not None:
         if check:
             assert(all(abs(np.sum(Pi,axis=1)-1)<1e-5))
@@ -177,8 +178,42 @@ def combine_matrices(a,b,Pia,Pib,check=False,trim=True,trim_level=0.00001):
     
     return grid, Pi
   
+def combine_matricesf(a,b,Pia,Pib,check=False,trim=False,trim_level=0.00001,leng=None):
+    # this combines INDEPENDENT transition matrices Pia and Pib
+    grid = mat_combine(a,b)
+    
+   
+    #Pi = np.einsum('ik,jl', Pia, Pib).reshape(leng,leng) if ((Pia is not None) and (Pib is not None)) else None
+    Pi=(Pia[:, None, :, None]*Pib[None, :, None, :]).reshape(leng,leng) if ((Pia is not None) and (Pib is not None)) else None
+    if Pi is not None:
+        if check:
+            assert(all(abs(np.sum(Pi,axis=1)-1)<1e-5))
+        
+        if trim:
+            Pi = trim_matrix(Pi,trim_level)
+    
+    return grid, Pi    
+
+
+def combine_matrices_two_listsf(alist,blist,Pialist,Piblist,check=True,trim=False,trim_level=0.00001):
+    # this combines each element of Pialist and Pib
+    # they assumed to be independent (i.e. Pialist and Pib can be combined in any order)
+    grid, Pi = (list(), list())
+        
+    assert len(alist) == len(blist)
+    
+    
+    for i in range(0,len(Pialist)):
+        gr_a, Pi_a = combine_matricesf(alist[i],blist[i],Pialist[i],Piblist[i],check,trim,trim_level,len(Piblist[0][0,:])*len(Pialist[0][0,:]))
+        grid = grid + [gr_a]
+        Pi   = Pi + [Pi_a]
+        
+    if len(alist) > len(Pialist): # fix in case alist has one more element
+        grid = grid + [mat_combine(alist[-1],blist[-1])]
+        
+    return grid, Pi
 #@jit
-def combine_matrices_list(alist,b,Pialist,Pib,check=True,trim=True,trim_level=0.00001):
+def combine_matrices_list(alist,b,Pialist,Pib,check=True,trim=False,trim_level=0.00001):
     # this combines each element of Pialist and Pib
     # they assumed to be independent (i.e. Pialist and Pib can be combined in any order)
     grid, Pi = (list(), list())
@@ -196,7 +231,7 @@ def combine_matrices_list(alist,b,Pialist,Pib,check=True,trim=True,trim_level=0.
 
 
 #@jit
-def combine_matrices_two_lists(alist,blist,Pialist,Piblist,check=True,trim=True,trim_level=0.00001):
+def combine_matrices_two_lists(alist,blist,Pialist,Piblist,check=True,trim=False,trim_level=0.00001):
     # this combines each element of Pialist and Pib
     # they assumed to be independent (i.e. Pialist and Pib can be combined in any order)
     grid, Pi = (list(), list())
@@ -290,7 +325,7 @@ def ind_combine_m(ilist,nlist):
     
 
 
-def int_prob_standard(vec,trim=True,trim_level=0.001,n_points=None):
+def int_prob_standard(vec,trim=False,trim_level=0.00001,n_points=None):
     # given ordered vector vec [x_0,...,x_{n-1}] this returns probabilities
     # [p0,...,p_{n-1}] such that p_i = P[d(Z,x_i) is minimal among i], where
     # Z is standard normal ranodm variable
@@ -333,12 +368,12 @@ def int_prob_standard(vec,trim=True,trim_level=0.001,n_points=None):
     return p#, ap, p[ap[-2]], p[ap[-1]]
 
 
-def int_prob(vec,mu=0,sig=1,trim=True,trim_level=0.001,n_points=None):
+def int_prob(vec,mu=0,sig=1,trim=False,trim_level=0.00001,n_points=None):
     # this works like int_prob_standard, but assumes that Z = mu + sig*N(0,1)
     vec_adj = (np.array(vec)-mu)/sig
     return int_prob_standard(vec_adj,trim,trim_level,n_points)
 
-def int_prob_standarda(vec,trim=True,trim_level=0.001,n_points=None):
+def int_prob_standarda(vec,trim=False,trim_level=0.00001,n_points=None):
     # given ordered vector vec [x_0,...,x_{n-1}] this returns probabilities
     # [p0,...,p_{n-1}] such that p_i = P[d(Z,x_i) is minimal among i], where
     # Z is standard normal ranodm variable
@@ -379,7 +414,7 @@ def int_prob_standarda(vec,trim=True,trim_level=0.001,n_points=None):
     return p#, ap, p[ap[-2]], p[ap[-1]]
 
 
-def int_proba(vec,mu=0,sig=1,trim=True,trim_level=0.00001,n_points=None):
+def int_proba(vec,mu=0,sig=1,trim=False,trim_level=0.000001,n_points=None):
     # this works like int_prob_standard, but assumes that Z = mu + sig*N(0,1)
     vec_adj = (np.array(vec)-mu.T[...,None])/sig.T[...,None]
     return int_prob_standarda(vec_adj,trim,trim_level,n_points)
