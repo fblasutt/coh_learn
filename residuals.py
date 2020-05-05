@@ -25,7 +25,7 @@ gc.disable()
 # we can add more things too for convenience
 
 def mdl_resid(x=None,save_to=None,load_from=None,return_format=['distance'],
-              solve_transition=True,
+              solve_transition=False,
               store_path = None,
               verbose=False,calibration_report=False,draw=False,graphs=False,
               rel_diff=True,welf=False):

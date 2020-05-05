@@ -25,7 +25,8 @@ def calibration_params(xin=None,xfix=None):
               util_alp=(0.554, 0.856, 0.01),#util_alp=(0.01, 0.4, 0.25),
               u_shift_mar = (0.0110, 0.0251, 0.001),#u_shift_mar = (0.0, 0.5, 0.0001),
               z_drift = (-0.129, -0.04, -0.001),#z_drift = (-0.3, 0.0, -0.1)
-              util_xi=(1.01, 1.4, 0.001)
+              util_xi=(1.01, 1.4, 0.001),
+              sigma_psi_mu=(0.0, 0.5, 0.001)
                         )
              
     
