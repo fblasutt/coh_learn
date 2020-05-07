@@ -28,7 +28,7 @@ if system() != 'Darwin' and system() != 'Windows':
 
 import numpy as np
 from numpy.random import random_sample as rs
-from data_moments import dat_moments
+from data_moments3 import dat_moments
 from tiktak import tiktak
 print('Hi!')
 

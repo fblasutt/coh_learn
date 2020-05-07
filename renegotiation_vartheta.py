@@ -49,6 +49,7 @@ def v_ren_vt(setup,V,marriage,dd,edu,desc,t,return_extra=False,return_vdiv_only=
         def thetafun(tht): return tht, 1-tht
         #def thetafun(tht): return 0.5*np.ones_like(tht), 0.5*np.ones_like(tht)
             
+    #Get value of divorce for men and women
     
     # values of divorce
     vf_n, vm_n = v_div_vartheta(

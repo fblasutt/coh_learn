@@ -248,7 +248,7 @@ def mdl_resid(x=None,save_to=None,load_from=None,return_format=['distance'],
     beta_edu_d=packed_data['beta_edu']
     ref_coh_d=packed_data['ref_coh']
     W=packed_data['W']
-    dat=np.concatenate((hazm_d,hazs_d,hazd_d,everc_d,everm_d,everr_e_d,everr_ne_d,flsc_d,flsm_d,beta_edu_d*np.ones(1),ref_coh_d),axis=0)
+    dat=np.concatenate((hazm_d,hazs_d,hazd_d,everc_d,everm_d,flsc_d,flsm_d,beta_edu_d*np.ones(1),ref_coh_d),axis=0)
     
 
     #Get Simulated Data
@@ -264,7 +264,7 @@ def mdl_resid(x=None,save_to=None,load_from=None,return_format=['distance'],
     flsm_s=moments['flsm']
     beta_edu_s=moments['beta_edu']
     ref_coh_s=moments['ref_coh']  
-    sim=np.concatenate((hazm_s,hazs_s,hazd_s,everc_s,everm_s,everr_e_s,everr_ne_s,flsc_s,flsm_s,beta_edu_s*np.ones(1),ref_coh_s),axis=0)
+    sim=np.concatenate((hazm_s,hazs_s,hazd_s,everc_s,everm_s,flsc_s,flsm_s,beta_edu_s*np.ones(1),ref_coh_s),axis=0)
 
 
 
@@ -293,22 +293,7 @@ def mdl_resid(x=None,save_to=None,load_from=None,return_format=['distance'],
     
     
     
-    if calibration_report:
-        print('')
-        print('')
-        print('Calibration report')
-        print('ulost = {:.4f} , s_psi = {:.4f}, s_psi0 = {:.4f}, uls = {:.4f}, pmeet = {:.4f}'.format(ulost,sigma_psi,sigma_psi_init,uls, pmeet))
-        print('')
-        print('')
-        print('Average {:.4f} mar and {:.4f} cohab'.format(np.mean(mar_s),np.mean(coh_s)))
-        print('Hazard of sep is {:.4f}, hazard of div is {:.4f}'.format(np.mean(hazs_s),np.mean(hazd_s)))        
-        print('Hazard of Marriage is {:.4f}'.format(np.mean(hazm_s)))
-        print('Calibration residual is {:.4f}'.format(dist))
-        print('')
-        print('')
-        print('End of calibration report')
-        print('')
-        print('')
+   
     
     
     

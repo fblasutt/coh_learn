@@ -104,7 +104,7 @@ def v_optimize_couple(money_in,sgrid,EV,mgrid,utilint,xint,ls,beta,ushift,
         
         
         
-    i_ls = np.expand_dims(V_opt_arr.argmax(axis=3),3)
+    i_ls =np.expand_dims(V_opt_arr.argmax(axis=3),3)
     
     V = tal(V_opt_arr,i_ls,axis=3).squeeze(axis=3)
     c = tal(c_opt_arr,i_ls,axis=3).squeeze(axis=3)
@@ -129,7 +129,7 @@ def v_optimize_couple(money_in,sgrid,EV,mgrid,utilint,xint,ls,beta,ushift,
 
 
 
-@njit(parallel=True)
+#@njit(parallel=True)
 def v_couple_par(money,sgrid,EV,mgrid,u_on_mgrid,x_on_mgrid,beta,uadd,V_opt,i_opt,c_opt,x_opt,s_opt):
     # this is a looped version of the optimizer
     # the last two things are outputs
@@ -160,6 +160,9 @@ def v_couple_par(money,sgrid,EV,mgrid,u_on_mgrid,x_on_mgrid,beta,uadd,V_opt,i_op
             x_opt[ind_a,ind_exo,:] = x_opt_i
             c_opt[ind_a,ind_exo,:] = c_opt_i
             s_opt[ind_a,ind_exo,:] = s_opt_i
+            
+           # if np.min(money_i-c_opt_i-x_opt_i-s_opt_i)<-0.000001:
+            #    print(111,np.min(money_i-c_opt_i-x_opt_i-s_opt_i))
             
 
 @njit
@@ -224,6 +227,7 @@ def v_couple_par_int(money_i,sgrid,EV_slice,mgrid,u_on_mgrid,x_on_mgrid,beta,uad
         s_opt_i[ind_theta] = sgrid[io]        
        
         assert Vo > -1e20
+
     return i_opt_i, V_opt_i, x_opt_i, c_opt_i, s_opt_i
 
     

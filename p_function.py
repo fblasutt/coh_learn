@@ -80,7 +80,7 @@ def fun(x):
             
             
             
-        res=dfols.solve(q, xc, rhobeg = 0.01, rhoend=1e-4, maxfun=100, bounds=(xl,xu),
+        res=dfols.solve(q, xc, rhobeg = 0.1, rhoend=1e-3, maxfun=100, bounds=(xl,xu),
                         scaling_within_bounds=True,objfun_has_noise=False, print_progress=True)
          
         #res=pybobyqa.solve(q, xc, rhobeg = 0.001, rhoend=1e-6, maxfun=80, bounds=(xl,xu),

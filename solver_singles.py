@@ -9,7 +9,7 @@ import numpy as np
 
 #from opt_test import build_s_grid, sgrid_on_agrid, get_EVM
 from optimizers import v_optimize_couple
-
+from intratemporal import int_sol
 
 
 def v_iter_single(setup,dd,t,EV,female,edu,ushift,force_f32=False):
@@ -46,23 +46,35 @@ def v_iter_single(setup,dd,t,EV,female,edu,ushift,force_f32=False):
     
     assert EV.dtype == dtype_here
     
-    V_0, c_opt, x_opt, s_opt, i_opt, _, _ = \
-        v_optimize_couple(money_t,sgrid_s,(setup.vsgrid_s,EV[:,:,None,None]),setup.mgrid,
-                             using_pre_u[:,None,None],
-                             using_pre_x[:,None,None],
-                                 ls,beta,ushift,dtype=dtype)
+    # V_01, c_opt1, x_opt1, s_opt1, i_opt1, _, _ = \
+    #     v_optimize_couple(money_t,sgrid_s,(setup.vsgrid_s,EV[:,:,None,None]),setup.mgrid,
+    #                           using_pre_u[:,None,None],
+    #                           using_pre_x[:,None,None],
+    #                               ls,beta,ushift,dtype=dtype)
     
     
     
-    V_0, c_opt, x_opt, s_opt, i_opt =  \
-        (x.squeeze(axis=2) for x in [V_0, c_opt, x_opt, s_opt, i_opt])
+    # V_01, c_opt1, x_opt1, s_opt1, i_opt1 =  \
+    #     (x.squeeze(axis=2) for x in [V_01, c_opt1, x_opt1, s_opt1, i_opt1])
     
+    A=setup.pars['A']
+    sig = setup.pars['crra_power']
+    alp = setup.pars['util_alp_m']
+    xi = setup.pars['util_xi']
+    lam = setup.pars['util_lam']
+    kap = setup.pars['util_kap_m']
+    x_opt,c_opt,u=int_sol(money_t[1]*ls[0],A=1,alp=alp,sig=sig,xi=xi,lam=lam,kap=kap,lbr=ls,mt=1.0-ls[0])
+    i_opt=np.zeros(x_opt.shape,dtype=np.int16)
+    s_opt=np.zeros(x_opt.shape,dtype=np.float64)
     
     EVexp =  EV if isinstance(setup.vsgrid_s,(np.ndarray)) else setup.vsgrid_s.apply_preserve_shape(EV)
-    V_ret = setup.u_single_pub(c_opt,x_opt,ls) + ushift + beta*np.take_along_axis(EVexp,i_opt,0)
+    #V_ret1 = setup.u_single_pub(c_opt1,x_opt1,ls) + ushift + beta*np.take_along_axis(EVexp,i_opt1,0)
+    V_ret = setup.u_single_pub(c_opt,x_opt,ls) + ushift + beta*np.take_along_axis(EVexp,np.expand_dims(i_opt,axis=0),0)
     
+    #print(1111,np.min(V_ret-V_ret1))
     assert V_ret.dtype==dtype
     
     def r(x): return x
     
-    return r(V_ret), r(c_opt), r(x_opt), r(s_opt)
+    return r(V_ret), r(np.expand_dims(c_opt,axis=0)), r(np.expand_dims(x_opt,axis=0)), r(np.expand_dims(s_opt,axis=0))
+

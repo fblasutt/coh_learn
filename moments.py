@@ -26,7 +26,7 @@ matplotlib.rcParams.update({
     'font.family': 'serif',  
     'font.size' : 11,  
     'text.usetex': True,  
-    'pgf.rcfonts': False,  
+    'pgf.rcfonts': False, 
 })  
   
   
@@ -665,25 +665,28 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     reltt=relt[:,:mdl.setup.pars['Tret']-mdl.setup.pars['Tbef']+1]    
     years=np.linspace(20,35,4)    
     years_model=np.linspace(20,35,int(15/mdl.setup.pars['py']))   
-    moments['everm']=relt[2,:]/N
-    moments['everc']=relt[3,:]/N
-                 
-         
+    
     #Find the right entries for creating moments    
-    pos=list()    
-    for j in range(len(years)):    
-        pos=pos+[np.argmin(np.abs(years_model-years[j]))]    
-        
+    pos=[0, 5, 10, 15]
+    
     #Approximation if more than 5 years in one period    
-    if len(pos)<7:    
-        for i in range(7-len(pos)):    
+    if len(pos)<4:    
+        for i in range(4-len(pos)):    
             pos=pos+[pos[-1]]    
     pos=np.array(pos)    
         
         
         
-    reltt=reltt[:,pos]    
-            
+     
+    reltt=reltt[:,pos]  
+    moments['everm']=reltt[2,:]/N
+    moments['everc']=reltt[3,:]/N
+                 
+         
+
+        
+   
+    
     moments['share single'] = reltt[0,:]/N    
     moments['share mar'] = reltt[2,:]/N    
     moments['share coh'] = reltt[3,:]/N    
@@ -720,6 +723,8 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     # if (mdl.setup.pars['Tret']>=mdl.setup.pars['Tret']):            
     Ereltt=Erelt[:,:mdl.setup.pars['Tret']-mdl.setup.pars['Tbef']+1]           
     Ereltt=Ereltt[:,pos]    
+    
+    
     moments['everr_e']=Ereltt[0,:]/np.sum(educ[:,0]=='e')
     moments['everr_ne']=Ereltt[1,:]/np.sum(educ[:,0]=='n')
     
@@ -1834,8 +1839,8 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         # create plot    
         plt.plot(np.array([25,35]), moments['flsc'], linestyle='--',linewidth=1.5,color="b", label='Simulated-C')    
         plt.plot(np.array([25,35]), flsc_d,linewidth=1.5,color="b", label='Data-C')  
-        plt.plot(np.array([25,35]), moments['flsm'], linestyle='--',linewidth=1.5,color="r", label='Simulated-S')    
-        plt.plot(np.array([25,35]), flsm_d,linewidth=1.5,color="r", label='Data-S')  
+        plt.plot(np.array([25,35]), moments['flsm'], linestyle='--',linewidth=1.5,color="r", label='Simulated-M')    
+        plt.plot(np.array([25,35]), flsm_d,linewidth=1.5,color="r", label='Data-M')  
         plt.fill_between(np.array([25,35]), flsc_i[0,0:lg], flsc_i[1,0:lg],alpha=0.2,facecolor='b')   
         plt.fill_between(np.array([25,35]), flsm_i[0,0:lg], flsm_i[1,0:lg],alpha=0.2,facecolor='r')   
         plt.ylabel('FLS mar and coh')

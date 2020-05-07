@@ -60,9 +60,9 @@ class ModelSetup(object):
         p['sigma_psi']   = 0.11
         p['meanpsi']   = 0.0#-1.0
         p['R_t'] = [1.02**period_year]*T
-        p['n_psi_t']     = [11]*T#[11]*T
+        p['n_psi_t']     = [12]*T#[11]*T
         p['beta_t'] = [0.98**period_year]*T
-        p['A'] = 1.0 # consumption in couple: c = (1/A)*[c_f^(1+rho) + c_m^(1+rho)]^(1/(1+rho))
+        p['A'] = 1.6 # consumption in couple: c = (1/A)*[c_f^(1+rho) + c_m^(1+rho)]^(1/(1+rho))
         p['crra_power'] = 1.5
         p['couple_rts'] = 0.0
         p['sig_partner_a'] = 0.1#0.5
@@ -77,7 +77,8 @@ class ModelSetup(object):
         p['pmeet'] = 0.5
         p['pmeet1'] = 0.0
         
-        p['z_drift'] = -0.09#-0.1
+        p['z_drift'] = -0.09#-0.2
+        
         
         
         p['wage_gap'] = 0.6
@@ -88,54 +89,54 @@ class ModelSetup(object):
         
         
         p['u_shift_mar'] = 0.0
-        p['u_shift_coh'] =0.0
+        p['u_shift_coh'] =-1.0
         
          
+        # #Wages over time
+        # p['wtrend']=dict()
+        # p['wtrend']['f'],p['wtrend']['m']=dict(),dict()
+       
+        # p['wtrend']['f']['e'] =[0.0*(t>=Tret)+(t<Tret)*(.0+0.0685814*t -.0038631*t**2+0.0000715*t**3) for t in range(T)]
+        # p['wtrend']['f']['n'] =[0.0*(t>=Tret)+(t<Tret)*(-0.3668214 +0.0264887*t -0.0012464*t**2+0.0000251*t**3) for t in range(T)]
+        
+        # p['wtrend']['m']['e'] = [0.0*(t>=Tret)+(t<Tret)*(0.0818515 + 0.0664369*t -.0032096*t**2+ 0.0000529*t**3) for t in range(T)]
+        # p['wtrend']['m']['n'] = [0.0*(t>=Tret)+(t<Tret)*(-0.2424105 + 0.037659*t -0.0015337*t**2+  + 0.000026*t**3) for t in range(T)]
+                
+
+
+        # #Wages over time-partner
+        # p['wtrendp']=dict()
+        # p['wtrendp']['f'],p['wtrendp']['m']=dict(),dict()
+        # p['wtrendp']['f']['e'] =[0.0*(t>=Tret)+(t<Tret)*(.0+0.0685814*t -.0038631*t**2+0.0000715*t**3) for t in range(T)]
+        # p['wtrendp']['f']['n'] =[0.0*(t>=Tret)+(t<Tret)*(-0.3668214 +0.0264887*t -0.0012464*t**2+0.0000251*t**3) for t in range(T)]
+        
+        # p['wtrendp']['m']['e'] = [0.0*(t>=Tret)+(t<Tret)*(0.0818515 + 0.0664369*t -.0032096*t**2+ 0.0000529*t**3) for t in range(T)]
+        # p['wtrendp']['m']['n'] = [0.0*(t>=Tret)+(t<Tret)*(-0.2424105 + 0.037659*t -0.0015337*t**2+  + 0.000026*t**3) for t in range(T)]
+                
+        
+        
         #Wages over time
         p['wtrend']=dict()
         p['wtrend']['f'],p['wtrend']['m']=dict(),dict()
-       
-        p['wtrend']['f']['e'] =[0.0*(t>=Tret)+(t<Tret)*(.0+0.0685814*t -.0038631*t**2+0.0000715*t**3) for t in range(T)]
-        p['wtrend']['f']['n'] =[0.0*(t>=Tret)+(t<Tret)*(-0.3668214 +0.0264887*t -0.0012464*t**2+0.0000251*t**3) for t in range(T)]
+      
+        p['wtrend']['f']['e'] =[0.0*(t>=Tret)+(t<Tret)*(-.44491918 +.05258303*t -.0016542*t**2+.00001775*t**3) for t in range(T)]
+        p['wtrend']['f']['n'] =[0.0*(t>=Tret)+(t<Tret)*(-.74491918 +.04258303*t -.0016542*t**2+.00001775*t**3) for t in range(T)]
         
-        p['wtrend']['m']['e'] = [0.0*(t>=Tret)+(t<Tret)*(0.0818515 + 0.0664369*t -.0032096*t**2+ 0.0000529*t**3) for t in range(T)]
-        p['wtrend']['m']['n'] = [0.0*(t>=Tret)+(t<Tret)*(-0.2424105 + 0.037659*t -0.0015337*t**2+  + 0.000026*t**3) for t in range(T)]
+        p['wtrend']['m']['e'] = [0.0*(t>=Tret)+(t<Tret)*(-0.2620125  +0.07767721*t -0.00192571*t**2+ 0.00001573*t**3) for t in range(T)]
+        p['wtrend']['m']['n'] = [0.0*(t>=Tret)+(t<Tret)*(-0.5620125  +0.06767721*t -0.00192571*t**2+ 0.00001573*t**3) for t in range(T)]
                 
 
 
         #Wages over time-partner
         p['wtrendp']=dict()
         p['wtrendp']['f'],p['wtrendp']['m']=dict(),dict()
-        p['wtrendp']['f']['e'] =[0.0*(t>=Tret)+(t<Tret)*(.0+0.0685814*t -.0038631*t**2+0.0000715*t**3) for t in range(T)]
-        p['wtrendp']['f']['n'] =[0.0*(t>=Tret)+(t<Tret)*(-0.3668214 +0.0264887*t -0.0012464*t**2+0.0000251*t**3) for t in range(T)]
+      
+        p['wtrendp']['f']['e'] =[0.0*(t>=Tret)+(t<Tret)*(-.3805060 +.05629912*t -.00160467*t**2+.00001626*t**3) for t in range(T)]
+        p['wtrendp']['f']['n'] =[0.0*(t>=Tret)+(t<Tret)*(-.6805060 +.04629912*t -.00160467*t**2+.00001626*t**3) for t in range(T)]
         
-        p['wtrendp']['m']['e'] = [0.0*(t>=Tret)+(t<Tret)*(0.0818515 + 0.0664369*t -.0032096*t**2+ 0.0000529*t**3) for t in range(T)]
-        p['wtrendp']['m']['n'] = [0.0*(t>=Tret)+(t<Tret)*(-0.2424105 + 0.037659*t -0.0015337*t**2+  + 0.000026*t**3) for t in range(T)]
-                
+        p['wtrendp']['m']['e'] = [0.0*(t>=Tret)+(t<Tret)*(-.2960803  +.06829568*t -.00169143*t**2+ .00001446*t**3) for t in range(T)]
+        p['wtrendp']['m']['n'] = [0.0*(t>=Tret)+(t<Tret)*(-.5960803  +.05829568*t -.00169143*t**2+ .00001446*t**3) for t in range(T)]
         
-        
-#        #Wages over time
-#        p['wtrend']=dict()
-#        p['wtrend']['f'],p['wtrend']['m']=dict(),dict()
-#       
-#        p['wtrend']['f']['n'] =[0.0*(t>=Tret)+(t<Tret)*(-.44491918 +.04258303*t -.0016542*t**2+.00001775*t**3) for t in range(T)]
-#        p['wtrend']['f']['e'] =[0.0*(t>=Tret)+(t<Tret)*(-.74491918 +.04258303*t -.0016542*t**2+.00001775*t**3) for t in range(T)]
-#        
-#        p['wtrend']['m']['n'] = [0.0*(t>=Tret)+(t<Tret)*(-0.2620125  +0.06767721*t -0.00192571*t**2+ 0.00001573*t**3) for t in range(T)]
-#        p['wtrend']['m']['e'] = [0.0*(t>=Tret)+(t<Tret)*(-0.5620125  +0.06767721*t -0.00192571*t**2+ 0.00001573*t**3) for t in range(T)]
-#                
-#
-#
-#        #Wages over time-partner
-#        p['wtrendp']=dict()
-#        p['wtrendp']['f'],p['wtrendp']['m']=dict(),dict()
-#       
-#        p['wtrendp']['f']['n'] =[0.0*(t>=Tret)+(t<Tret)*(-.3805060 +.04629912*t -.00160467*t**2+.00001626*t**3) for t in range(T)]
-#        p['wtrendp']['f']['e'] =[0.0*(t>=Tret)+(t<Tret)*(-.6805060 +.04629912*t -.00160467*t**2+.00001626*t**3) for t in range(T)]
-#        
-#        p['wtrendp']['m']['n'] = [0.0*(t>=Tret)+(t<Tret)*(-.2960803  +.05829568*t -.00169143*t**2+ .00001446*t**3) for t in range(T)]
-#        p['wtrendp']['m']['e'] = [0.0*(t>=Tret)+(t<Tret)*(-.5960803  +.05829568*t -.00169143*t**2+ .00001446*t**3) for t in range(T)]
-#        
 
         
         
@@ -1085,7 +1086,7 @@ class DivorceCosts(object):
                  assets_kept = 1.0, # how many assets of couple are splited (the rest disappears)
                  u_lost_m=0.0,u_lost_f=0.0, # pure utility losses b/c of divorce
                  money_lost_m=0.0,money_lost_f=0.0, # pure money (asset) losses b/c of divorce
-                 money_lost_m_ez=0.0,money_lost_f_ez=0.0, # money losses proportional to exp(z) b/c of divorce
+                 money_lost_m_ez=0.4,money_lost_f_ez=0.4, # money losses proportional to exp(z) b/c of divorce
                  eq_split=1.0 #The more of less equal way assets are split within divorce
                  ): # 
         
