@@ -247,8 +247,9 @@ def mdl_resid(x=None,save_to=None,load_from=None,return_format=['distance'],
     flsm_d=packed_data['flsm']
     beta_edu_d=packed_data['beta_edu']
     ref_coh_d=packed_data['ref_coh']
+    ratio_mar_d=packed_data['ratio_mar']
     W=packed_data['W']
-    dat=np.concatenate((hazm_d,hazs_d,hazd_d,everc_d,everm_d,flsc_d,flsm_d,beta_edu_d*np.ones(1),ref_coh_d),axis=0)
+    dat=np.concatenate((hazm_d,hazs_d,hazd_d,everc_d,everm_d,flsc_d,flsm_d,beta_edu_d*np.ones(1),ref_coh_d,ratio_mar_d*np.ones(1)),axis=0)
     
 
     #Get Simulated Data
@@ -264,7 +265,8 @@ def mdl_resid(x=None,save_to=None,load_from=None,return_format=['distance'],
     flsm_s=moments['flsm']
     beta_edu_s=moments['beta_edu']
     ref_coh_s=moments['ref_coh']  
-    sim=np.concatenate((hazm_s,hazs_s,hazd_s,everc_s,everm_s,flsc_s,flsm_s,beta_edu_s*np.ones(1),ref_coh_s),axis=0)
+    ratio_mar_s=moments['ratio_mar'] 
+    sim=np.concatenate((hazm_s,hazs_s,hazd_s,everc_s,everm_s,flsc_s,flsm_s,beta_edu_s*np.ones(1),ref_coh_s,ratio_mar_s*np.ones(1)),axis=0)
 
 
 

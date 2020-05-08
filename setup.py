@@ -41,7 +41,7 @@ class ModelSetup(object):
         p['Nfn']=1-0.3
         p['Nme']=0.25
         p['Nmn']=1-0.25
-        p['ass']=1.0
+        p['ass']=0.5
         p['dm']=dm
         p['py']=period_year
         p['ty']=transform
@@ -89,7 +89,7 @@ class ModelSetup(object):
         
         
         p['u_shift_mar'] = 0.0
-        p['u_shift_coh'] =0.0
+        p['u_shift_coh'] =-0.1
         
          
         # #Wages over time

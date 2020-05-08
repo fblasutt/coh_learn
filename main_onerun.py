@@ -44,7 +44,7 @@ if __name__ == '__main__':
     #import warnings
     #warnings.filterwarnings("error")
     #For graphs later
-    graphs=True
+    graphs=False
     #Build  data moments and pickle them
     dat_moments(period=1,sampling_number=1,transform=1)
     
@@ -68,7 +68,7 @@ if __name__ == '__main__':
 
     #Second
     #x0 = np.array([0.0,   0.06565744,  1.5,  0.2904853,   0.7371481,  0.018159483 - 0.6, -0.091977, 0.805955,0.1])
-    x0 = np.array([0.4,   0.06565744,  1.5,  0.2904853,   0.1371481,  0.0 , -0.191977, 1.5,0.1])
+    x0 = np.array([0.6,   0.03565744,  3.5,  0.9904853,   0.04371481,  0.01-0.1 , -0.091977, 1.01,0.0])
 
   
     #x0 = np.array([2.24964844,  0.63925781,  2.93851562,  0.29136719,  0.59011719,  0.0613125, -0.05425391,  1.02433594,  0.05273438])

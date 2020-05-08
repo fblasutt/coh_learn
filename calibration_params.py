@@ -19,13 +19,13 @@ def calibration_params(xin=None,xfix=None):
     
     params = OrderedDict(
               ulost=(0.29, 1.50, 0.1),
-              sigma_psi=(0.03, 0.9, 0.01),#sigma_psi=(0.005, 0.8, 0.01),
-              sigma_psi_mult=(1.10, 3.12, 0.2),#sigma_psi_mult=(0.5, 5.0, 0.02),
+              sigma_psi=(0.03, 0.4, 0.01),#sigma_psi=(0.005, 0.8, 0.01),
+              sigma_psi_mult=(1.10, 5.12, 0.2),#sigma_psi_mult=(0.5, 5.0, 0.02),
               pmeet=(0.23, 0.64, 0.01),#pmeet=(0.1, 1.0, 0.7),
-              util_alp=(0.554, 0.856, 0.01),#util_alp=(0.01, 0.4, 0.25),
-              u_shift_mar = (0.0110, 0.0251, 0.001),#u_shift_mar = (0.0, 0.5, 0.0001),
+              util_alp=(0.01, 0.456, 0.01),#util_alp=(0.01, 0.4, 0.25),
+              u_shift_mar = (0.0110, 0.11, 0.001),#u_shift_mar = (0.0, 0.5, 0.0001),
               z_drift = (-0.129, -0.04, -0.001),#z_drift = (-0.3, 0.0, -0.1)
-              util_xi=(1.01, 1.4, 0.001),
+              util_xi=(1.01, 1.6, 0.001),
               sigma_psi_mu=(0.0, 0.5, 0.001)
                         )
              

@@ -98,6 +98,11 @@ def compute(dpi,dco,dma,period=3,transform=1):
     #get if ever cohabited each month
     mart[coh>=200]=1.0
     coht[(coh>=100) & (coh<200)]=1.0
+    
+    # #Get first relationship
+    # ever_in_rel=(np.sum(np.array(mart+coht),axis=1)>0)
+    # marmin=(np.cumsum(mart+coht,axis=1)==1)
+    # marrf=mart[where_first]==1 & coht[where_first]==0
    
     #Create cariavle evercohabited and married
     ecoh[(sta!=-4) & (sta!=-3)]=0.0
@@ -165,9 +170,26 @@ def compute(dpi,dco,dma,period=3,transform=1):
     
     
    
+    
+    ecoh1,emar1=ecoh.copy(),emar.copy()
+    ecoh1[np.isnan(ecoh)]=0
+    emar1[np.isnan(emar)]=0
+    ec=np.cumsum(ecoh1,axis=1)
+    em=np.cumsum(emar1,axis=1)
+    
+    firstmar=np.any(((em>ec) & (em>0))==True,axis=1)
+    firstcoh=np.any(((ec>em) & (ec>0))==True,axis=1)
+    
+    weight=weightsa.copy()
+    weight[(firstmar+firstcoh)==False]=0.0
+    
+    ratio_mar=np.average(firstmar[colla==0],weights=weight[colla==0])/np.average(firstmar[colla==1],weights=weight[colla==1])
+ 
+
+    
     ##########################   
     #BUILD HAZARD RATES   
-    #########################    
+    #########################    n
        
     #Get Duration bins   
     bins_d=np.linspace(0,1200,int((100/period)+1))   
@@ -353,7 +375,7 @@ def compute(dpi,dco,dma,period=3,transform=1):
     listofTuples = [("hazs" , hazs), ("hazm" , hazm),("hazd" , hazd),  
                     ("everc" , everc), ("everm" , everm),("everr_e" , everr_e),("everr_ne" , everr_ne),
                     ("flsc" , flsc),("flsm" , flsm),
-                    ("beta_edu" , beta_edu),("ref_coh",ref_dut[1:4]),
+                    ("beta_edu" , beta_edu),("ref_coh",ref_dut[1:5]),('ratio_mar',ratio_mar),
                     ("freq",freq)]   
     dic_mom=dict(listofTuples)   
        
@@ -400,6 +422,7 @@ def dat_moments(sampling_number=5,weighting=False,covariances=False,relative=Fal
     beta_edu=dic['beta_edu']
     ref_coh=dic['ref_coh']
     freq=dic['freq']
+    ratio_mar=dic['ratio_mar']
 
        
     #Use bootstrap samples to compute the weighting matrix   
@@ -422,7 +445,7 @@ def dat_moments(sampling_number=5,weighting=False,covariances=False,relative=Fal
     flsmB=np.zeros((len(flsm),boot)) 
     beta_eduB=np.zeros((1,boot))
     ref_cohB=np.zeros((len(ref_coh),boot)) 
-       
+    ratio_marB=np.zeros((1,boot))   
        
     aa=dpeople.sample(n=nn,replace=True,weights='weight',random_state=4) 
     a_h=dcoh.sample(n=nn_c,replace=True,random_state=5) 
@@ -448,7 +471,7 @@ def dat_moments(sampling_number=5,weighting=False,covariances=False,relative=Fal
         flsmB[:,i]=dicti['flsm']  
         beta_eduB[:,i]=dicti['beta_edu']   
         ref_cohB[:,i]=dicti['ref_coh']   
-       
+        ratio_marB[:,i]=dicti['ratio_mar']
            
        
     #################################   
@@ -465,12 +488,13 @@ def dat_moments(sampling_number=5,weighting=False,covariances=False,relative=Fal
     flsmi=np.array((np.percentile(flsmB,2.5,axis=1),np.percentile(flsmB,97.5,axis=1)))
     beta_edui=np.array((np.percentile(beta_eduB,2.5,axis=1),np.percentile(beta_eduB,97.5,axis=1)))   
     ref_cohi=np.array((np.percentile(ref_cohB,2.5,axis=1),np.percentile(ref_cohB,97.5,axis=1)))   
+    ratio_mari=np.array((np.percentile(ratio_marB,2.5,axis=1),np.percentile(ratio_marB,97.5,axis=1)))   
        
     #Do what is next only if you want the weighting matrix      
     if weighting:   
            
         #Compute optimal Weighting Matrix   
-        col=np.concatenate((hazmB,hazsB,hazdB,evercB,evermB,flscB,flsmB,beta_eduB,ref_cohB),axis=0)       
+        col=np.concatenate((hazmB,hazsB,hazdB,evercB,evermB,flscB,flsmB,beta_eduB,ref_cohB,ratio_marB),axis=0)       
         dim=len(col)   
         W_in=np.zeros((dim,dim))   
         for i in range(dim):   
@@ -489,7 +513,7 @@ def dat_moments(sampling_number=5,weighting=False,covariances=False,relative=Fal
     elif relative:  
           
         #Compute optimal Weighting Matrix   
-        col=np.concatenate((hazm,hazs,hazd,everc,everm,flsc,flsm,beta_edu*np.ones(1),ref_coh),axis=0)       
+        col=np.concatenate((hazm,hazs,hazd,everc,everm,flsc,flsm,beta_edu*np.ones(1),ref_coh,ratio_mar*np.ones(1)),axis=0)       
         dim=len(col)   
         W=np.zeros((dim,dim))   
         for i in range(dim):   
@@ -498,16 +522,16 @@ def dat_moments(sampling_number=5,weighting=False,covariances=False,relative=Fal
     else:   
            
         #If no weighting, just use sum of squred deviations as the objective function           
-        W=np.diag(np.ones(len(hazm)+len(hazs)+len(hazd)+len(everc)+len(everm)+len(flscB)+len(flsm)+len(ref_coh)+1))#two is for fls+beta_unid   
+        W=np.diag(np.ones(len(hazm)+len(hazs)+len(hazd)+len(everc)+len(everm)+len(flscB)+len(flsm)+len(ref_coh)+2))#two is for fls+beta_unid   
            
     listofTuples = [("hazs" , hazs), ("hazm" , hazm),("hazd" , hazd),  
                     ("everc" , everc), ("everm" , everm),("everr_e" , everr_e),("everr_ne" , everr_ne),
                     ("flsc" , flsc),("flsm" , flsm),
-                    ("beta_edu" , beta_edu),("ref_coh",ref_coh),
+                    ("beta_edu" , beta_edu),("ref_coh",ref_coh),("ratio_mar",ratio_mar),
                     ("hazsi" , hazsi), ("hazmi" , hazmi),("hazdi" , hazdi),  
                     ("everci" , everci), ("evermi" , evermi),("everr_ei" , everr_ei),("everr_nei" , everr_nei),
                     ("flsci" , flsci),("flsmi" , flsmi),
-                    ("beta_edui" , beta_edui),("ref_cohi",ref_cohi),("W",W)]   
+                    ("beta_edui" , beta_edui),("ref_cohi",ref_cohi),("ratio_mari",ratio_mari),("W",W)]   
     
     packed_stuff=dict(listofTuples)   
     #packed_stuff = (hazm,hazs,hazd,emar,ecoh,fls_ratio,W,hazmi,hazsi,hazdi,emari,ecohi,fls_ratioi,mar,coh,mari,cohi)   

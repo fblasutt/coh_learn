@@ -39,7 +39,7 @@ if __name__ == '__main__':
     
     
     #Build  data moments and pickle them
-    dat_moments(period=1,sampling_number=4,transform=2) # refresh
+    dat_moments(period=1,sampling_number=1,transform=1) # refresh
     
     
     

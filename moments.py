@@ -364,7 +364,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         beta_div_edu_s=cox_join.hazard_ratios_['edu']
         #beta_div_edup_s=cox_join.hazard_ratios_['edup']
         moments['beta_edu']= beta_div_edu_s
-        moments['ref_coh']=ref_dut[1:4]
+        moments['ref_coh']=ref_dut[1:5]
         
     except:
         Tmax=int(15/mdl.setup.pars['py'])
@@ -752,6 +752,22 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     
     moments['everr_e']=Ereltt[0,:]/np.sum(educ[:,0]=='e')
     moments['everr_ne']=Ereltt[1,:]/np.sum(educ[:,0]=='n')
+    
+    #
+  
+    ecoh1=np.cumsum(state==3,axis=1)>1
+    emar1=np.cumsum(state==2,axis=1)>1
+    ec=np.cumsum(ecoh1,axis=1)
+    em=np.cumsum(emar1,axis=1)
+    
+    firstmar=np.any(((em>ec) & (em>0))==True,axis=1)
+    firstcoh=np.any(((ec>em) & (ec>0))==True,axis=1)
+    
+
+    weightsh=np.ones(state[:,0].shape)
+    weightsh[(firstmar+firstcoh)==False]=0.0
+    ratio_mar=np.average(firstmar[educ[:,0]=='n'],weights=weightsh[educ[:,0]=='n'])/np.average(firstmar[educ[:,0]=='e'],weights=weightsh[educ[:,0]=='e'])
+    moments['ratio_mar']=ratio_mar
     
     ########################################################### 
     #Ever in a relationship by Education 2
@@ -1208,7 +1224,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
                          
                 if not (np.any(is_state) or np.any(is_state1)): continue    
                      
-                zf,zm,psi=mdl.setup.all_indices(t,iexo[ind1,t])[1:4]    
+                zf,zm,psi=mdl.setup.all_indices(t,iexo[ind1,t])[1:5]    
                          
  
                      
@@ -1358,6 +1374,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
             flsm_d=packed_data['flsm']
             beta_edu_d=packed_data['beta_edu']
             ref_coh_d=packed_data['ref_coh']
+            ratio_mar_d=packed_data['ratio_mar']
             
             hazs_i=packed_data['hazsi']   
             hazm_i=packed_data['hazmi']   
@@ -1370,6 +1387,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
             flsm_i=packed_data['flsmi']
             beta_edu_i=packed_data['beta_edui']
             ref_coh_i=packed_data['ref_cohi']  
+            ratio_mari=packed_data['ratio_mari']
      
              
              
@@ -1613,8 +1631,8 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
          
         gridcd=np.linspace(1,Tmax,Tmax)
         
-        plt.plot(gridcd[1:4], ref_coh_d,color='b',markersize=3, label='Data') 
-        plt.fill_between(gridcd[1:4], ref_coh_i[0,:], ref_coh_i[1,:],alpha=0.2,facecolor='g')
+        plt.plot(gridcd[1:5], ref_coh_d,color='b',markersize=3, label='Data') 
+        plt.fill_between(gridcd[1:5], ref_coh_i[0,:], ref_coh_i[1,:],alpha=0.2,facecolor='g')
         plt.plot(gridcd[0:4], ref_dut[0:4],linestyle='--',color='r',markersize=3, label='Simulation') 
         plt.yticks(np.arange(0, 2, 0.2))
         plt.legend(loc='best', ncol=1, fontsize='x-small',frameon=False)
@@ -1982,22 +2000,22 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
 #        plt.xlim(xmax=1.0,xmin=0.0)   
      
           
-                ##########################################   
-        # Divorce by Edu P  
+        ##########################################   
+        # Divorce by Edu
         ##########################################   
         fig = plt.figure()   
         f6=fig.add_subplot(2,1,1)   
             
         
-        beta_div_edup_d=0.0
-        beta_div_edup_i=np.array([0.0,0.0])
+
         # create plot   
         x=np.array([0.25,0.75])  
-        y=np.array([beta_div_edup_d,beta_edu_s])         
-        plt.axhline(y=0.0,linewidth=0.1, color='r')   
+        y=np.array([ratio_mar_d,ratio_mar])   
+        yerr=np.array([(ratio_mari[1]-ratio_mari[0])/2.0,0.0])   
+        plt.axhline(y=1.0,linewidth=0.1, color='r')   
         plt.errorbar(x, y, yerr=yerr, fmt='o', elinewidth=0.03)   
-        plt.ylabel('Marriage-Education')   
-        plt.xticks(x, ["-","Simulation"] )  
+        plt.ylabel('Ratio No college marria/College marriage')   
+        plt.xticks(x, ["Data","Simulation"] )  
         plt.ylim(ymax=1.4)   
         plt.xlim(xmax=1.0,xmin=0.0)   
         ##########################################    
