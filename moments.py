@@ -633,6 +633,31 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     moments['flsc']=mean_fls_c
      
      
+    if draw:
+        
+        
+        ################ 
+        #Ratio of fls  
+        ############### 
+      
+        full_flsm={'e':{'e':np.array([0.0,0.0]),'n':np.array([0.0,0.0])},'n':{'e':np.array([0.0,0.0]),'n':np.array([0.0,0.0])}}
+        full_flsc={'e':{'e':np.array([0.0,0.0]),'n':np.array([0.0,0.0])},'n':{'e':np.array([0.0,0.0]),'n':np.array([0.0,0.0])}}
+         
+        for e in ['e','n']:
+            for eo in ['e','n']:
+            
+               
+                picky=(state[:,5:15]==2) & (educ[:,5:15]==e) & (edup[:,5:15]==eo) & (female[:,5:15]==1)
+                picko=(state[:,15:30]==2) & (educ[:,15:30]==e) & (edup[:,15:30]==eo) & (female[:,15:30]==1)
+               
+                if picky.any():full_flsm[e][eo][0]=np.mean(np.array(labor[:,5:15])[picky])  
+                if picko.any():full_flsm[e][eo][1]=np.mean(np.array(labor[:,15:30])[picko])  
+                    
+                picky=(state[:,5:15]==3) & (educ[:,5:15]==e) & (edup[:,5:15]==eo) & (female[:,5:15]==1)
+                picko=(state[:,15:30]==3) & (educ[:,15:30]==e) & (edup[:,15:30]==eo) & (female[:,15:30]==1)
+               
+                if picky.any():full_flsc[e][eo][0]=np.mean(np.array(labor[:,5:15])[picky])  
+                if picko.any():full_flsc[e][eo][1]=np.mean(np.array(labor[:,15:30])[picko])  
      
      
     ########################################################### 
@@ -1850,8 +1875,30 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         #plt.ylim(ymax=0.1)    
         #plt.xlim(xmax=1.0,xmin=0.0)    
          
-   
+        ##########################################    
+        # FLS: Marriage vs. cohabitation  
+        ##########################################     
+        fig = plt.figure()    
+        f6=fig.add_subplot(2,1,1)    
+             
+ 
+         
+        lg=2 
+        # create plot    
+        plt.plot(np.array([25,35]), full_flsc['e']['e'], linestyle='--',linewidth=1.5,color="b", label='fls-ee-C')  
+        plt.plot(np.array([25,35]), full_flsm['e']['e'], linewidth=1.5,color="b", label='fls-ee-M')  
+        plt.plot(np.array([25,35]), full_flsc['e']['n'], linestyle='--',linewidth=1.5,color="r", label='fls-en-C')  
+        plt.plot(np.array([25,35]), full_flsm['e']['n'], linewidth=1.5,color="r", label='fls-en-M')  
+        plt.plot(np.array([25,35]), full_flsc['n']['e'], linestyle='--',linewidth=1.5,color="y", label='fls-ne-C')  
+        plt.plot(np.array([25,35]), full_flsm['n']['e'], linewidth=1.5,color="y", label='fls-ne-M')  
+        plt.plot(np.array([25,35]), full_flsc['n']['n'], linestyle='--',linewidth=1.5,color="g", label='fls-nn-C')  
+        plt.plot(np.array([25,35]), full_flsm['n']['n'], linewidth=1.5,color="g", label='fls-nn-M')  
+        plt.ylabel('FLS mar and coh')
+        plt.xlabel('Age')
+        plt.legend(loc='best', fontsize='x-small',frameon=False)  
   
+    
+       
         
           
             

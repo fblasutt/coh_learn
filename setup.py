@@ -41,7 +41,7 @@ class ModelSetup(object):
         p['Nfn']=1-0.3
         p['Nme']=0.25
         p['Nmn']=1-0.25
-        p['ass']=0.4
+        p['ass']=1.0
         p['dm']=dm
         p['py']=period_year
         p['ty']=transform
@@ -62,7 +62,7 @@ class ModelSetup(object):
         p['R_t'] = [1.02**period_year]*T
         p['n_psi_t']     = [12]*T#[11]*T
         p['beta_t'] = [0.98**period_year]*T
-        p['A'] = 1.6 # consumption in couple: c = (1/A)*[c_f^(1+rho) + c_m^(1+rho)]^(1/(1+rho))
+        p['A'] = 1.0 # consumption in couple: c = (1/A)*[c_f^(1+rho) + c_m^(1+rho)]^(1/(1+rho))
         p['crra_power'] = 1.5
         p['couple_rts'] = 0.0
         p['sig_partner_a'] = 0.1#0.5
@@ -89,7 +89,7 @@ class ModelSetup(object):
         
         
         p['u_shift_mar'] = 0.0
-        p['u_shift_coh'] =-1.0
+        p['u_shift_coh'] =0.0
         
          
         # #Wages over time
@@ -131,11 +131,11 @@ class ModelSetup(object):
         p['wtrendp']=dict()
         p['wtrendp']['f'],p['wtrendp']['m']=dict(),dict()
       
-        p['wtrendp']['f']['e'] =[0.0*(t>=Tret)+(t<Tret)*(-.3805060 +.05629912*t -.00160467*t**2+.00001626*t**3) for t in range(T)]
-        p['wtrendp']['f']['n'] =[0.0*(t>=Tret)+(t<Tret)*(-.6805060 +.04629912*t -.00160467*t**2+.00001626*t**3) for t in range(T)]
+        p['wtrendp']['f']['e'] =[0.0*(t>=Tret)+(t<Tret)*(-0.1-0.03*t-.3805060 +.05629912*t -.00160467*t**2+.00001626*t**3) for t in range(T)]
+        p['wtrendp']['f']['n'] =[0.0*(t>=Tret)+(t<Tret)*(-0.1-0.03*t-.6805060 +.04629912*t -.00160467*t**2+.00001626*t**3) for t in range(T)]
         
-        p['wtrendp']['m']['e'] = [0.0*(t>=Tret)+(t<Tret)*(-.2960803  +.06829568*t -.00169143*t**2+ .00001446*t**3) for t in range(T)]
-        p['wtrendp']['m']['n'] = [0.0*(t>=Tret)+(t<Tret)*(-.5960803  +.05829568*t -.00169143*t**2+ .00001446*t**3) for t in range(T)]
+        p['wtrendp']['m']['e'] = [0.0*(t>=Tret)+(t<Tret)*(-0.1-0.03*t-.2960803  +.06829568*t -.00169143*t**2+ .00001446*t**3) for t in range(T)]
+        p['wtrendp']['m']['n'] = [0.0*(t>=Tret)+(t<Tret)*(-0.1-0.03*t-.5960803  +.05829568*t -.00169143*t**2+ .00001446*t**3) for t in range(T)]
         
 
         
@@ -338,8 +338,8 @@ class ModelSetup(object):
         
         
         # female labor supply
-        self.ls_levels = np.array([0.0,0.8],dtype=self.dtype)
-        self.mlevel=0.8
+        self.ls_levels = np.array([0.0,1.0],dtype=self.dtype)
+        self.mlevel=1.0
         #self.ls_utilities = np.array([p['uls'],0.0],dtype=self.dtype)
         self.ls_pdown = np.array([p['pls'],0.0],dtype=self.dtype)
         self.nls = len(self.ls_levels)
@@ -531,11 +531,11 @@ class ModelSetup(object):
                    
                     for dd in range(p['dm']):
                      
-                        print(111111111)
+                      
                         all_t, all_t_mat = combine_matrices_two_listsf(zfzm.copy(),exogrid['psi_t'][dd].copy(),zfzmmat.copy(),exogrid['psi_t_mat'][dd].copy(),check=False,trim=True)                       
-                        print(22222222)
+                      
                         all_t_mat_sparse_T = [sparse.csc_matrix(D.T) if D is not None else None for D in all_t_mat.copy()]
-                        print(3333333333333)                 
+                                 
                        
                         all_t_down, all_t_mat_down = combine_matrices_two_listsf(zfzm2.copy(),exogrid['psi_t'][dd].copy(),zfzmmat2.copy(),exogrid['psi_t_mat'][dd].copy(),check=False,trim=True)                        
                         all_t_mat_down_sparse_T = [sparse.csc_matrix(D.T) if D is not None else None for D in all_t_mat_down.copy()]
@@ -550,7 +550,7 @@ class ModelSetup(object):
                         del all_t_mat_by_l_spt,all_t_mat_down_sparse_T,all_t_down,all_t_mat_down,all_t_mat,all_t_mat_sparse_T
                         
                         
-                        print(psutil.Process(os.getpid()).memory_info().rss/1e6)
+                       
                        
                     del zfzm,zfzmmat,zfzm2,zfzmmat2    
                     gc.collect()
@@ -1086,7 +1086,7 @@ class DivorceCosts(object):
                  assets_kept = 1.0, # how many assets of couple are splited (the rest disappears)
                  u_lost_m=0.0,u_lost_f=0.0, # pure utility losses b/c of divorce
                  money_lost_m=0.0,money_lost_f=0.0, # pure money (asset) losses b/c of divorce
-                 money_lost_m_ez=0.4,money_lost_f_ez=0.4, # money losses proportional to exp(z) b/c of divorce
+                 money_lost_m_ez=0.0,money_lost_f_ez=0.0, # money losses proportional to exp(z) b/c of divorce
                  eq_split=1.0 #The more of less equal way assets are split within divorce
                  ): # 
         

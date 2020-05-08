@@ -68,7 +68,7 @@ def v_iter_single(setup,dd,t,EV,female,edu,ushift,force_f32=False):
     s_opt=np.zeros(x_opt.shape,dtype=np.float64)
     
     EVexp =  EV if isinstance(setup.vsgrid_s,(np.ndarray)) else setup.vsgrid_s.apply_preserve_shape(EV)
-    #V_ret1 = setup.u_single_pub(c_opt1,x_opt1,ls) + ushift + beta*np.take_along_axis(EVexp,i_opt1,0)
+#    V_ret1 = setup.u_single_pub(c_opt1,x_opt1,ls) + ushift + beta*np.take_along_axis(EVexp,i_opt1,0)
     V_ret = setup.u_single_pub(c_opt,x_opt,ls) + ushift + beta*np.take_along_axis(EVexp,np.expand_dims(i_opt,axis=0),0)
     
     #print(1111,np.min(V_ret-V_ret1))
@@ -77,4 +77,5 @@ def v_iter_single(setup,dd,t,EV,female,edu,ushift,force_f32=False):
     def r(x): return x
     
     return r(V_ret), r(np.expand_dims(c_opt,axis=0)), r(np.expand_dims(x_opt,axis=0)), r(np.expand_dims(s_opt,axis=0))
+    #return r(V_ret1), r(c_opt1), r(x_opt1), r(s_opt1)
 

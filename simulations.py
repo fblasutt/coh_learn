@@ -730,7 +730,12 @@ class Agents:
                                 ipick = (self.iexo[ind[i_ren],t+1],self.itheta[ind[i_ren],t+1],0)
                             self.ils_i[ind[i_ren],t+1] = self.Mlist[ipol].decisions[t+1][dd][sname]['fls'][ipick]
                         else:
-                            i_coh = decision['Cohabitation preferred to Marriage'][isc,iall,thts]
+                            
+                            if t>=self.Mlist[ipol].setup.pars['Tret']:
+                                i_coh = decision['Cohabitation preferred to Marriage'][iall,thts]    
+                            else:
+                                i_coh = decision['Cohabitation preferred to Marriage'][isc,iall,thts]
+                            
                             i_coh1=i_coh[i_ren]
                             
                             if len(self.setup.agrid_s)>1  :
@@ -762,7 +767,10 @@ class Agents:
                             
                             self.ils_i[ind[i_sq],t+1] = self.Mlist[ipol].decisions[t+1][dd][sname]['fls'][ipick]
                         else:
-                            i_coh = decision['Cohabitation preferred to Marriage'][isc,iall,thts]
+                            if t>=self.Mlist[ipol].setup.pars['Tret']:
+                                i_coh = decision['Cohabitation preferred to Marriage'][iall,thts]    
+                            else:
+                                i_coh = decision['Cohabitation preferred to Marriage'][isc,iall,thts]
                             i_coh1=i_coh[i_sq]
                             self.state[ind[i_sq],t+1] = i_coh1*self.state_codes[self.setup.desc_i[ef][em]['C']]+(1-i_coh1)*self.state_codes[self.setup.desc_i[ef][em]['M']]
                             

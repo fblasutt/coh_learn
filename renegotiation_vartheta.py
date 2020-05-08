@@ -9,6 +9,7 @@ Created on Mon Mar 23 19:33:42 2020
 import numpy as np
 from numba import njit, prange
 from gridvec import VecOnGrid
+from intratemporal import int_sol
 
 
 from platform import system
@@ -48,14 +49,35 @@ def v_ren_vt(setup,V,marriage,dd,edu,desc,t,return_extra=False,return_vdiv_only=
     if thetafun is None:
         def thetafun(tht): return tht, 1-tht
         #def thetafun(tht): return 0.5*np.ones_like(tht), 0.5*np.ones_like(tht)
-            
-    #Get value of divorce for men and women
+      
     
+    #Get value of divorce for men and women
+    if marriage:
+        moneyf = np.exp(setup.exogrid.zf_t[edu[0]][t]+setup.pars['wtrend']['m'][edu[0]][t])   
+        moneym = np.exp(setup.exogrid.zf_t[edu[1]][t]+setup.pars['wtrend']['m'][edu[1]][t])
+    
+        
+        A=setup.pars['A']
+        sig = setup.pars['crra_power']
+        alp = setup.pars['util_alp_m']
+        xi = setup.pars['util_xi']
+        lam = setup.pars['util_lam']
+        kap = setup.pars['util_kap_m']
+        xf,cf,uf=int_sol(moneyf*setup.mlevel,A=1,alp=alp,sig=sig,xi=xi,lam=lam,kap=kap,lbr=setup.mlevel,mt=1.0-setup.mlevel)
+        xm,cm,um=int_sol(moneym*setup.mlevel,A=1,alp=alp,sig=sig,xi=xi,lam=lam,kap=kap,lbr=setup.mlevel,mt=1.0-setup.mlevel)
+        xfd,cfd,ufd=int_sol(moneyf*setup.mlevel*(1.0-dc.money_lost_f_ez),A=1,alp=alp,sig=sig,xi=xi,lam=lam,kap=kap,lbr=setup.mlevel,mt=1.0-setup.mlevel)
+        xmd,cmd,umd=int_sol(moneym*setup.mlevel*(1.0-dc.money_lost_m_ez),A=1,alp=alp,sig=sig,xi=xi,lam=lam,kap=kap,lbr=setup.mlevel,mt=1.0-setup.mlevel)
+        
+        V_df=V[setup.desc_i['f'][edu[0]]]['V']-setup.u_single_pub(cf,xf,setup.mlevel)+setup.u_single_pub(cfd,xfd,setup.mlevel)
+        V_dm=V[setup.desc_i['m'][edu[1]]]['V']-setup.u_single_pub(cm,xm,setup.mlevel)+setup.u_single_pub(cmd,xmd,setup.mlevel)
+  
+    else:
+        
+        V_df=V[setup.desc_i['f'][edu[0]]]['V']
+        V_dm=V[setup.desc_i['m'][edu[1]]]['V']
+        
     # values of divorce
-    vf_n, vm_n = v_div_vartheta(
-        setup, dc, dd,t, sc,
-        V[setup.desc_i['m'][edu[1]]]['V'], V[setup.desc_i['f'][edu[0]]]['V'],
-        izf, izm, cost_fem=dc.money_lost_f, cost_mal=dc.money_lost_m, fun=thetafun)
+    vf_n, vm_n = v_div_vartheta(setup, dc, dd,t, sc,V_dm,V_df,izf, izm, cost_fem=dc.money_lost_f, cost_mal=dc.money_lost_m, fun=thetafun)
     
     assert vf_n.dtype == setup.dtype
     
