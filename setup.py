@@ -41,7 +41,7 @@ class ModelSetup(object):
         p['Nfn']=1-0.3
         p['Nme']=0.25
         p['Nmn']=1-0.25
-        p['ass']=0.5
+        p['ass']=1.0
         p['dm']=dm
         p['py']=period_year
         p['ty']=transform
@@ -49,11 +49,11 @@ class ModelSetup(object):
         p['Tret'] = Tret
         p['Tren'] = Tren
         p['Tbef'] = Tbef
-        p['sig_zf_0']  = {'e':.5449176,'n':.5449176}#{'e':.5449176,'n':.3449176}#
+        p['sig_zf_0']  = {'e':.5449176,'n':.3449176}#{'e':3.522707-2.7,'n':2.853316-2.7}#
         p['sig_zf']    = {'e':.0272437**(0.5),'n':.0272437**(0.5)}#{'e':.0272437**(0.5),'n':.0122437**(0.5)}#
         p['n_zf_t']      = [5]*Tret + [1]*(T-Tret)
-        p['sig_zm_0']  = {'e':0.54896510,'n':0.54896510}#{'e':0.54896510,'n':0.34896510} #
-        p['sig_zm']    = {'e':.025014**(0.5),'n':.025014**(0.5)} # {'e':.025014**(0.5),'n':.013014**(0.5)}#
+        p['sig_zm_0']  = {'e':0.54896510,'n':0.34896510} #{'e':3.500857-2.7,'n':2.433748-2.7}#
+        p['sig_zm']    = {'e':.0136562**(0.5),'n':.0611578**(0.5)} # {'e':.025014**(0.5),'n':.013014**(0.5)}#
         p['n_zm_t']      = [5]*Tret + [1]*(T-Tret)
         p['sigma_psi_mult'] = 0.28
         p['sigma_psi_mu'] = 0.0#1.0#nthe1.1
@@ -64,9 +64,9 @@ class ModelSetup(object):
         p['beta_t'] = [0.98**period_year]*T
         p['A'] = 1.0 # consumption in couple: c = (1/A)*[c_f^(1+rho) + c_m^(1+rho)]^(1/(1+rho))
         p['crra_power'] = 1.5
-        p['couple_rts'] = 0.0
+        p['couple_rts'] = 0.4
         p['sig_partner_a'] = 0.1#0.5
-        p['sig_partner_z'] = 1.2#1.0#0.4 #This is crazy powerful for the diff in diff estimate
+        p['sig_partner_z'] = 1.0#1.0#0.4 #This is crazy powerful for the diff in diff estimate
         p['sig_partner_mult'] = 1.0
         p['dump_factor_z'] = 0.78#0.85#0.82
         p['mean_partner_z_female'] = 0.02#+0.03
@@ -89,7 +89,7 @@ class ModelSetup(object):
         
         
         p['u_shift_mar'] = 0.0
-        p['u_shift_coh'] =-0.1
+        p['u_shift_coh'] =-0.0
         
          
         # #Wages over time
@@ -119,11 +119,11 @@ class ModelSetup(object):
         p['wtrend']=dict()
         p['wtrend']['f'],p['wtrend']['m']=dict(),dict()
       
-        p['wtrend']['f']['e'] =[0.0*(t>=Tret)+(t<Tret)*(-.44491918 +.05258303*t -.0016542*t**2+.00001775*t**3) for t in range(T)]
-        p['wtrend']['f']['n'] =[0.0*(t>=Tret)+(t<Tret)*(-.74491918 +.04258303*t -.0016542*t**2+.00001775*t**3) for t in range(T)]
+        p['wtrend']['f']['e'] =[0.0*(t>=Tret)+(t<Tret)*(2.3765402-5.5 +.12413066*t -.00431752*t**2+.00004882*t**3) for t in range(T)]
+        p['wtrend']['f']['n'] =[0.0*(t>=Tret)+(t<Tret)*(2.3083389-5.5 +.05429329*t -.00182547*t**2+.00002366*t**3) for t in range(T)]
         
-        p['wtrend']['m']['e'] = [0.0*(t>=Tret)+(t<Tret)*(-0.2620125  +0.07767721*t -0.00192571*t**2+ 0.00001573*t**3) for t in range(T)]
-        p['wtrend']['m']['n'] = [0.0*(t>=Tret)+(t<Tret)*(-0.5620125  +0.06767721*t -0.00192571*t**2+ 0.00001573*t**3) for t in range(T)]
+        p['wtrend']['m']['e'] = [0.0*(t>=Tret)+(t<Tret)*(2.3142676-5.5  +.11127253*t -.00316829*t**2+ .00002856*t**3) for t in range(T)]
+        p['wtrend']['m']['n'] = [0.0*(t>=Tret)+(t<Tret)*(2.2978303-5.5  +.06156223*t -.00172878*t**2+ .00001568*t**3) for t in range(T)]
                 
 
 
@@ -131,11 +131,11 @@ class ModelSetup(object):
         p['wtrendp']=dict()
         p['wtrendp']['f'],p['wtrendp']['m']=dict(),dict()
       
-        p['wtrendp']['f']['e'] =[0.0*(t>=Tret)+(t<Tret)*(-0.1-0.03*t-.3805060 +.05629912*t -.00160467*t**2+.00001626*t**3) for t in range(T)]
-        p['wtrendp']['f']['n'] =[0.0*(t>=Tret)+(t<Tret)*(-0.1-0.03*t-.6805060 +.04629912*t -.00160467*t**2+.00001626*t**3) for t in range(T)]
+        p['wtrendp']['f']['e'] =[0.0*(t>=Tret)+(t<Tret)*(2.3765402-5.5 +.12413066*t -.00431752*t**2+.00004882*t**3) for t in range(T)]
+        p['wtrendp']['f']['n'] =[0.0*(t>=Tret)+(t<Tret)*(2.3083389-5.5 +.05429329*t -.00182547*t**2+.00002366*t**3) for t in range(T)]
         
-        p['wtrendp']['m']['e'] = [0.0*(t>=Tret)+(t<Tret)*(-0.1-0.03*t-.2960803  +.06829568*t -.00169143*t**2+ .00001446*t**3) for t in range(T)]
-        p['wtrendp']['m']['n'] = [0.0*(t>=Tret)+(t<Tret)*(-0.1-0.03*t-.5960803  +.05829568*t -.00169143*t**2+ .00001446*t**3) for t in range(T)]
+        p['wtrendp']['m']['e'] = [0.0*(t>=Tret)+(t<Tret)*(2.3142676-5.5  +.11127253*t -.00316829*t**2+ .00002856*t**3) for t in range(T)]
+        p['wtrendp']['m']['n'] = [0.0*(t>=Tret)+(t<Tret)*(2.2978303-5.5  +.06156223*t -.00172878*t**2+ .00001568*t**3) for t in range(T)]
         
 
         
@@ -1086,7 +1086,7 @@ class DivorceCosts(object):
                  assets_kept = 1.0, # how many assets of couple are splited (the rest disappears)
                  u_lost_m=0.0,u_lost_f=0.0, # pure utility losses b/c of divorce
                  money_lost_m=0.0,money_lost_f=0.0, # pure money (asset) losses b/c of divorce
-                 money_lost_m_ez=0.0,money_lost_f_ez=0.0, # money losses proportional to exp(z) b/c of divorce
+                 money_lost_m_ez=0.8,money_lost_f_ez=0.8, # money losses proportional to exp(z) b/c of divorce
                  eq_split=1.0 #The more of less equal way assets are split within divorce
                  ): # 
         

@@ -279,8 +279,30 @@ def mdl_resid(x=None,save_to=None,load_from=None,return_format=['distance'],
  
     
     if verbose:
-        print('data moments are {}'.format(dat))
-        print('simulated moments are {}'.format(sim))
+        #print('data moments are {}'.format(dat))
+        #print('simulated moments are {}'.format(sim))
+        print('')
+        print('')
+        print('Calibration report')
+        print('')
+        print('')
+        print('Hazd is {}'.format(hazd_s))
+        print('Hazs is {}'.format(hazs_s))        
+        print('Hazm is {}'.format(hazm_s))
+        print('Everc is {}'.format(everc_s))
+        print('Everm is {}'.format(everm_s))
+        print('Ever_e is {}'.format(everr_e_s))
+        print('Ever_ne is {}'.format(everr_ne_s))
+        print('flsc is {}'.format(flsc_s))
+        print('flsm is {}'.format(flsm_s))
+        print('beta_edu is {}'.format(beta_edu_s))
+        print('ref_coh is {}'.format(ref_coh_s))
+        print('ratio_mar is {}'.format(ratio_mar_s))
+        print('')
+        print('')
+        print('End of calibration report')
+        print('')
+        print('') 
     
     resid_all = np.array([x if (not np.isnan(x) and not np.isinf(x)) else 1e6 for x in res_all])
     

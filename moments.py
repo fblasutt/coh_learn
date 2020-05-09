@@ -1633,7 +1633,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         
         plt.plot(gridcd[1:5], ref_coh_d,color='b',markersize=3, label='Data') 
         plt.fill_between(gridcd[1:5], ref_coh_i[0,:], ref_coh_i[1,:],alpha=0.2,facecolor='g')
-        plt.plot(gridcd[0:4], ref_dut[0:4],linestyle='--',color='r',markersize=3, label='Simulation') 
+        plt.plot(gridcd[1:5], ref_dut[1:5],linestyle='--',color='r',markersize=3, label='Simulation') 
         plt.yticks(np.arange(0, 2, 0.2))
         plt.legend(loc='best', ncol=1, fontsize='x-small',frameon=False)
         #plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
@@ -2016,8 +2016,8 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         plt.errorbar(x, y, yerr=yerr, fmt='o', elinewidth=0.03)   
         plt.ylabel('Ratio No college marria/College marriage')   
         plt.xticks(x, ["Data","Simulation"] )  
-        plt.ylim(ymax=1.4)   
-        plt.xlim(xmax=1.0,xmin=0.0)   
+        #plt.ylim(ymax=1.4)   
+        #plt.xlim(xmax=1.0,xmin=0.0)   
         ##########################################    
         # Put graphs together    
         ##########################################    
