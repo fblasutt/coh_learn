@@ -41,7 +41,7 @@ class ModelSetup(object):
         p['Nfn']=1-0.3
         p['Nme']=0.25
         p['Nmn']=1-0.25
-        p['ass']=1.0
+        p['ass']=0.5
         p['dm']=dm
         p['py']=period_year
         p['ty']=transform
@@ -1086,7 +1086,7 @@ class DivorceCosts(object):
                  assets_kept = 1.0, # how many assets of couple are splited (the rest disappears)
                  u_lost_m=0.0,u_lost_f=0.0, # pure utility losses b/c of divorce
                  money_lost_m=0.0,money_lost_f=0.0, # pure money (asset) losses b/c of divorce
-                 money_lost_m_ez=0.8,money_lost_f_ez=0.8, # money losses proportional to exp(z) b/c of divorce
+                 money_lost_m_ez=0.7,money_lost_f_ez=0.7, # money losses proportional to exp(z) b/c of divorce
                  eq_split=1.0 #The more of less equal way assets are split within divorce
                  ): # 
         

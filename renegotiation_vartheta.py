@@ -54,8 +54,8 @@ def v_ren_vt(setup,V,marriage,dd,edu,desc,t,return_extra=False,return_vdiv_only=
     if marriage:
         moneyf = setup.exogrid.zf_t[edu[0]][t]+setup.pars['wtrend']['m'][edu[0]][t]
         moneym = setup.exogrid.zf_t[edu[1]][t]+setup.pars['wtrend']['m'][edu[1]][t]
-        money_ataxf=np.exp(np.log(1.0-0.75)+(1.0+0.2)*moneyf)
-        money_ataxm=np.exp(np.log(1.0-0.75)+(1.0+0.2)*moneym)
+        money_ataxf=np.exp(np.log(1.0-dc.money_lost_f_ez)+(1.0-0.0)*moneyf)
+        money_ataxm=np.exp(np.log(1.0-dc.money_lost_m_ez)+(1.0-0.0)*moneym)
     
         
         A=setup.pars['A']
