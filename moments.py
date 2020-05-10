@@ -388,6 +388,8 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         #beta_dur_s=FE_ols.params['uni']    
            
             from lifelines import CoxPHFitter   
+
+            
             cph = CoxPHFitter()   
             data_coh_panda['age2']=data_coh_panda['age']**2   
             data_coh_panda['age3']=data_coh_panda['age']**3   
@@ -410,7 +412,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
             data_coh_panda2=data_coh_panda.drop(['end','coh','uni'], axis=1)   
             cox_mar=cph.fit(data_coh_panda2, duration_col='duration', event_col='endd')   
             haz_mar=cox_mar.hazard_ratios_['edu'] 
-            haz_marp=cox_mar.hazard_ratios_['edup'] 
+            #haz_marp=cox_mar.hazard_ratios_['edup'] 
                
             #Cox where risk is separatio   
             data_coh_panda['endd']=0.0   
@@ -1938,23 +1940,23 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         #plt.ylim(ymax=1.2,ymin=0.7)   
         plt.xlim(xmax=1.0,xmin=0.0)   
         
-        ##########################################################  
-        # Histogram of Unilateral Divorce on Cohabitation Length  
-        #############################################################  
-        fig = plt.figure()   
-        f6=fig.add_subplot(2,1,1)   
+        # ##########################################################  
+        # # Histogram of Unilateral Divorce on Cohabitation Length  
+        # #############################################################  
+        # fig = plt.figure()   
+        # f6=fig.add_subplot(2,1,1)   
             
            
-        # create plot   
-        x=np.array([0.2,0.5,0.8])  
-        y=np.array([haz_joinp,haz_marp,haz_sepp])   
-        yerr=y*0.0   
-        plt.axhline(y=1.0,linewidth=0.1, color='r')   
-        plt.errorbar(x, y, yerr=yerr, fmt='o', elinewidth=0.03)   
-        plt.ylabel('Relative Hazard - Education Partner')   
-        plt.xticks(x, ["Overall Risk","Risk of Marriage","Risk of Separation"] )  
-        #plt.ylim(ymax=1.2,ymin=0.7)   
-        plt.xlim(xmax=1.0,xmin=0.0)   
+        # # create plot   
+        # x=np.array([0.2,0.5,0.8])  
+        # y=np.array([haz_joinp,haz_marp,haz_sepp])   
+        # yerr=y*0.0   
+        # plt.axhline(y=1.0,linewidth=0.1, color='r')   
+        # plt.errorbar(x, y, yerr=yerr, fmt='o', elinewidth=0.03)   
+        # plt.ylabel('Relative Hazard - Education Partner')   
+        # plt.xticks(x, ["Overall Risk","Risk of Marriage","Risk of Separation"] )  
+        # #plt.ylim(ymax=1.2,ymin=0.7)   
+        # plt.xlim(xmax=1.0,xmin=0.0)   
         
       
         

@@ -74,6 +74,26 @@ def v_ren_vt(setup,V,marriage,dd,edu,desc,t,return_extra=False,return_vdiv_only=
   
     else:
     
+        moneyf = setup.exogrid.zf_t[edu[0]][t]+setup.pars['wtrend']['m'][edu[0]][t]
+        moneym = setup.exogrid.zf_t[edu[1]][t]+setup.pars['wtrend']['m'][edu[1]][t]
+        money_ataxf=np.exp(np.log(1.0-0.2)+(1.0-0.0)*moneyf)
+        money_ataxm=np.exp(np.log(1.0-0.2)+(1.0-0.0)*moneym)
+    
+        
+        A=setup.pars['A']
+        sig = setup.pars['crra_power']
+        alp = setup.pars['util_alp_m']
+        xi = setup.pars['util_xi']
+        lam = setup.pars['util_lam']
+        kap = setup.pars['util_kap_m']
+        xf,cf,uf=int_sol(np.exp(moneyf)*setup.mlevel,A=1,alp=alp,sig=sig,xi=xi,lam=lam,kap=kap,lbr=setup.mlevel,mt=1.0-setup.mlevel)
+        xm,cm,um=int_sol(np.exp(moneym)*setup.mlevel,A=1,alp=alp,sig=sig,xi=xi,lam=lam,kap=kap,lbr=setup.mlevel,mt=1.0-setup.mlevel)
+        xfd,cfd,ufd=int_sol(money_ataxf*setup.mlevel,A=1,alp=alp,sig=sig,xi=xi,lam=lam,kap=kap,lbr=setup.mlevel,mt=1.0-setup.mlevel)
+        xmd,cmd,umd=int_sol(money_ataxm*setup.mlevel,A=1,alp=alp,sig=sig,xi=xi,lam=lam,kap=kap,lbr=setup.mlevel,mt=1.0-setup.mlevel)
+        
+        V_df=V[setup.desc_i['f'][edu[0]]]['V']-setup.u_single_pub(cf,xf,setup.mlevel)+setup.u_single_pub(cfd,xfd,setup.mlevel)
+        V_dm=V[setup.desc_i['m'][edu[1]]]['V']-setup.u_single_pub(cm,xm,setup.mlevel)+setup.u_single_pub(cmd,xmd,setup.mlevel)
+  
     # #Get value of divorce for men and women
     # if marriage:
     #     moneyf = np.exp(setup.exogrid.zf_t[edu[0]][t]+setup.pars['wtrend']['m'][edu[0]][t])   
@@ -96,8 +116,8 @@ def v_ren_vt(setup,V,marriage,dd,edu,desc,t,return_extra=False,return_vdiv_only=
   
     # else:
         
-        V_df=V[setup.desc_i['f'][edu[0]]]['V']
-        V_dm=V[setup.desc_i['m'][edu[1]]]['V']
+        # V_df=V[setup.desc_i['f'][edu[0]]]['V']
+        # V_dm=V[setup.desc_i['m'][edu[1]]]['V']
         
     # values of divorce
     vf_n, vm_n = v_div_vartheta(setup, dc, dd,t, sc,V_dm,V_df,izf, izm, cost_fem=dc.money_lost_f, cost_mal=dc.money_lost_m, fun=thetafun)
