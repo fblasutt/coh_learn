@@ -48,7 +48,10 @@ def mdl_resid(x=None,save_to=None,load_from=None,return_format=['distance'],
     
     
     
-    
+    try:
+        zlost = params.pop('zlost') # ulost does not belong to setup parameters so this pop removes it
+    except:
+        zlost = 0.0 
     
    
     try:
@@ -62,8 +65,8 @@ def mdl_resid(x=None,save_to=None,load_from=None,return_format=['distance'],
         alost = 0.0
     
     # this is for the default model
-    dc = DivorceCosts(unilateral_divorce=True,assets_kept = 1.0,u_lost_m=ulost,u_lost_f=ulost,eq_split=1.0)
-    sc = DivorceCosts(unilateral_divorce=True,assets_kept = 1.0,u_lost_m=0.00,u_lost_f=0.00,eq_split=0.0)
+    dc = DivorceCosts(unilateral_divorce=True,assets_kept = 1.0,u_lost_m=ulost,u_lost_f=ulost,eq_split=1.0,money_lost_m_ez=zlost,money_lost_f_ez=zlost)
+    sc = DivorceCosts(unilateral_divorce=True,assets_kept = 1.0,u_lost_m=0.00,u_lost_f=0.00,eq_split=0.s0)
     
     
     
@@ -106,8 +109,8 @@ def mdl_resid(x=None,save_to=None,load_from=None,return_format=['distance'],
             
         else:
             # specify the changes here manually
-            dc_before = DivorceCosts(unilateral_divorce=False,assets_kept = 1.0,u_lost_m=ulost,u_lost_f=ulost,eq_split=1.0)
-            dc_after  = DivorceCosts(unilateral_divorce=True,assets_kept = 1.0,u_lost_m=ulost,u_lost_f=ulost,eq_split=1.0)
+            dc_before = DivorceCosts(unilateral_divorce=False,assets_kept = 1.0,u_lost_m=ulost,u_lost_f=ulost,eq_split=1.0,money_lost_m_ez=zlost,money_lost_f_ez=zlost)
+            dc_after  = DivorceCosts(unilateral_divorce=True,assets_kept = 1.0,u_lost_m=ulost,u_lost_f=ulost,eq_split=1.0,money_lost_m_ez=zlost,money_lost_f_ez=zlost)
             
             
             

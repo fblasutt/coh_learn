@@ -34,7 +34,7 @@ class ModelSetup(object):
         Tbef=int(2/period_year)
         Tren =  int(47/period_year)#int(42/period_year) # period starting which people do not renegotiate/divroce
         Tmeet = int(47/period_year)#int(42/period_year) # period starting which you do not meet anyone
-        dm=4
+        dm=6
         
         #Measure of People
         p['Nfe']=0.25#3
@@ -58,13 +58,14 @@ class ModelSetup(object):
         p['sigma_psi_mult'] = 0.28
         p['sigma_psi_mu'] = 0.1#1.0#nthe1.1
         p['sigma_psi']   = 0.11
-        p['multpsi']   = 10#-1.0
+        p['multpsi']   = 10/2.996194651745017#-1.0
         p['R_t'] = [1.02**period_year]*T
-        p['n_psi_t']     = [32]*T#[11]*T
+        p['n_psi_t']     = [22]*T#[11]*T
         p['beta_t'] = [0.98**period_year]*T
         p['A'] =1.0  # consumption in couple: c = (1/A)*[c_f^(1+rho) + c_m^(1+rho)]^(1/(1+rho))
         p['crra_power'] = 1.5
         p['couple_rts'] = 0.0
+        p['sigma_psi_init']=1.0
         p['sig_partner_a'] = 0.1#0.5
         p['sig_partner_z'] = 1.0#1.0#0.4 #This is crazy powerful for the diff in diff estimate
         p['sig_partner_mult'] = 1.0
@@ -175,7 +176,7 @@ class ModelSetup(object):
         
         
         def f(x): 
-            return (x**(3/2) - (p['sigma_psi_mu']**2+x)*(p['sigma_psi_mult']*p['sigma_psi']))
+            return (x**(3/2) - (p['sigma_psi_mu']**2+x)*p['sigma_psi_init'])#(p['sigma_psi_mult']*p['sigma_psi']))
             #return (np.sqrt(x)*x)-(p['sigma_psi_mu']**2+x)*(p['sigma_psi_mult']*p['sigma_psi'])
         
   
@@ -184,11 +185,11 @@ class ModelSetup(object):
         #root= optimize.brentq(f, 0.0001, 10)
         #sigma0=np.sqrt(root-p['sigma_psi_mu']**2)
         #sigma0=np.sqrt(root)
-        p['sigma_psi_init'] =p['sigma_psi_mult']*p['sigma_psi']
+        #p['sigma_psi_init'] =p['sigma_psi_mult']*p['sigma_psi']
   
         
         #Get Variance of Love shock by Duration using Kalman Filter
-        self.K,sigma=kalman(1.0,p['sigma_psi']**2,p['sigma_psi_mu']**2,(p['sigma_psi_mult']*p['sigma_psi'])**2,p['dm']+1)
+        self.K,sigma=kalman(1.0,p['sigma_psi']**2,p['sigma_psi_mu']**2,(p['sigma_psi_init'])**2,p['dm']+1)
         #K,sigma=kalman(1.0,p['sigma_psi']**2,p['sigma_psi_mu']**2,(sigma0)**2,p['dm'])
         #Get variance by duration
         self.sigmad=-1*np.ones((p['dm']))
@@ -1089,7 +1090,7 @@ class DivorceCosts(object):
                  assets_kept = 1.0, # how many assets of couple are splited (the rest disappears)
                  u_lost_m=0.0,u_lost_f=0.0, # pure utility losses b/c of divorce
                  money_lost_m=0.0,money_lost_f=0.0, # pure money (asset) losses b/c of divorce
-                 money_lost_m_ez=0.3,money_lost_f_ez=0.3, # money losses proportional to exp(z) b/c of divorce
+                 money_lost_m_ez=0.s0,money_lost_f_ez=0.0, # money losses proportional to exp(z) b/c of divorce
                  eq_split=1.0 #The more of less equal way assets are split within divorce
                  ): # 
         
