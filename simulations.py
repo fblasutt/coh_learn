@@ -403,7 +403,7 @@ class Agents:
                         iall, izf, izm, ipsi = self.Mlist[ipol].setup.all_indices(t,ic_out)
                         
                         #Modify grid according to the shock
-                        mean=np.zeros(ind.shape,dtype=np.float32)+self.setup.pars['meanpsi']
+                        mean=np.zeros(ind.shape,dtype=np.float32)
                         grid=self.setup.exogrid.psi_t[0][t+1]
                         shocks=self.setup.K[0]*(self.shocke0[ind,t+1]+self.shockmu[ind,t+1])
                         target=self.setup.pars['sigma_psi_init']
@@ -729,6 +729,7 @@ class Agents:
                             else:
                                 ipick = (self.iexo[ind[i_ren],t+1],self.itheta[ind[i_ren],t+1],0)
                             self.ils_i[ind[i_ren],t+1] = self.Mlist[ipol].decisions[t+1][dd][sname]['fls'][ipick]
+                            self.partneredu[ind[i_ren],t+1]=em if self.female else ef 
                         else:
                             
                             if t>=self.Mlist[ipol].setup.pars['Tret']:
@@ -766,6 +767,7 @@ class Agents:
                                 ipick = (self.iexo[ind[i_sq],t+1],self.itheta[ind[i_sq],t+1],0)
                             
                             self.ils_i[ind[i_sq],t+1] = self.Mlist[ipol].decisions[t+1][dd][sname]['fls'][ipick]
+                            self.partneredu[ind[i_sq],t+1]=em if self.female else ef
                         else:
                             if t>=self.Mlist[ipol].setup.pars['Tret']:
                                 i_coh = decision['Cohabitation preferred to Marriage'][iall,thts]    

@@ -91,6 +91,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
 
        
         labor_w=agents.ils_i 
+        labor_w=labor_w[:,mdl.setup.pars['Tbef']:mdl.setup.pars['T']]
         divorces_w=agents.divorces 
         theta_w=mdl.setup.thetagrid_fine[agents.itheta]  
         assets_w=mdl.setup.agrid_c[agents.iassets] 
@@ -401,26 +402,26 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
             #Standard Cox   
             data_coh_panda['endd']=1.0   
             data_coh_panda.loc[data_coh_panda['end']==3.0,'endd']=0.0   
-            data_coh_panda1=data_coh_panda.drop(['end','coh','uni'], axis=1)   
+            data_coh_panda1=data_coh_panda.drop(['end','coh','uni','edup'], axis=1)   
             cox_join=cph.fit(data_coh_panda1, duration_col='duration', event_col='endd')   
             haz_join=cox_join.hazard_ratios_['edu']
-            haz_joinp=cox_join.hazard_ratios_['edup']
+            haz_joinp=1.0#cox_join.hazard_ratios_['edup']
                
             #Cox where risk is marriage   
             data_coh_panda['endd']=0.0   
             data_coh_panda.loc[data_coh_panda['end']==2.0,'endd']=1.0   
-            data_coh_panda2=data_coh_panda.drop(['end','coh','uni'], axis=1)   
+            data_coh_panda2=data_coh_panda.drop(['end','coh','uni','edup'], axis=1)   
             cox_mar=cph.fit(data_coh_panda2, duration_col='duration', event_col='endd')   
             haz_mar=cox_mar.hazard_ratios_['edu'] 
-            #haz_marp=cox_mar.hazard_ratios_['edup'] 
+            haz_marp=1.0#cox_mar.hazard_ratios_['edup'] 
                
             #Cox where risk is separatio   
             data_coh_panda['endd']=0.0   
             data_coh_panda.loc[data_coh_panda['end']==0.0,'endd']=1.0   
-            data_coh_panda3=data_coh_panda.drop(['end','coh','uni'], axis=1)   
+            data_coh_panda3=data_coh_panda.drop(['end','coh','uni','edup'], axis=1)   
             cox_sep=cph.fit(data_coh_panda3, duration_col='duration', event_col='endd')   
             haz_sep=cox_sep.hazard_ratios_['edu']   
-            haz_sepp=cox_sep.hazard_ratios_['edup']   
+            haz_sepp=1.0#cox_sep.hazard_ratios_['edup']   
                
         except:    
             print('No data for unilateral divorce regression...')    
@@ -578,8 +579,9 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     iexo=iexo[:,mdl.setup.pars['Tbef']:mdl.setup.pars['T']]    
     state=state[:,mdl.setup.pars['Tbef']:mdl.setup.pars['T']] 
     state_true=state_true[:,mdl.setup.pars['Tbef']:mdl.setup.pars['T']]    
-    labor=labor[:,mdl.setup.pars['Tbef']:mdl.setup.pars['T']]    
+    labor=labor[:,mdl.setup.pars['Tbef']:mdl.setup.pars['T']]        
     female=female[:,mdl.setup.pars['Tbef']:mdl.setup.pars['T']] 
+    edupp=edup[:,mdl.setup.pars['Tbef']:mdl.setup.pars['T']] 
     #psi_check=psi_check[:,mdl.setup.pars['Tbef']:mdl.setup.pars['T']]
     ###########################################    
     #Moments: FLS   
@@ -768,7 +770,11 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
 
     weightsh=np.ones(state[:,0].shape)
     weightsh[(firstmar+firstcoh)==False]=0.0
-    ratio_mar=np.average(firstmar[educ[:,0]=='n'],weights=weightsh[educ[:,0]=='n'])/np.average(firstmar[educ[:,0]=='e'],weights=weightsh[educ[:,0]=='e'])
+    try:
+        ratio_mar=np.average(firstmar[educ[:,0]=='n'],weights=weightsh[educ[:,0]=='n'])/np.average(firstmar[educ[:,0]=='e'],weights=weightsh[educ[:,0]=='e'])
+    except:
+        ratio_mar=1.0
+        
     moments['ratio_mar']=ratio_mar
     
     ########################################################### 
@@ -870,7 +876,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         imale2=(female[:,0]==0) 
         ass_rel=np.zeros((len(state_codes),lenn,2))    
         inc_rel=np.zeros((len(state_codes),lenn,2))  
-        log_inc_rel=np.zeros((2,len(state)))  
+        log_inc_rel=np.zeros((2,2,len(state)))  
          
         #Create wages 
         wage_f=np.zeros(state.shape) 
@@ -1047,13 +1053,14 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
             
             
             if np.any(nsinglef):wage_mp[nsinglef,i]=np.concatenate((
-            np.exp(setup.pars['wtrend']['m']['e'][i]+setup.exogrid.zm_t['e'][i][((setup.all_indices(i,iexo[:,i]))[2])])[(nsinglef) & (educ[:,i]=='e')],            
-            np.exp(setup.pars['wtrend']['m']['n'][i]+setup.exogrid.zm_t['n'][i][((setup.all_indices(i,iexo[:,i]))[2])])[(nsinglef) & (educ[:,i]=='n')]))
+            np.exp(setup.pars['wtrend']['m']['e'][i]+setup.exogrid.zm_t['e'][i][((setup.all_indices(i,iexo[:,i]))[2])])[(nsinglef) & (edupp[:,i]=='e')],            
+            np.exp(setup.pars['wtrend']['m']['n'][i]+setup.exogrid.zm_t['n'][i][((setup.all_indices(i,iexo[:,i]))[2])])[(nsinglef) & (edupp[:,i]=='n')]))
             
+   
             
             if np.any(nsinglem):wage_fp[nsinglem,i]=np.concatenate((
-            np.exp(setup.pars['wtrend']['f']['e'][i]+setup.exogrid.zf_t['e'][i][((setup.all_indices(i,iexo[:,i]))[1])])[(nsinglem) & (educ[:,i]=='e')],            
-            np.exp(setup.pars['wtrend']['f']['n'][i]+setup.exogrid.zf_t['n'][i][((setup.all_indices(i,iexo[:,i]))[1])])[(nsinglem) & (educ[:,i]=='n')]))
+            np.exp(setup.pars['wtrend']['f']['e'][i]+setup.exogrid.zf_t['e'][i][((setup.all_indices(i,iexo[:,i]))[1])])[(nsinglem) & (edupp[:,i]=='e')],            
+            np.exp(setup.pars['wtrend']['f']['n'][i]+setup.exogrid.zf_t['n'][i][((setup.all_indices(i,iexo[:,i]))[1])])[(nsinglem) & (edupp[:,i]=='n')]))
             
             
             #((setup.exogrid.psi_t[i][(setup.all_indices(i,iexo[:,i]))[3]])) 
@@ -1072,14 +1079,14 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
             
             
             wage_m2[nsinglef2,i]=np.concatenate((
-            np.exp(setup.pars['wtrend']['m']['e'][i]+setup.exogrid.zm_t['e'][i][((setup.all_indices(i,iexo[:,i]))[2])])[(nsinglef2) & (educ[:,i]=='e')] ,            
-            np.exp(setup.pars['wtrend']['m']['n'][i]+setup.exogrid.zm_t['n'][i][((setup.all_indices(i,iexo[:,i]))[2])])[(nsinglef2) & (educ[:,i]=='n')] ))
+            np.exp(setup.pars['wtrend']['m']['e'][i]+setup.exogrid.zm_t['e'][i][((setup.all_indices(i,iexo[:,i]))[2])])[(nsinglef2) & (edupp[:,i]=='e')] ,            
+            np.exp(setup.pars['wtrend']['m']['n'][i]+setup.exogrid.zm_t['n'][i][((setup.all_indices(i,iexo[:,i]))[2])])[(nsinglef2) & (edupp[:,i]=='n')] ))
             
             
             
             wage_f2[nsinglem2,i]=np.concatenate((
-            np.exp(setup.pars['wtrend']['f']['e'][i]+setup.exogrid.zf_t['e'][i][((setup.all_indices(i,iexo[:,i]))[1])])[(nsinglem2) & (educ[:,i]=='e')],            
-            np.exp(setup.pars['wtrend']['f']['n'][i]+setup.exogrid.zf_t['n'][i][((setup.all_indices(i,iexo[:,i]))[1])])[(nsinglem2) & (educ[:,i]=='n')]))
+            np.exp(setup.pars['wtrend']['f']['e'][i]+setup.exogrid.zf_t['e'][i][((setup.all_indices(i,iexo[:,i]))[1])])[(nsinglem2) & (edupp[:,i]=='e')],            
+            np.exp(setup.pars['wtrend']['f']['n'][i]+setup.exogrid.zf_t['n'][i][((setup.all_indices(i,iexo[:,i]))[1])])[(nsinglem2) & (edupp[:,i]=='n')]))
             
             
             
@@ -1118,14 +1125,14 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
             
             
             if np.any(nsinglefc):wage_mpc[i]=np.mean(
-            np.concatenate((setup.pars['wtrend']['m']['e'][i]+setup.exogrid.zm_t['e'][i][((setup.all_indices(i,iexo[:,i]))[2])][(nsinglefc) & (edup[:,i]=='e')],            
-                            setup.pars['wtrend']['m']['n'][i]+setup.exogrid.zm_t['n'][i][((setup.all_indices(i,iexo[:,i]))[2])][(nsinglefc) & (edup[:,i]=='n')])))
+            np.concatenate((setup.pars['wtrend']['m']['e'][i]+setup.exogrid.zm_t['e'][i][((setup.all_indices(i,iexo[:,i]))[2])][(nsinglefc) & (edupp[:,i]=='e')],            
+                            setup.pars['wtrend']['m']['n'][i]+setup.exogrid.zm_t['n'][i][((setup.all_indices(i,iexo[:,i]))[2])][(nsinglefc) & (edupp[:,i]=='n')])))
             
             
             
             if np.any(nsinglemc):wage_fpc[i]=np.mean(
-            np.concatenate((setup.pars['wtrend']['f']['e'][i]+setup.exogrid.zf_t['e'][i][((setup.all_indices(i,iexo[:,i]))[1])][(nsinglemc) & (edup[:,i]=='e')] ,            
-                            setup.pars['wtrend']['f']['n'][i]+setup.exogrid.zf_t['n'][i][((setup.all_indices(i,iexo[:,i]))[1])][(nsinglemc) & (edup[:,i]=='n')]) ))
+            np.concatenate((setup.pars['wtrend']['f']['e'][i]+setup.exogrid.zf_t['e'][i][((setup.all_indices(i,iexo[:,i]))[1])][(nsinglemc) & (edupp[:,i]=='e')] ,            
+                            setup.pars['wtrend']['f']['n'][i]+setup.exogrid.zf_t['n'][i][((setup.all_indices(i,iexo[:,i]))[1])][(nsinglemc) & (edupp[:,i]=='n')]) ))
      
      
             if np.any(nsinglefc):var_wage_fc[i]=np.var(
@@ -1141,14 +1148,14 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
             
             
             if np.any(nsinglefc):var_wage_mpc[i]=np.var(
-            np.concatenate((setup.pars['wtrend']['m']['e'][i]+setup.exogrid.zm_t['e'][i][((setup.all_indices(i,iexo[:,i]))[2])][(nsinglefc) & (edup[:,i]=='e')] ,            
-                            setup.pars['wtrend']['m']['n'][i]+setup.exogrid.zm_t['n'][i][((setup.all_indices(i,iexo[:,i]))[2])][(nsinglefc) & (edup[:,i]=='n')])))
+            np.concatenate((setup.pars['wtrend']['m']['e'][i]+setup.exogrid.zm_t['e'][i][((setup.all_indices(i,iexo[:,i]))[2])][(nsinglefc) & (edupp[:,i]=='e')] ,            
+                            setup.pars['wtrend']['m']['n'][i]+setup.exogrid.zm_t['n'][i][((setup.all_indices(i,iexo[:,i]))[2])][(nsinglefc) & (edupp[:,i]=='n')])))
             
             
             
             if np.any(nsinglemc):var_wage_fpc[i]=np.var(
-            np.concatenate((setup.pars['wtrend']['f']['e'][i]+setup.exogrid.zf_t['e'][i][((setup.all_indices(i,iexo[:,i]))[1])][(nsinglemc) & (edup[:,i]=='e')],            
-                            setup.pars['wtrend']['f']['n'][i]+setup.exogrid.zf_t['n'][i][((setup.all_indices(i,iexo[:,i]))[1])][(nsinglemc) & (edup[:,i]=='n')])))
+            np.concatenate((setup.pars['wtrend']['f']['e'][i]+setup.exogrid.zf_t['e'][i][((setup.all_indices(i,iexo[:,i]))[1])][(nsinglemc) & (edupp[:,i]=='e')],            
+                            setup.pars['wtrend']['f']['n'][i]+setup.exogrid.zf_t['n'][i][((setup.all_indices(i,iexo[:,i]))[1])][(nsinglemc) & (edupp[:,i]=='n')])))
      
             #Marriage Income 
             if np.any(nsinglefm):wage_fm[i]=np.mean(
@@ -1164,14 +1171,14 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
             
             
             if np.any(nsinglefm):wage_mpm[i]=np.mean(
-            np.concatenate((setup.pars['wtrend']['m']['e'][i]+setup.exogrid.zm_t['e'][i][((setup.all_indices(i,iexo[:,i]))[2])][(nsinglefm) & (edup[:,i]=='e')],            
-                           setup.pars['wtrend']['m']['n'][i]+setup.exogrid.zm_t['n'][i][((setup.all_indices(i,iexo[:,i]))[2])][(nsinglefm) & (edup[:,i]=='n')])))
+            np.concatenate((setup.pars['wtrend']['m']['e'][i]+setup.exogrid.zm_t['e'][i][((setup.all_indices(i,iexo[:,i]))[2])][(nsinglefm) & (edupp[:,i]=='e')],            
+                           setup.pars['wtrend']['m']['n'][i]+setup.exogrid.zm_t['n'][i][((setup.all_indices(i,iexo[:,i]))[2])][(nsinglefm) & (edupp[:,i]=='n')])))
             
             
             
             if np.any(nsinglemm):wage_fpm[i]=np.mean(
-            np.concatenate((setup.pars['wtrend']['f']['e'][i]+setup.exogrid.zf_t['e'][i][((setup.all_indices(i,iexo[:,i]))[1])][(nsinglemm) & (edup[:,i]=='e')],            
-                            setup.pars['wtrend']['f']['n'][i]+setup.exogrid.zf_t['n'][i][((setup.all_indices(i,iexo[:,i]))[1])][(nsinglemm) & (edup[:,i]=='n')])))
+            np.concatenate((setup.pars['wtrend']['f']['e'][i]+setup.exogrid.zf_t['e'][i][((setup.all_indices(i,iexo[:,i]))[1])][(nsinglemm) & (edupp[:,i]=='e')],            
+                            setup.pars['wtrend']['f']['n'][i]+setup.exogrid.zf_t['n'][i][((setup.all_indices(i,iexo[:,i]))[1])][(nsinglemm) & (edupp[:,i]=='n')])))
      
             if np.any(nsinglefm):var_wage_fm[i]=np.var(
             np.concatenate((setup.pars['wtrend']['f']['e'][i]+setup.exogrid.zf_t['e'][i][((setup.all_indices(i,iexo[:,i]))[1])][(nsinglefm) & (educ[:,i]=='e')],            
@@ -1186,25 +1193,30 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
             
             
             if np.any(nsinglefm):var_wage_mpm[i]=np.var(
-            np.concatenate((setup.pars['wtrend']['m']['e'][i]+setup.exogrid.zm_t['e'][i][((setup.all_indices(i,iexo[:,i]))[2])][(nsinglefm) & (edup[:,i]=='e')] ,            
-                            setup.pars['wtrend']['m']['n'][i]+setup.exogrid.zm_t['n'][i][((setup.all_indices(i,iexo[:,i]))[2])][(nsinglefm) & (edup[:,i]=='n')]) ))
+            np.concatenate((setup.pars['wtrend']['m']['e'][i]+setup.exogrid.zm_t['e'][i][((setup.all_indices(i,iexo[:,i]))[2])][(nsinglefm) & (edupp[:,i]=='e')] ,            
+                            setup.pars['wtrend']['m']['n'][i]+setup.exogrid.zm_t['n'][i][((setup.all_indices(i,iexo[:,i]))[2])][(nsinglefm) & (edupp[:,i]=='n')]) ))
             
             
             
             if np.any(nsinglemm):var_wage_fpm[i]=np.var(
-            np.concatenate((setup.pars['wtrend']['f']['e'][i]+setup.exogrid.zf_t['e'][i][((setup.all_indices(i,iexo[:,i]))[1])][(nsinglemm) & (edup[:,i]=='e')],            
-                            setup.pars['wtrend']['f']['n'][i]+setup.exogrid.zf_t['n'][i][((setup.all_indices(i,iexo[:,i]))[1])][(nsinglemm) & (edup[:,i]=='n')])))
+            np.concatenate((setup.pars['wtrend']['f']['e'][i]+setup.exogrid.zf_t['e'][i][((setup.all_indices(i,iexo[:,i]))[1])][(nsinglemm) & (edupp[:,i]=='e')],            
+                            setup.pars['wtrend']['f']['n'][i]+setup.exogrid.zf_t['n'][i][((setup.all_indices(i,iexo[:,i]))[1])][(nsinglemm) & (edupp[:,i]=='n')])))
                        
 
             
              
         #Log Income over time 
         for t in range(lenn): 
-            ipart=(labor_w[:,t]>0.1) & (ifemale2) #& (state[:,t]>1) 
-           
-            log_inc_rel[0,t]=np.mean(np.log(wage_f2[ipart,t])) 
-            log_inc_rel[1,t]=np.mean(np.log(wage_m2[imale2,t])) 
-                 
+            for i in range(2):
+                iparte=(labor_w[:,t]>0.0) & (ifemale2) & (educ[:,t]=='e') #& (state[:,t]>1) 
+                ipartne=(labor_w[:,t]>0.0) & (ifemale2) & (educ[:,t]=='n')
+                
+                log_inc_rel[0,0,t]=np.mean(np.log(wage_f2[iparte,t])) 
+                log_inc_rel[0,1,t]=np.mean(np.log(wage_m2[(imale2) & (educ[:,t]=='e'),t])) 
+                
+                log_inc_rel[1,0,t]=np.mean(np.log(wage_f2[ipartne,t])) 
+                log_inc_rel[1,1,t]=np.mean(np.log(wage_m2[(imale2) & (educ[:,t]=='n'),t])) 
+                     
             
             
              
@@ -1282,10 +1294,10 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         agef=int(40/setup.pars['py'])
         if (agei==agef):agef=agef+1
         assets_w_mod=assets_w[:,agei:agef]
-        nsinglefc1_mod=(ifemale1[:,agei:agef]) & (state[:,agei:agef]==3) & (labor_w[:,agei:agef]>0.1) 
-        nsinglefm1_mod=(ifemale1[:,agei:agef]) & (state[:,agei:agef]==2) & (labor_w[:,agei:agef]>0.1) 
-        nsinglefc2_mod=(imale1[:,agei:agef]) & (state[:,agei:agef]==3) & (labor_w[:,agei:agef]>0.1) 
-        nsinglefm2_mod=(imale1[:,agei:agef]) & (state[:,agei:agef]==2) & (labor_w[:,agei:agef]>0.1) 
+        nsinglefc1_mod=(ifemale1[:,agei:agef]) & (state[:,agei:agef]==3) & (labor_w[:,agei:agef]>0) 
+        nsinglefm1_mod=(ifemale1[:,agei:agef]) & (state[:,agei:agef]==2) & (labor_w[:,agei:agef]>0) 
+        nsinglefc2_mod=(imale1[:,agei:agef]) & (state[:,agei:agef]==3) & (labor_w[:,agei:agef]>0) 
+        nsinglefm2_mod=(imale1[:,agei:agef]) & (state[:,agei:agef]==2) & (labor_w[:,agei:agef]>0) 
         nsinglefc1_mod1=(ifemale1[:,agei:agef]) & (state[:,agei:agef]==3)  
         nsinglefm1_mod1=(ifemale1[:,agei:agef]) & (state[:,agei:agef]==2)
         nsinglefc2_mod1=(imale1[:,agei:agef]) & (state[:,agei:agef]==3)
@@ -1503,10 +1515,12 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
          
         lend=len(inc_men['earn_age']) 
         agea=np.array(range(lend))+20 
-        plt.plot(agea, inc_men['earn_age'], marker='o',color='r',markersize=6, label='Men Data') 
-        plt.plot(agea, inc_women['earn_age'], marker='o',color='b',markersize=6, label='Women Data') 
-        plt.plot(agea, log_inc_rel[0,mdl.setup.pars['Tbef']:lend+mdl.setup.pars['Tbef']],'y',markersize=6, label='Women Simulation') 
-        plt.plot(agea, log_inc_rel[1,mdl.setup.pars['Tbef']:lend+mdl.setup.pars['Tbef']],'k',markersize=6, label='Men Simulation') 
+        #plt.plot(agea, inc_men['earn_age'], marker='o',color='r',markersize=6, label='Men Data') 
+        #plt.plot(agea, inc_women['earn_age'], marker='o',color='b',markersize=6, label='Women Data') 
+        plt.plot(agea, log_inc_rel[0,0,mdl.setup.pars['Tbef']:lend+mdl.setup.pars['Tbef']],'y',markersize=6, label='Women Simulation e') 
+        plt.plot(agea, log_inc_rel[0,1,mdl.setup.pars['Tbef']:lend+mdl.setup.pars['Tbef']],'k',markersize=6, label='Men Simulation e') 
+        plt.plot(agea, log_inc_rel[1,0,mdl.setup.pars['Tbef']:lend+mdl.setup.pars['Tbef']],'r',markersize=6, label='Women Simulation ne') 
+        plt.plot(agea, log_inc_rel[1,1,mdl.setup.pars['Tbef']:lend+mdl.setup.pars['Tbef']],'g',markersize=6, label='Men Simulation ne') 
         plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
                   fancybox=True, shadow=True, ncol=len(state_codes), fontsize='x-small')    
         plt.xlabel('Age')    

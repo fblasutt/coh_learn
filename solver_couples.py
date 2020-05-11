@@ -172,7 +172,7 @@ def v_iter_couple(setup,dd,t,EV_tuple,edu,ushift,nbatch=nbatch_def,verbose=False
     ilw=np.ones(shp,dtype=np.int8)
     iln=np.zeros(shp,dtype=np.int8)
     
-    psi_r = psi[None,:,None].astype(setup.dtype,copy=False)
+    psi_r = psi[None,:,None].astype(setup.dtype,copy=False)*setup.pars['multpsi']
     
     uw = setup.u_couple(c_opt_w,x_opt_w,ilw,theta_val[None,None,:],ushift,psi_r)
     un = setup.u_couple(c_opt_n,x_opt_n,iln,theta_val[None,None,:],ushift,psi_r)

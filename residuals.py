@@ -204,9 +204,9 @@ def mdl_resid(x=None,save_to=None,load_from=None,return_format=['distance'],
     N=15000
     Nf=int(N*freq['fem'])#age_uni['share_female'])
     Nm=N-Nf
-    Nme=int(Nm*freq['Nme'])
+    Nme=int(Nm*mdl.setup.pars['Nme'])
     Nmn=Nm-int(Nm*mdl.setup.pars['Nme'])
-    Nfe=int(Nf*freq['Nfe'])
+    Nfe=int(Nf*mdl.setup.pars['Nfe'])
     Nfn=Nf-int(Nf*mdl.setup.pars['Nfe'])
    
     agents_feme = Agents( mdl_list ,age_uni['female'],female=True,edu='e',pswitchlist=None,verbose=False,N=Nfe,draw=draw)

@@ -44,7 +44,7 @@ if __name__ == '__main__':
     #import warnings
     #warnings.filterwarnings("error")
     #For graphs later
-    graphs=False
+    graphs=True
     #Build  data moments and pickle them
     dat_moments(period=1,sampling_number=1,transform=1)
     
@@ -56,7 +56,7 @@ if __name__ == '__main__':
     #Second
     #x0 = np.array([0.0,   0.06565744,  1.5,  0.2904853,   0.7371481,  0.018159483 - 0.6, -0.091977, 0.805955,0.1])
     #x0 = np.array([1.10511688 , 0.10725931,  3.6224206,   0.44856022 , 0.0472732 ,  0.02879032, -0.09039855,  1.23986084 , 0.10953983])
-    x0 = np.array([0.0 , 0.04725931,  7.06224206,   0.99 , 0.000001 ,  0.04-0.0, -0.09039855,  1.23986084 , 0.20953983])
+    x0 = np.array([0.0 , 0.04725931,  7.06224206,   0.2, 1.1 ,  0.01-0.0, -0.09039855,  1.13986084 , 0.20953983])
 
 
     #Name and location of files
@@ -71,7 +71,7 @@ if __name__ == '__main__':
                                       #save_to=['mdl_save_bil_le.pkl'],#'mdl_save_uni.pkl'],
                                       #store_path=path,
                                       verbose=True,calibration_report=False,draw=graphs,graphs=graphs,
-                                      welf=True) #Switch to true for decomposition of welfare analysis
+                                      welf=False) #Switch to true for decomposition of welfare analysis
                          
     print('Done. Residual in point x0 is {}'.format(out))
      
@@ -82,7 +82,7 @@ if __name__ == '__main__':
         ai=0
         zfi=3
         zmi=3
-        psii=4
+        psii=0
         ti=4
         thi=5
         dd=0
