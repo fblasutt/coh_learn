@@ -66,7 +66,7 @@ def mdl_resid(x=None,save_to=None,load_from=None,return_format=['distance'],
     
     # this is for the default model
     dc = DivorceCosts(unilateral_divorce=True,assets_kept = 1.0,u_lost_m=ulost,u_lost_f=ulost,eq_split=1.0,money_lost_m_ez=zlost,money_lost_f_ez=zlost)
-    sc = DivorceCosts(unilateral_divorce=True,assets_kept = 1.0,u_lost_m=0.00,u_lost_f=0.00,eq_split=0.s0)
+    sc = DivorceCosts(unilateral_divorce=True,assets_kept = 1.0,u_lost_m=0.00,u_lost_f=0.00,eq_split=0.0)
     
     
     

@@ -1090,7 +1090,7 @@ class DivorceCosts(object):
                  assets_kept = 1.0, # how many assets of couple are splited (the rest disappears)
                  u_lost_m=0.0,u_lost_f=0.0, # pure utility losses b/c of divorce
                  money_lost_m=0.0,money_lost_f=0.0, # pure money (asset) losses b/c of divorce
-                 money_lost_m_ez=0.s0,money_lost_f_ez=0.0, # money losses proportional to exp(z) b/c of divorce
+                 money_lost_m_ez=0.0,money_lost_f_ez=0.0, # money losses proportional to exp(z) b/c of divorce
                  eq_split=1.0 #The more of less equal way assets are split within divorce
                  ): # 
         

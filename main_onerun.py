@@ -44,7 +44,7 @@ if __name__ == '__main__':
     #import warnings
     #warnings.filterwarnings("error")
     #For graphs later
-    graphs=False
+    graphs=True
     #Build  data moments and pickle them
     dat_moments(period=1,sampling_number=1,transform=1)
     
@@ -58,7 +58,15 @@ if __name__ == '__main__':
     #x0 = np.array([1.10511688 , 0.10725931,  3.6224206,   0.44856022 , 0.0472732 ,  0.02879032, -0.09039855,  1.23986084 , 0.10953983])
     x0 = np.array([0.3 , 0.04725931*2.996194651745017, 10/2.996194651745017,   0.25, 1.1 ,  0.0075-0.0, -0.09039855,  1.13986084 , 0.20953983*2.996194651745017])
 
-
+    #1 1
+    x0 = np.array([0.321094,0.167578,3.69922,0.214648,1.14922,0.00989453,-0.0951172,1.11156,0.959375])
+    
+    #1 2
+    x0 = np.array([0.251807,0.228589,4.37695,0.183325,1.10332,0.00648584,-0.0843213,1.12707,0.395508])
+    
+    #Wisdom
+    x0 = np.array([0.287148,0.23265,4.43904,0.197515,1.1088,0.0067326,-0.084137,1.1219,0.432568])
+   
     #Name and location of files
     if system() == 'Windows':   
         path='D:/blasutto/store_model'
