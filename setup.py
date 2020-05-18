@@ -41,7 +41,7 @@ class ModelSetup(object):
         p['Nfn']=1-0.25#0.3
         p['Nme']=0.25
         p['Nmn']=1-0.25
-        p['ass']=0.7
+        p['ass']=0.4
         p['dm']=dm
         p['py']=period_year
         p['ty']=transform
@@ -50,17 +50,17 @@ class ModelSetup(object):
         p['Tren'] = Tren
         p['Tbef'] = Tbef
         p['sig_zf_0']  = {'e':.5449176,'n':.5449176}#{'e':3.522707,'n':2.853316}#
-        p['sig_zf']    = {'e':.0136562**(0.5),'n':.0611578**(0.5)} #{'e':.02**(0.5),'n':.02**(0.5)}#{'e':.0272437**(0.5),'n':.0272437**(0.5)}#
+        p['sig_zf']    = {'e':.0247495**(0.5),'n':.0124777**(0.5)} #{'e':.02**(0.5),'n':.02**(0.5)}#{'e':.0272437**(0.5),'n':.0272437**(0.5)}#
         p['n_zf_t']      = [5]*Tret + [1]*(T-Tret)
-        p['sig_zm_0']  =  {'e':.0272437**(0.5),'n':.0122437**(0.5)}#{'e':.5449176,'n':.5449176} #{'e':3.500857,'n':2.433748}#
-        p['sig_zm']    =  {'e':.02**(0.5),'n':.02**(0.5)}# {'e':.025014**(0.5),'n':.025014**(0.5)}#
+        p['sig_zm_0']  =  {'e':.5449176,'n':.5449176}#{'e':.5449176,'n':.5449176} #{'e':3.500857,'n':2.433748}#
+        p['sig_zm']    =  {'e':.0272437**(0.5),'n':.0122437**(0.5)}# {'e':.025014**(0.5),'n':.025014**(0.5)}#
         p['n_zm_t']      = [5]*Tret + [1]*(T-Tret)
         p['sigma_psi_mult'] = 0.28
         p['sigma_psi_mu'] = 0.1#1.0#nthe1.1
         p['sigma_psi']   = 0.11
         p['multpsi']   = 10/2.996194651745017#-1.0
         p['R_t'] = [1.02**period_year]*T
-        p['n_psi_t']     = [22]*T#[11]*T
+        p['n_psi_t']     = [21]*T#[11]*T
         p['beta_t'] = [0.98**period_year]*T
         p['A'] =1.0  # consumption in couple: c = (1/A)*[c_f^(1+rho) + c_m^(1+rho)]^(1/(1+rho))
         p['crra_power'] = 1.5
@@ -68,8 +68,8 @@ class ModelSetup(object):
         p['sigma_psi_init']=1.0
         p['sig_partner_a'] = 0.1#0.5
         p['sig_partner_z'] = 1.0#1.0#0.4 #This is crazy powerful for the diff in diff estimate
-        p['sig_partner_mult'] = 1.0
-        p['dump_factor_z'] = 0.7#0.78#0.85#0.8
+        p['sig_partner_mult'] = 1.5
+        p['dump_factor_z'] = 0.4#0.78#0.85#0.8
         p['mean_partner_z_female'] = 0.00#+0.03
         p['mean_partner_z_male'] =  0.00#-0.03
         p['mean_partner_a_female'] = 0.0#0.1
@@ -99,11 +99,12 @@ class ModelSetup(object):
         p['wtrend']=dict()
         p['wtrend']['f'],p['wtrend']['m']=dict(),dict()
       
-        p['wtrend']['f']['e'] =[0.0*(t>=Tret)+(t<Tret)*(2.3765402 +.12413066*t -.00431752*t**2+.00004882*t**3) for t in range(T)]
-        p['wtrend']['f']['n'] =[0.0*(t>=Tret)+(t<Tret)*(2.3083389 +.05429329*t -.00182547*t**2+.00002366*t**3) for t in range(T)]
+      
+        p['wtrend']['f']['e'] =[0.0*(t>=Tret)+(t<Tret)*(2.4129672 +.10766143*t -.00380598*t**2+.00004237*t**3) for t in range(T)]
+        p['wtrend']['f']['n'] =[0.0*(t>=Tret)+(t<Tret)*(2.147265 +.05892621*t -.00213548*t**2+.0000275*t**3) for t in range(T)]
         
-        p['wtrend']['m']['e'] = [0.0*(t>=Tret)+(t<Tret)*(2.3142676  +.11127253*t -.00316829*t**2+ .00002856*t**3) for t in range(T)]
-        p['wtrend']['m']['n'] = [0.0*(t>=Tret)+(t<Tret)*(2.2978303  +.06156223*t -.00172878*t**2+ .00001568*t**3) for t in range(T)]
+        p['wtrend']['m']['e'] = [0.0*(t>=Tret)+(t<Tret)*(2.3142676  +.11127253*(t+2) -.00316829*(t+2)**2+ .00002856*(t+2)**3) for t in range(T)]
+        p['wtrend']['m']['n'] = [0.0*(t>=Tret)+(t<Tret)*(2.2978303  +.06156223*(t+2) -.00172878*(t+2)**2+ .00001568*(t+2)**3) for t in range(T)]
                 
 
 
@@ -111,12 +112,12 @@ class ModelSetup(object):
         p['wtrendp']=dict()
         p['wtrendp']['f'],p['wtrendp']['m']=dict(),dict()
       
-        p['wtrendp']['f']['e'] =[0.0*(t>=Tret)+(t<Tret)*(2.3765402 +.12413066*t -.00431752*t**2+.00004882*t**3) for t in range(T)]
-        p['wtrendp']['f']['n'] =[0.0*(t>=Tret)+(t<Tret)*(2.3083389 +.05429329*t -.00182547*t**2+.00002366*t**3) for t in range(T)]
+        p['wtrendp']['f']['e'] =[0.0*(t>=Tret)+(t<Tret)*(2.4129672 +.10766143*t -.00380598*t**2+.00004237*t**3) for t in range(T)]
+        p['wtrendp']['f']['n'] =[0.0*(t>=Tret)+(t<Tret)*(2.147265 +.05892621*t -.00213548*t**2+.0000275*t**3) for t in range(T)]
         
-        p['wtrendp']['m']['e'] = [0.0*(t>=Tret)+(t<Tret)*(2.3142676  +.11127253*t -.00316829*t**2+ .00002856*t**3) for t in range(T)]
-        p['wtrendp']['m']['n'] = [0.0*(t>=Tret)+(t<Tret)*(2.2978303  +.06156223*t -.00172878*t**2+ .00001568*t**3) for t in range(T)]
-        
+        p['wtrendp']['m']['e'] = [0.0*(t>=Tret)+(t<Tret)*(2.3142676  +.11127253*(t+2) -.00316829*(t+2)**2+ .00002856*(t+2)**3) for t in range(T)]
+        p['wtrendp']['m']['n'] = [0.0*(t>=Tret)+(t<Tret)*(2.2978303  +.06156223*(t+2) -.00172878*(t+2)**2+ .00001568*(t+2)**3) for t in range(T)]
+                
 
         #         #Wages over time
         # p['wtrend']=dict()
@@ -458,15 +459,16 @@ class ModelSetup(object):
             print(self.K[0],self.K[1],self.K[2],self.K[3])
             #New way of getting transition matrix
             psit, matri=list(np.ones((T))),list(np.ones((T)))
-            sigmainitial=np.sqrt(self.pars['sigma_psi_init']**2+(np.sum(self.sigmad**2)-len(self.sigmad)*self.sigmad[-1]**2))
-            sigmabase=np.sqrt([sigmainitial**2+(t+1)*self.sigmad[-1]**2 for t in range(T)])
+            sigmainitial=np.sqrt((self.pars['sigma_psi_init']*1.0)**2+(np.sum(self.sigmad**2)-len(self.sigmad)*self.sigmad[-1]**2))
+            sigmabase=np.sqrt([sigmainitial**2+(t)*self.sigmad[-1]**2 for t in range(T)])
             sigmadp=np.concatenate((np.array([0.0]),self.sigmad))
             sigmadi=self.sigmad[::-1]
             for i in range(T):
                 
                 base=sigmabase[min(i+p['dm'],T-1)]**2-np.sum(self.sigmad**2)
-                sigp=np.sqrt([base+np.sum(sigmadi[p['dm']-dd:]**2) for dd in range(p['dm']+1)])
-                psit[i],matri[i] = tauchen_nonstm(p['dm']+1,sigmadp*period_year**0.5,0.0,p['n_psi_t'][0],sd_z=sigp)
+                sigp=np.sqrt([base+np.cumsum(sigmadp**2)[dd] for dd in range(p['dm']+1)])
+                #sigp=np.sqrt([base+np.sum(sigmadi[p['dm']-dd:]**2) for dd in range(p['dm']+1)])
+                psit[i],matri[i] = tauchen_nonstm(p['dm']+1,0.0,0.0,p['n_psi_t'][0],sd_z=sigp)
                 
 
             exogrid['psi_t'], exogrid['psi_t_mat']=list(np.ones((p['dm']))),list(np.ones((p['dm'])))
@@ -812,7 +814,7 @@ class ModelSetup(object):
         nexo = setup.pars['nexo_t'][t]
         sigma_psi_init = setup.pars['sigma_psi_init']
         #sig_z_partner = setup.pars['sig_partner_z']
-        psi_couple = setup.orig_psi[t+1]#setup.exogrid.psi_t[0][t+1]
+        psi_couple = setup.orig_psi[t]#setup.exogrid.psi_t[0][t+1]
         
         g='f' if female else 'm'
         go='m' if female else 'f'
@@ -844,12 +846,12 @@ class ModelSetup(object):
         for iz in range(n_zown):
             p_psi = int_prob(psi_couple,mu=0.0,sig=sigma_psi_init)
             if female:
-                p_zm  = int_prob(z_partner, mu=setup.pars['dump_factor_z']*z_own[iz]+
+                p_zm  = int_prob(z_partner, mu=setup.pars['dump_factor_z']*z_partner[iz]+
                                   mean,sig=0.0001+(1-setup.pars['dump_factor_z'])**0.5*sig_z_partner*setup.pars['sig_partner_mult'])
                                             
                 p_zf  = zmat_own[iz,:]
             else:
-                p_zf  = int_prob(z_partner, mu=setup.pars['dump_factor_z']*z_own[iz]+ 
+                p_zf  = int_prob(z_partner, mu=setup.pars['dump_factor_z']*z_partner[iz]+ 
                                  mean,sig=0.0001+(1-setup.pars['dump_factor_z'])**0.5*sig_z_partner*setup.pars['sig_partner_mult'])
                                             
                 p_zm  = zmat_own[iz,:]

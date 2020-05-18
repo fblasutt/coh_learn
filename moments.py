@@ -1052,17 +1052,21 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
             np.exp(setup.pars['wtrend']['m']['n'][i]+setup.exogrid.zm_t['n'][i][iexo[singlem,i]])[educ[singlem,i]=='n']))
             
             
-            if np.any(nsinglef):wage_mp[nsinglef,i]=np.concatenate((
-            np.exp(setup.pars['wtrend']['m']['e'][i]+setup.exogrid.zm_t['e'][i][((setup.all_indices(i,iexo[:,i]))[2])])[(nsinglef) & (edupp[:,i]=='e')],            
-            np.exp(setup.pars['wtrend']['m']['n'][i]+setup.exogrid.zm_t['n'][i][((setup.all_indices(i,iexo[:,i]))[2])])[(nsinglef) & (edupp[:,i]=='n')]))
+            # if np.any(nsinglef):wage_mp[nsinglef,i]=np.concatenate((
+            # np.exp(setup.pars['wtrend']['m']['e'][i]+setup.exogrid.zm_t['e'][i][((setup.all_indices(i,iexo[:,i]))[2])])[(nsinglef) & (edupp[:,i]=='e')],            
+            # np.exp(setup.pars['wtrend']['m']['n'][i]+setup.exogrid.zm_t['n'][i][((setup.all_indices(i,iexo[:,i]))[2])])[(nsinglef) & (edupp[:,i]=='n')]))
             
-   
+            if np.any(nsinglef):wage_mp[(nsinglef) &  (edupp[:,i]=='e') ,i]=np.exp(setup.pars['wtrend']['m']['e'][i]+setup.exogrid.zm_t['e'][i][((setup.all_indices(i,iexo[:,i]))[2])])[(nsinglef) & (edupp[:,i]=='e')]    
+            if np.any(nsinglef):wage_mp[(nsinglef) &  (edupp[:,i]=='n') ,i]=np.exp(setup.pars['wtrend']['m']['n'][i]+setup.exogrid.zm_t['n'][i][((setup.all_indices(i,iexo[:,i]))[2])])[(nsinglef) & (edupp[:,i]=='n')]    
+       
             
-            if np.any(nsinglem):wage_fp[nsinglem,i]=np.concatenate((
-            np.exp(setup.pars['wtrend']['f']['e'][i]+setup.exogrid.zf_t['e'][i][((setup.all_indices(i,iexo[:,i]))[1])])[(nsinglem) & (edupp[:,i]=='e')],            
-            np.exp(setup.pars['wtrend']['f']['n'][i]+setup.exogrid.zf_t['n'][i][((setup.all_indices(i,iexo[:,i]))[1])])[(nsinglem) & (edupp[:,i]=='n')]))
+            # if np.any(nsinglem):wage_fp[nsinglem,i]=np.concatenate((
+            # np.exp(setup.pars['wtrend']['f']['e'][i]+setup.exogrid.zf_t['e'][i][((setup.all_indices(i,iexo[:,i]))[1])])[(nsinglem) & (edupp[:,i]=='e')],            
+            # np.exp(setup.pars['wtrend']['f']['n'][i]+setup.exogrid.zf_t['n'][i][((setup.all_indices(i,iexo[:,i]))[1])])[(nsinglem) & (edupp[:,i]=='n')]))
             
-            
+            if np.any(nsinglem):wage_fp[(nsinglem) &  (edupp[:,i]=='e') ,i]=np.exp(setup.pars['wtrend']['f']['e'][i]+setup.exogrid.zf_t['e'][i][((setup.all_indices(i,iexo[:,i]))[1])])[(nsinglem) & (edupp[:,i]=='e')]    
+            if np.any(nsinglem):wage_fp[(nsinglem) &  (edupp[:,i]=='n') ,i]=np.exp(setup.pars['wtrend']['f']['n'][i]+setup.exogrid.zf_t['n'][i][((setup.all_indices(i,iexo[:,i]))[1])])[(nsinglem) & (edupp[:,i]=='n')]    
+       
             #((setup.exogrid.psi_t[i][(setup.all_indices(i,iexo[:,i]))[3]])) 
              
             #For income process validation 

@@ -404,7 +404,7 @@ class Agents:
                         
                         #Modify grid according to the shock
                         mean=np.zeros(ind.shape,dtype=np.float32)
-                        grid=self.setup.exogrid.psi_t[0][t+1]
+                        grid=self.setup.orig_psi[t+1]#self.setup.exogrid.psi_t[0][t+1]
                         shocks=self.setup.K[0]*(self.shocke0[ind,t+1]+self.shockmu[ind,t+1])
                         target=self.setup.pars['sigma_psi_init']
                         #ipsi,adjust=mc_init_normal_corr(mean,grid,shocks=shocks,target=target)
