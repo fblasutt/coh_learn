@@ -76,7 +76,7 @@ class Agents:
         np.random.seed(2)
         self.shockmu=np.reshape(np.random.normal(0.0, self.setup.pars['sigma_psi_mu'], N*T),(N,T))
         np.random.seed(3)
-        self.shocke0=np.reshape(np.random.normal(0.0, self.setup.pars['sigma_psi']*self.setup.pars['sigma_psi_mult'], N*T),(N,T))
+        self.shocke0=np.reshape(np.random.normal(0.0, 1.0, N*T),(N,T))#np.reshape(np.random.logistic(0.0,np.sqrt(3)/np.pi, N*T),(N,T))#
           
         
         z_t = self.setup.exogrid.zf_t[self.edu] if female else self.setup.exogrid.zm_t[self.edu]
@@ -410,30 +410,26 @@ class Agents:
                         #ipsi,adjust=mc_init_normal_corr(mean,grid,shocks=shocks,target=target)
                         
                         adjust=1.0
-                        ipsi=mc_init_normal_array(mean,grid,shocks=shocks,adjust=adjust)
-                        
+                        ipsi=mc_init_normal_array(mean,grid,shocks=shocks,adjust=adjust)              
                         mean1=adjust*shocks
                         self.predl[ind,t+1]=grid[abs(mean1[:,np.newaxis]-grid).argmin(axis=1)] 
+                        shk=grid[ipsi]
+                        
+                        adjust=self.setup.pars['sigma_psi_init']/np.std(shk)
+                        ipsi=mc_init_normal_array(mean,grid,shocks=shocks,adjust=adjust)              
+                        mean1=adjust*shocks
+                        self.predl[ind,t+1]=grid[ipsi]#grid[abs(mean1[:,np.newaxis]-grid).argmin(axis=1)] 
                        
+
+
+                        shk=grid[ipsi]
+                        #print('The shock of predicted love is {}, true is {}, while theoricals are {} and {}'.format(np.std(shk),np.std(self.truel[ind,t+1]),self.setup.pars['sigma_psi_init'],self.setup.pars['sigma_psi']*self.setup.pars['sigma_psi_mult']))
+                        
+                        
+                        
                         iall=self.Mlist[ipol].setup.all_indices(t,(izf,izm,ipsi))[0]
                         self.iexo[ind,t+1]=iall
                         i_pmat=iall
-    #                                      
-    
-    #                    mat_prob=int_prob(self.setup.exogrid.psi_t[0][t+1],0,self.setup.pars['sigma_psi_init'])
-    #                    grid=self.setup.exogrid.psi_t[0][t+1]
-    #                    i_pmat2 =  np.cumsum(mat_prob)
-    #                    where=np.argmin(v>i_pmat2[...,None],axis=0)
-    #                    
-    #                    prova=self.setup.K[0]*self.truel[ind,t+1]
-    #                    sigma=np.ones(prova.shape)*(self.setup.K[0]*self.setup.pars['sigma_psi_mu']+0.001)
-    #                    mat_prob=int_proba(self.setup.exogrid.psi_t[0][t+1],prova,sigma)
-    #                    pmat_cum = mat_prob.cumsum(axis=1)
-    #                    i_pmat = (v[:,None] > pmat_cum).sum(axis=1)
-                        shk=self.setup.exogrid.psi_t[0][t+1][ipsi]
-                       # print('The shock of predicted love is {}, true is {}, while theoricals are {} and {}'.format(np.std(shk),np.std(self.truel[ind,t+1]),self.setup.pars['sigma_psi_init'],self.setup.pars['sigma_psi']*self.setup.pars['sigma_psi_mult']))
-                        
-                        
                         
                         self.ipsim[ind,t+1]=iall
                         iz = izf if self.female else izm
@@ -463,14 +459,14 @@ class Agents:
                         i_agree_coh = (i_agree) & (~i_m_preferred)
                         
                         assert np.all(~i_nomeet[i_agree])
-    #                    
-    #                    i_agree_mar1=(np.ones(i_agree_mar.shape,dtype=np.int32)==1)
-    #                    i_agree_mar=i_agree_mar1.copy()
-    #                    i_agree_coh=(np.ones(i_agree_mar.shape,dtype=np.int32)==0)
-    #                    i_disagree_or_nomeet=(np.ones(i_agree_mar.shape,dtype=np.int32)==0)
-    #                    i_nomeet=(np.ones(i_agree_mar.shape,dtype=np.int32)==0)
-    #                    i_disagree_and_meet=(np.ones(i_agree_mar.shape,dtype=np.int32)==0)
                         
+#                        i_agree_mar1=(np.ones(i_agree_mar.shape,dtype=np.int32)==1)
+#                        i_agree_mar=i_agree_mar1.copy()
+#                        i_agree_coh=(np.ones(i_agree_mar.shape,dtype=np.int32)==0)
+#                        i_disagree_or_nomeet=(np.ones(i_agree_mar.shape,dtype=np.int32)==0)
+#                        i_nomeet=(np.ones(i_agree_mar.shape,dtype=np.int32)==0)
+#                        i_disagree_and_meet=(np.ones(i_agree_mar.shape,dtype=np.int32)==0)
+#                        
                         
                         
                         nmar, ncoh, ndis, nnom = np.sum(i_agree_mar),np.sum(i_agree_coh),np.sum(i_disagree_and_meet),np.sum(i_nomeet)
@@ -538,7 +534,7 @@ class Agents:
                     ind=ind_raw.copy()
                     
                     ss = self.single_state
-                    decision = self.Mlist[ipol].decisions[t][dd][sname]
+                    decision =self.Mlist[ipol].decisions[t][dd][sname]#self.Mlist[ipol].decisions[t][0][sname]# 
                     
                     #get Education
                     ef=self.setup.edu[sname][0]
@@ -563,35 +559,34 @@ class Agents:
                     #matt=self.setup.exogrid.psi_t_mat[max(prev,0)][t]
                     #ipsi=mc_simulate(ipsio,matt,shocks=self.shocks_couples[ind,t+1])
                     
-                    mean=self.predl[ind,t]
+                    mean=(1.0-self.setup.K[dd+1])*self.predl[ind,t]+(self.setup.K[dd+1])*self.truel[ind,t]
                     grid=self.setup.exogrid.psi_t[dd][t+1]
                     shocks=self.setup.K[dd+1]*(self.shocke[ind,t+1]+self.shockmu[ind,t+1])
                     target=np.sqrt(np.var(mean)+self.setup.sigmad[dd]**2)
                     #ipsi,adjust=mc_init_normal_corr(mean,grid,shocks=shocks,target=target)
                     
-                    adjust=1.0
-                    ipsi=mc_init_normal_array(mean,grid,shocks=shocks,adjust=adjust)
-                        
-                    mean1=mean+adjust*shocks
-                    self.predl[ind,t+1]=grid[abs(mean1[:,np.newaxis]-grid).argmin(axis=1)] 
-#                    prova=self.setup.K[dd+1]*self.truel[ind,t+1]+(1-self.setup.K[dd+1])*self.setup.exogrid.psi_t[max(prev,0)][t][ipsio]
-#                    sigma=np.ones(prova.shape)*(self.setup.K[dd+1]*self.setup.pars['sigma_psi_mu'])
-#                    mat_prob=int_proba(self.setup.exogrid.psi_t[dd][t+1],prova,sigma)
-#                    pmat_cum = mat_prob.cumsum(axis=1)
-#                    v=self.shocks_couples[ind,t+1]
-#                    i_pmat = (v[:,None] > pmat_cum).sum(axis=1)
-#                   
-                   
-                    iall=self.Mlist[ipol].setup.all_indices(t,(izf,izm,ipsi))[0]
-                    self.iexo[ind,t+1]=iall
                     
+                    adjust=1.0
+                    ipsi=mc_init_normal_array(mean,grid,shocks=shocks,adjust=adjust)                  
+                    mean1=mean+adjust*shocks             
                     bef=self.setup.exogrid.psi_t[max(prev,0)][t][ipsio]
                     aft=self.setup.exogrid.psi_t[dd][t+1][ipsi]
                     diffe=bef-aft
                     
-                   # print('The standard deviation of innovation in {} is {}, theorical is {}'.format(dd,np.std(diffe),self.setup.sigmad[dd]))
+                    adjust=self.setup.sigmad[dd]/np.std(diffe)
+                    ipsi=mc_init_normal_array(mean,grid,shocks=shocks,adjust=adjust)    
+                    mean1=mean+adjust*shocks             
+                    bef=self.setup.exogrid.psi_t[max(prev,0)][t][ipsio]
+                    aft=self.setup.exogrid.psi_t[dd][t+1][ipsi]
+                    diffe=bef-aft    
                     
-
+                    print('In {}, the mean of past prediction is {}, average error is {}'.format(dd,np.mean(self.predl[ind,t]),np.mean(np.absolute(bef-aft))))
+                    #print('The standard deviation of innovation in {} is {}, theorical is {}'.format(dd,np.std(diffe),self.setup.sigmad[dd]))
+                    #print('target is {} actual variance is{},in grid is {}'.format(target,np.std(mean1),np.std(self.predl[ind,t+1])))
+                    
+                    self.predl[ind,t+1]=aft#grid[abs(mean1[:,np.newaxis]-grid).argmin(axis=1)] 
+                    iall=self.Mlist[ipol].setup.all_indices(t,(izf,izm,ipsi))[0]
+                    self.iexo[ind,t+1]=iall
                     
                     
                     iz = izf if self.female else izm

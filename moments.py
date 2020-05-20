@@ -328,14 +328,14 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         
         from lifelines import CoxPHFitter   
         cph = CoxPHFitter()   
-        data_m_panda.drop(data_m_panda[data_m_panda['age']>=15].index, inplace=True)
+        #data_m_panda.drop(data_m_panda[data_m_panda['age']>=25].index, inplace=True)
         data_m_panda['ecoh']=0.0
         data_m_panda.loc[data_m_panda['coh']>0.0,'ecoh']=1.0   
         data_m_panda['lcoh']=np.log(data_m_panda['coh']+0.001)
         #dummy=pd.get_dummies(data_m_panda['age'])
         #data_m_panda=pd.concat([data_m_panda,dummy],axis=1)
-        #data_m_panda['age2']=data_m_panda['age']**2   
-        #data_m_panda['age3']=data_m_panda['age']**3   
+        data_m_panda['age2']=data_m_panda['age']**2   
+        data_m_panda['age3']=data_m_panda['age']**3   
         #data_m_panda['rel2']=data_m_panda['rel']**2   
         #data_m_panda['rel3']=data_m_panda['rel']**3   
     
@@ -1654,6 +1654,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         plt.plot(gridcd[1:5], ref_coh_d,color='b',markersize=3, label='Data') 
         plt.fill_between(gridcd[1:5], ref_coh_i[0,:], ref_coh_i[1,:],alpha=0.2,facecolor='g')
         plt.plot(gridcd[1:5], ref_dut[1:5],linestyle='--',color='r',markersize=3, label='Simulation') 
+        plt.plot(gridcd[1:5], raw_dut[1:5],linestyle='--',color='y',markersize=3, label='Simulation')  
         plt.yticks(np.arange(0, 2, 0.2))
         plt.legend(loc='best', ncol=1, fontsize='x-small',frameon=False)
         #plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    

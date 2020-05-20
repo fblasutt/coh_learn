@@ -34,7 +34,7 @@ class ModelSetup(object):
         Tbef=int(2/period_year)
         Tren =  int(47/period_year)#int(42/period_year) # period starting which people do not renegotiate/divroce
         Tmeet = int(47/period_year)#int(42/period_year) # period starting which you do not meet anyone
-        dm=6
+        dm=4
         
         #Measure of People
         p['Nfe']=0.25#3
@@ -60,7 +60,7 @@ class ModelSetup(object):
         p['sigma_psi']   = 0.11
         p['multpsi']   = 10/2.996194651745017#-1.0
         p['R_t'] = [1.02**period_year]*T
-        p['n_psi_t']     = [21]*T#[11]*T
+        p['n_psi_t']     = [11]*T#[11]*T
         p['beta_t'] = [0.98**period_year]*T
         p['A'] =1.0  # consumption in couple: c = (1/A)*[c_f^(1+rho) + c_m^(1+rho)]^(1/(1+rho))
         p['crra_power'] = 1.5
@@ -90,7 +90,7 @@ class ModelSetup(object):
         
         
         p['u_shift_mar'] = 0.0
-        p['u_shift_coh'] =-0.0
+        p['u_shift_coh'] =-0.00966553
         
          
 
@@ -459,7 +459,7 @@ class ModelSetup(object):
             print(self.K[0],self.K[1],self.K[2],self.K[3])
             #New way of getting transition matrix
             psit, matri=list(np.ones((T))),list(np.ones((T)))
-            sigmainitial=np.sqrt((self.pars['sigma_psi_init']*1.0)**2+(np.sum(self.sigmad**2)-len(self.sigmad)*self.sigmad[-1]**2))
+            sigmainitial=np.sqrt((self.pars['sigma_psi_init']/1.0)**2+(np.sum(self.sigmad**2)-len(self.sigmad)*self.sigmad[-1]**2))
             sigmabase=np.sqrt([sigmainitial**2+(t)*self.sigmad[-1]**2 for t in range(T)])
             sigmadp=np.concatenate((np.array([0.0]),self.sigmad))
             sigmadi=self.sigmad[::-1]
@@ -619,7 +619,7 @@ class ModelSetup(object):
 #        
         
         # grid for theta
-        self.ntheta = 11
+        self.ntheta = 21
         self.thetamin = 0.02
         self.thetamax = 0.98
         self.thetagrid = np.linspace(self.thetamin,self.thetamax,self.ntheta,dtype=self.dtype)

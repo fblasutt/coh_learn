@@ -23,8 +23,8 @@ else:
 from renegotiation_vartheta_gpu import v_ren_gpu_oneopt, v_ren_gpu_twoopt
         
 
-def v_ren_vt(setup,V,marriage,dd,edu,desc,t,return_extra=False,return_vdiv_only=False,rescale=False,
-             thetafun=None, mixed_rescale=False):
+def v_ren_vt(setup,V,marriage,dd,edu,desc,t,return_extra=False,return_vdiv_only=False,rescale=True,
+             thetafun=None, mixed_rescale=True):
     # this returns value functions for couple that entered the period with
     # (s,Z,theta) from the grid and is allowed to renegotiate them or breakup
     # 
@@ -198,7 +198,7 @@ def v_ren_vt(setup,V,marriage,dd,edu,desc,t,return_extra=False,return_vdiv_only=
             #Adjust thetaout
             nomar=(itheta_out<0)
             itheta_out[nomar]=itheta_out_1[nomar]
-            
+#            
 
             
             

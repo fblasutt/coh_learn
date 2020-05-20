@@ -52,7 +52,7 @@ class Model(object):
         return psutil.Process(os.getpid()).memory_info().rss/1e6
         
         
-    def time(self,whatisdone,verbose=True,mintime=0.5):
+    def time(self,whatisdone,verbose=True,mintime=1.5):
         # mintime removes actions that take too little
         
         total_time = default_timer() - self.start
