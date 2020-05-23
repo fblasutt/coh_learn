@@ -354,7 +354,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         ref_dut=np.zeros((Tmax))
           
         for i in range(Tmax):
-            isp=(allspells_beg==2) & (allspells_prec==i) & (allspells_timeb<15)
+            isp=(allspells_beg==2) & (allspells_prec==i) #& (allspells_timeb<15)
             raw_dut[i]=np.mean(allspells_end[isp]!=2)
             ref_dut[i]=np.exp(np.log(i+0.001)*parm['lcoh']+parm['ecoh'])/np.exp(np.log(0.001)*parm['lcoh'])
             
@@ -1368,7 +1368,10 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
             print('The max level of assets for couples is {:.2f}, the grid upper bound is {:.2f}'.format(np.amax(assets_t[cond]),max(mdl.setup.agrid_c)))    
              
         #Setup a file for the graphs    
-        pdf = matplotlib.backends.backend_pdf.PdfPages("moments_graphs.pdf")    
+        import time
+        timestr = time.strftime("%H%M%S")
+        
+        pdf = matplotlib.backends.backend_pdf.PdfPages("moments"+timestr+"_graphs.pdf")    
              
         #################    
         #Get data moments    

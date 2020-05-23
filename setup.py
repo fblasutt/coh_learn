@@ -34,7 +34,7 @@ class ModelSetup(object):
         Tbef=int(2/period_year)
         Tren =  int(47/period_year)#int(42/period_year) # period starting which people do not renegotiate/divroce
         Tmeet = int(47/period_year)#int(42/period_year) # period starting which you do not meet anyone
-        dm=4
+        dm=7
         
         #Measure of People
         p['Nfe']=0.25#3
@@ -60,7 +60,7 @@ class ModelSetup(object):
         p['sigma_psi']   = 0.11
         p['multpsi']   = 10/2.996194651745017#-1.0
         p['R_t'] = [1.02**period_year]*T
-        p['n_psi_t']     = [11]*T#[11]*T
+        p['n_psi_t']     = [31]*T#[11]*T
         p['beta_t'] = [0.98**period_year]*T
         p['A'] =1.0  # consumption in couple: c = (1/A)*[c_f^(1+rho) + c_m^(1+rho)]^(1/(1+rho))
         p['crra_power'] = 1.5
@@ -90,7 +90,7 @@ class ModelSetup(object):
         
         
         p['u_shift_mar'] = 0.0
-        p['u_shift_coh'] =-0.00966553
+        p['u_shift_coh'] =0.0#-0.00966553
         
          
 
@@ -619,7 +619,7 @@ class ModelSetup(object):
 #        
         
         # grid for theta
-        self.ntheta = 21
+        self.ntheta = 11
         self.thetamin = 0.02
         self.thetamax = 0.98
         self.thetagrid = np.linspace(self.thetamin,self.thetamax,self.ntheta,dtype=self.dtype)

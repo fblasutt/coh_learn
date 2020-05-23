@@ -23,8 +23,8 @@ else:
 from renegotiation_vartheta_gpu import v_ren_gpu_oneopt, v_ren_gpu_twoopt
         
 
-def v_ren_vt(setup,V,marriage,dd,edu,desc,t,return_extra=False,return_vdiv_only=False,rescale=True,
-             thetafun=None, mixed_rescale=True):
+def v_ren_vt(setup,V,marriage,dd,edu,desc,t,return_extra=False,return_vdiv_only=False,rescale=False,
+             thetafun=None, mixed_rescale=False):
     # this returns value functions for couple that entered the period with
     # (s,Z,theta) from the grid and is allowed to renegotiate them or breakup
     # 
@@ -164,40 +164,40 @@ def v_ren_vt(setup,V,marriage,dd,edu,desc,t,return_extra=False,return_vdiv_only=
         descrc,descrm=setup.desc_i[edu[0]][edu[1]]['C'],setup.desc_i[edu[0]][edu[1]]['M']
         
         if not ugpu:
-            # v_out_nor, vf_out, vm_out, itheta_out, switch = \
-            #     v_ren_core_two_opts_with_int(
-            #                np.stack([V[descrc]['V'], V[descrm]['V']]),
-            #                np.stack([V[descrc]['VF'],V[descrm]['VF']]), 
-            #                np.stack([V[descrc]['VM'],V[descrm]['VM']]), 
-            #                         vf_n, vm_n,
-            #                         itht, wntht, thtgrid)     
-                
-            #First: cohabitation versus separation
-            v_out_nor_1, vf_out_1, vm_out_1, itheta_out_1,_ = \
+            v_out_nor, vf_out, vm_out, itheta_out, switch = \
                 v_ren_core_two_opts_with_int(
-                           V[descrc]['V'][None,...],
-                           V[descrc]['VF'][None,...], 
-                           V[descrc]['VM'][None,...], 
+                            np.stack([V[descrc]['V'], V[descrm]['V']]),
+                            np.stack([V[descrc]['VF'],V[descrm]['VF']]), 
+                            np.stack([V[descrc]['VM'],V[descrm]['VM']]), 
                                     vf_n, vm_n,
-                                    itht, wntht, thtgrid)  
+                                    itht, wntht, thtgrid)     
+                
+            # #First: cohabitation versus separation
+            # v_out_nor_1, vf_out_1, vm_out_1, itheta_out_1,_ = \
+            #     v_ren_core_two_opts_with_int(
+            #                V[descrc]['V'][None,...],
+            #                V[descrc]['VF'][None,...], 
+            #                V[descrc]['VM'][None,...], 
+            #                         vf_n, vm_n,
+            #                         itht, wntht, thtgrid)  
                 
                 
-            #Second: Marriage versus envelop
-            v_out_nor, vf_out, vm_out, itheta_out,_ = \
-                v_ren_core_two_opts_with_int2(
-                           V[descrm]['V'][None,...],
-                           V[descrm]['VF'][None,...], 
-                           V[descrm]['VM'][None,...], 
-                                    vf_out_1, vm_out_1,
-                                    itht, wntht, thtgrid)  
+            # #Second: Marriage versus envelop
+            # v_out_nor, vf_out, vm_out, itheta_out,_ = \
+            #     v_ren_core_two_opts_with_int2(
+            #                V[descrm]['V'][None,...],
+            #                V[descrm]['VF'][None,...], 
+            #                V[descrm]['VM'][None,...], 
+            #                         vf_out_1, vm_out_1,
+            #                         itht, wntht, thtgrid)  
              
                 
-            #Get switch
-            switch=(itheta_out>=0)
+            # #Get switch
+            # switch=(itheta_out>=0)
             
-            #Adjust thetaout
-            nomar=(itheta_out<0)
-            itheta_out[nomar]=itheta_out_1[nomar]
+            # #Adjust thetaout
+            # nomar=(itheta_out<0)
+            # itheta_out[nomar]=itheta_out_1[nomar]
 #            
 
             

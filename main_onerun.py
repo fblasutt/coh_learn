@@ -68,7 +68,12 @@ if __name__ == '__main__':
     x0 = np.array([0.287148,0.43265,4.43904,0.197515,1.1088,0.0067326,-0.084137,1.1219,1.532568])
     x0 = np.array([0.44474121,  0.32749023,  7.0759082,   0.2302002,   1.09989648,  0.00966553,-0.06185889,  1.1963916,   1.37988281])
     x0 = np.array([0.44474121,  0.42749023*1.2,  27.0759082,   0.2302002,   0.003989648,  0.0,-0.06185889,  1.1963916,   0.77988281*1.2])
-    x0 = np.array([0.44474121,  0.42749023*1.2,  27.0759082,   0.2302002,   0.000001,  0.0,-0.06185889,  1.1963916,   0.77988281*1.2])   
+    x0 = np.array([0.44474121,  0.42749023*1.2,  0.0759082,   0.2302002,   0.000001,  0.0,-0.06185889,  1.1963916,   0.77988281*1.2])   
+    x0 = np.array([0.8296875,   0.238125,    0.79570312,  0.59226563,  0.36492187,  0.01349219, -0.08658594,  1.03046875,  0.2703125])   
+    x0 = np.array([0.4296875,   0.638125,    0.149570312,  0.59226563,  0.36492187,  0.0000, -0.08658594,  1.03046875,  0.5703125])   
+    
+
+
     #Name and location of files
     if system() == 'Windows':   
         path='D:/blasutto/store_model'
@@ -78,7 +83,7 @@ if __name__ == '__main__':
     out, mdl, agents, res = mdl_resid(x0,return_format=['distance','models','agents','scaled residuals'],
                                       #load_from=['mdl_save_bil_le.pkl'],#'mdl_save_uni.pkl'],
                                       solve_transition=False,                                    
-                                      save_to=['mdl_save_bil_le.pkl'],#'mdl_save_uni.pkl'],
+                                      #save_to=['mdl_save_bil_le.pkl'],#'mdl_save_uni.pkl'],
                                       #store_path=path,
                                       verbose=True,calibration_report=False,draw=graphs,graphs=graphs,
                                       welf=False) #Switch to true for decomposition of welfare analysis
