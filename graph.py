@@ -116,14 +116,14 @@ def graphs(mdl,ai,zfi,zmi,psii,ti,thi,dd,edu):
          
         ai_a = ai*np.ones_like(setup.agrid_s,dtype=np.int32) # these are assets of potential partner 
          
-        resc = v_mar_igrid(setup,t+1,Packed[t][dd],ai_a,inds,descc,edu[0],edu[1],female=True,marriage=False) 
+        resc = v_mar_igrid(setup,t+1,Packed[t][0],ai_a,inds,descc,edu[0],edu[1],female=True,marriage=False) 
         (vf_c,vm_c), nbs_c, decc, tht_c = resc['Values'], resc['NBS'], resc['Decision'], resc['theta'] 
          
         tcv=setup.thetagrid_fine[tht_c] 
         tcv[tht_c==-1]=None 
          
         # marriage 
-        resm = v_mar_igrid(setup,t,Packed[t][dd],ai_a,inds,descm,edu[0],edu[1],female=True,marriage=True) 
+        resm = v_mar_igrid(setup,t,Packed[t][0],ai_a,inds,descm,edu[0],edu[1],female=True,marriage=True) 
         (vf_m,vm_m), nbs_m, decm, tht_m = resm['Values'], resm['NBS'], resm['Decision'], resm['theta'] 
          
          
@@ -211,7 +211,8 @@ def graphs(mdl,ai,zfi,zmi,psii,ti,thi,dd,edu):
      
     #Decisions to marry/cohabit/divorcce
     aaa=dec[0][0][descc]['Decision']
-    entry=  (i_mar*decm + (~i_mar)*decc)
+    entry=  (i_mar) & (thet_ft>=0)
+    m_over_cm1= v_reshape(setup,descc,'Cohabitation preferred to Marriage',dec,T-1,0)
     m_over_c0= v_reshape(setup,descc,'Cohabitation preferred to Marriage',dec,T-1,0)
     m_over_c1= v_reshape(setup,descc,'Cohabitation preferred to Marriage',dec,T-1,1)
     m_over_c2= v_reshape(setup,descc,'Cohabitation preferred to Marriage',dec,T-1,2)
@@ -220,14 +221,30 @@ def graphs(mdl,ai,zfi,zmi,psii,ti,thi,dd,edu):
     nodiv1= v_reshape(setup,descc,'Decision',dec,T-1,1)
     nodiv2= v_reshape(setup,descc,'Decision',dec,T-1,2)
     nodiv3= v_reshape(setup,descc,'Decision',dec,T-1,3)
-    val0= v_reshape(setup,descm,'Values',dec,T-1,0,tu=1)
-    val1= v_reshape(setup,descm,'Values',dec,T-1,1,1)
-    val2= v_reshape(setup,descm,'Values',dec,T-1,2,1)
-    val3= v_reshape(setup,descm,'Values',dec,T-1,3,1)
-    valc0= v_reshape(setup,descc,'Values',dec,T-1,0,tu=1)
-    valc1= v_reshape(setup,descc,'Values',dec,T-1,1,1)
-    valc2= v_reshape(setup,descc,'Values',dec,T-1,2,1)
-    valc3= v_reshape(setup,descc,'Values',dec,T-1,3,1)
+    val0= v_reshape(setup,descm,'Values',dec,T-1,0,0)
+    val1= v_reshape(setup,descm,'Values',dec,T-1,1,0)
+    val2= v_reshape(setup,descm,'Values',dec,T-1,2,0)
+    val3= v_reshape(setup,descm,'Values',dec,T-1,3,0)
+    valc0= v_reshape(setup,descc,'Values',dec,T-1,0,0)
+    valc1= v_reshape(setup,descc,'Values',dec,T-1,1,0)
+    valc2= v_reshape(setup,descc,'Values',dec,T-1,2,0)
+    valc3= v_reshape(setup,descc,'Values',dec,T-1,3,0)
+    val0m= v_reshape(setup,descm,'Values',dec,T-1,0,1)
+    val1m= v_reshape(setup,descm,'Values',dec,T-1,1,1)
+    val2m= v_reshape(setup,descm,'Values',dec,T-1,2,1)
+    val3m= v_reshape(setup,descm,'Values',dec,T-1,3,1)
+    valc0m= v_reshape(setup,descc,'Values',dec,T-1,0,1)
+    valc1m= v_reshape(setup,descc,'Values',dec,T-1,1,1)
+    valc2m= v_reshape(setup,descc,'Values',dec,T-1,2,1)
+    valc3m= v_reshape(setup,descc,'Values',dec,T-1,3,1)
+    val0f= v_reshape(setup,descm,'Values',dec,T-1,0,2)
+    val1f= v_reshape(setup,descm,'Values',dec,T-1,1,2)
+    val2f= v_reshape(setup,descm,'Values',dec,T-1,2,2)
+    val3f= v_reshape(setup,descm,'Values',dec,T-1,3,2)
+    valc0f= v_reshape(setup,descc,'Values',dec,T-1,0,2)
+    valc1f= v_reshape(setup,descc,'Values',dec,T-1,1,2)
+    valc2f= v_reshape(setup,descc,'Values',dec,T-1,2,2)
+    valc3f= v_reshape(setup,descc,'Values',dec,T-1,3,2)
     
     #Value Functions
     Vm0, Vmm0, Vfm0, cm, sm, flsm = [v_reshape(setup,descm,f,Packed,T,0) 
@@ -332,7 +349,7 @@ def graphs(mdl,ai,zfi,zmi,psii,ti,thi,dd,edu):
     plt.axvline(x=tre, color='b', linestyle='--', label='Treshold Single-Couple') 
     #plt.axvline(x=treb, color='b', linestyle='--', label='Tresh Bilateral') 
     plt.xlabel('Love') 
-    plt.ylabel('Utility') 
+    plt.ylabel('Utility Not renogotiated') 
     #plt.title('Utility  Divorce costs: men=0.5, women=0.5') 
     plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3), 
                   fancybox=True, shadow=True, ncol=3, fontsize='x-small') 
@@ -349,7 +366,7 @@ def graphs(mdl,ai,zfi,zmi,psii,ti,thi,dd,edu):
 
 
     plt.xlabel('Love') 
-    plt.ylabel('Utility') 
+    plt.ylabel('Sruplus Mar wrt Cohabitation not renegotiated') 
     #plt.title('Utility  Divorce costs: men=0.5, women=0.5') 
     plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3), 
                   fancybox=True, shadow=True, ncol=3, fontsize='x-small') 
@@ -361,7 +378,7 @@ def graphs(mdl,ai,zfi,zmi,psii,ti,thi,dd,edu):
     f1=fig.add_subplot(2,1,1) 
     nex1 = setup.all_indices(min(ti+1,T),(zfi,zmi,psig))[0] 
 
-    plt.plot(psig0, entry[ai,0:len(nex1)]*-1,'k',linewidth=0.2, label='Couple formed') 
+    plt.plot(psig0, entry[ai,0:len(nex1)]*-1,'k+',linewidth=0.2, label='At meeting') 
     plt.plot(psig0, m_over_c0[ai,zfi,zmi,0:len(psig),thi,ti+1]*1,'k*',linewidth=0.2, label='Couple Marriage0') 
     plt.plot(psig1, m_over_c1[ai,zfi,zmi,0:len(psig),thi,ti+1]*2,'b*',linewidth=0.2, label='Couple Marriage1') 
     plt.plot(psig2, m_over_c2[ai,zfi,zmi,0:len(psig),thi,ti+1]*3,'r*',linewidth=0.2, label='Couple Marriage2') 
@@ -386,13 +403,21 @@ def graphs(mdl,ai,zfi,zmi,psii,ti,thi,dd,edu):
     f1=fig.add_subplot(2,1,1) 
     nex1 = setup.all_indices(min(ti+1,T),(zfi,zmi,psig))[0] 
     #plt.plot(psig, entry[ai,0:len(nex1)],'k',linewidth=0.2, label='Couple formed') 
-    plt.plot(psig0, val0[ai,zfi,zmi,0:len(psig),inde,ti+1]-valc0[ai,zfi,zmi,0:len(psig),inde,ti+1],'k',linewidth=0.2, label='vm0') 
-    plt.plot(psig1, val1[ai,zfi,zmi,0:len(psig),inde,ti+1]-valc1[ai,zfi,zmi,0:len(psig),inde,ti+1],'b',linewidth=0.2, label='vm1') 
-    plt.plot(psig2, val2[ai,zfi,zmi,0:len(psig),inde,ti+1]-valc2[ai,zfi,zmi,0:len(psig),inde,ti+1],'r',linewidth=0.2, label='vm2') 
-    plt.plot(psig3, val3[ai,zfi,zmi,0:len(psig),inde,ti+1]-valc3[ai,zfi,zmi,0:len(psig),inde,ti+1],'y',linewidth=0.2, label='vm3') 
+    plt.plot(psig0, val0[ai,zfi,zmi,0:len(psig),inde,ti+1]-valc0[ai,zfi,zmi,0:len(psig),inde,ti+1],'k+',linewidth=0.2, label='C-vm0') 
+    plt.plot(psig1, val1[ai,zfi,zmi,0:len(psig),inde,ti+1]-valc1[ai,zfi,zmi,0:len(psig),inde,ti+1],'b+',linewidth=0.2, label='C-vm1') 
+    plt.plot(psig2, val2[ai,zfi,zmi,0:len(psig),inde,ti+1]-valc2[ai,zfi,zmi,0:len(psig),inde,ti+1],'r+',linewidth=0.2, label='C-vm2') 
+    plt.plot(psig3, val3[ai,zfi,zmi,0:len(psig),inde,ti+1]-valc3[ai,zfi,zmi,0:len(psig),inde,ti+1],'y+',linewidth=0.2, label='C-vm3') 
+    plt.plot(psig0, val0m[ai,zfi,zmi,0:len(psig),inde,ti+1]-valc0m[ai,zfi,zmi,0:len(psig),inde,ti+1],'k',linewidth=0.2, label='C-vm0') 
+    plt.plot(psig1, val1m[ai,zfi,zmi,0:len(psig),inde,ti+1]-valc1m[ai,zfi,zmi,0:len(psig),inde,ti+1],'b',linewidth=0.2, label='C-vm1') 
+    plt.plot(psig2, val2m[ai,zfi,zmi,0:len(psig),inde,ti+1]-valc2m[ai,zfi,zmi,0:len(psig),inde,ti+1],'r',linewidth=0.2, label='C-vm2') 
+    plt.plot(psig3, val3m[ai,zfi,zmi,0:len(psig),inde,ti+1]-valc3m[ai,zfi,zmi,0:len(psig),inde,ti+1],'y',linewidth=0.2, label='C-vm3') 
+    plt.plot(psig0, val0f[ai,zfi,zmi,0:len(psig),inde,ti+1]-valc0f[ai,zfi,zmi,0:len(psig),inde,ti+1],'k',linestyle='--',linewidth=0.2, label='C-vm0') 
+    plt.plot(psig1, val1f[ai,zfi,zmi,0:len(psig),inde,ti+1]-valc1f[ai,zfi,zmi,0:len(psig),inde,ti+1],'b',linestyle='--',linewidth=0.2, label='C-vm1') 
+    plt.plot(psig2, val2f[ai,zfi,zmi,0:len(psig),inde,ti+1]-valc2f[ai,zfi,zmi,0:len(psig),inde,ti+1],'r',linestyle='--',linewidth=0.2, label='C-vm2') 
+    plt.plot(psig3, val3f[ai,zfi,zmi,0:len(psig),inde,ti+1]-valc3f[ai,zfi,zmi,0:len(psig),inde,ti+1],'y',linestyle='--',linewidth=0.2, label='C-vm3') 
 
     plt.xlabel('Love') 
-    plt.ylabel('Utility') 
+    plt.ylabel('Ren. Surplus marriage wrt cohabitation renegotiated') 
     #plt.title('Utility  Divorce costs: men=0.5, women=0.5') 
     plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3), 
                   fancybox=True, shadow=True, ncol=3, fontsize='x-small') 
@@ -412,7 +437,7 @@ def graphs(mdl,ai,zfi,zmi,psii,ti,thi,dd,edu):
     plt.xlabel('Love') 
     plt.ylabel('Utility') 
     #plt.title('Utility  Divorce costs: men=0.5, women=0.5') 
-    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3), 
+    plt.legend(loc='Ren .Surplus marriage wrt divorce', bbox_to_anchor=(0.5, -0.3), 
                   fancybox=True, shadow=True, ncol=3, fontsize='x-small') 
     
     ########################################## 
@@ -424,13 +449,17 @@ def graphs(mdl,ai,zfi,zmi,psii,ti,thi,dd,edu):
     plt.plot(psig1, Vmm1[ai,zfi,zmi,0:len(psig),thi,ti]-Vmc1[ai,zfi,zmi,0:len(psig),thi,ti],'b',linewidth=0.2, label='M Marriage1') 
     plt.plot(psig2, Vmm2[ai,zfi,zmi,0:len(psig),thi,ti]-Vmc2[ai,zfi,zmi,0:len(psig),thi,ti],'r',linewidth=0.2, label='M Marriage2') 
     plt.plot(psig3, Vmm3[ai,zfi,zmi,0:len(psig),thi,ti]-Vmc3[ai,zfi,zmi,0:len(psig),thi,ti],'y',linewidth=0.2, label='M Marriage3') 
-#    plt.plot(psig, Vmc0[ai,zfi,zmi,0:len(psig),thi,ti],'k',linewidth=0.2, label='M Cohab0') 
-#    plt.plot(psig, Vmc1[ai,zfi,zmi,0:len(psig),thi,ti],'b',linewidth=0.2, label='M Cohab1') 
-#    plt.plot(psig, Vmc2[ai,zfi,zmi,0:len(psig),thi,ti],'r',linewidth=0.2, label='M Cohab2') 
-#    plt.plot(psig, Vmc3[ai,zfi,zmi,0:len(psig),thi,ti],'y',linewidth=0.2, label='M Cohab3') 
-
+    plt.plot(psig0, Vfm0[ai,zfi,zmi,0:len(psig),thi,ti]-Vfc0[ai,zfi,zmi,0:len(psig),thi,ti],'k',linestyle='--',linewidth=0.2, label='F Marriage0') 
+    plt.plot(psig1, Vfm1[ai,zfi,zmi,0:len(psig),thi,ti]-Vfc1[ai,zfi,zmi,0:len(psig),thi,ti],'b',linestyle='--',linewidth=0.2, label='F Marriage1') 
+    plt.plot(psig2, Vfm2[ai,zfi,zmi,0:len(psig),thi,ti]-Vfc2[ai,zfi,zmi,0:len(psig),thi,ti],'r',linestyle='--',linewidth=0.2, label='F Marriage2') 
+    plt.plot(psig3, Vfm3[ai,zfi,zmi,0:len(psig),thi,ti]-Vfc3[ai,zfi,zmi,0:len(psig),thi,ti],'y',linestyle='--',linewidth=0.2, label='F Marriage3') 
+    plt.plot(psig0, Vm0[ai,zfi,zmi,0:len(psig),thi,ti]-Vc0[ai,zfi,zmi,0:len(psig),thi,ti],'k+',linewidth=0.2, label='C Marriage0') 
+    plt.plot(psig1, Vm1[ai,zfi,zmi,0:len(psig),thi,ti]-Vc1[ai,zfi,zmi,0:len(psig),thi,ti],'b+',linewidth=0.2, label='C Marriage1') 
+    plt.plot(psig2, Vm2[ai,zfi,zmi,0:len(psig),thi,ti]-Vc2[ai,zfi,zmi,0:len(psig),thi,ti],'r+',linewidth=0.2, label='C Marriage2') 
+    plt.plot(psig3, Vm3[ai,zfi,zmi,0:len(psig),thi,ti]-Vc3[ai,zfi,zmi,0:len(psig),thi,ti],'y+',linewidth=0.2, label='C Marriage3') 
+    
     plt.xlabel('Love') 
-    plt.ylabel('Utility') 
+    plt.ylabel('Not renegotiated surplus Marriage wrt cohabitation-M+F') 
     #plt.title('Utility  Divorce costs: men=0.5, women=0.5') 
     plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3), 
                   fancybox=True, shadow=True, ncol=3, fontsize='x-small') 
@@ -443,7 +472,7 @@ def graphs(mdl,ai,zfi,zmi,psii,ti,thi,dd,edu):
     nex1 = setup.all_indices(min(ti+1,T),(zfi,zmi,psig))[0] 
     #plt.plot(psig, entry[ai,0:len(nex1)],'k',linewidth=0.2, label='Couple formed') 
     
-    plt.plot(psig0, Vmee[ai,zfi,zmi,0:len(psig),thi,ti],'k',linewidth=0.2, label='sur ee 0 m') 
+    plt.plot(psig0, Vmee[ai,zfi,zmi,0:len(psig),thi,ti],'k',linewidth=1.2, label='sur ee 0 m') 
     plt.plot(psig1, Vmee3[ai,zfi,zmi,0:len(psig),thi,ti],'b',linewidth=0.2, label='sur ee 3 m') 
     plt.plot(psig2, Vmnn[ai,zfi,zmi,0:len(psig),thi,ti],'r',linewidth=0.2, label='sur nn 0 m') 
     plt.plot(psig3, Vmnn3[ai,zfi,zmi,0:len(psig),thi,ti],'y',linewidth=0.2, label='sur nn 3 m') 
@@ -471,7 +500,7 @@ def graphs(mdl,ai,zfi,zmi,psii,ti,thi,dd,edu):
     plt.plot(psig3, Vmnn3[ai,zfi,zmi,0:len(psig),thi,ti]-Vcnn3[ai,zfi,zmi,0:len(psig),thi,ti],'y',linewidth=0.2, label='sur nn 3') 
 
     plt.xlabel('Love') 
-    plt.ylabel('Utility') 
+    plt.ylabel('Surplus mar coh not renegotiated') 
     plt.title('Marriage surplus wrt cohab-duration and education') 
     plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3), 
                   fancybox=True, shadow=True, ncol=3, fontsize='x-small')  

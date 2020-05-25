@@ -34,7 +34,7 @@ class ModelSetup(object):
         Tbef=int(2/period_year)
         Tren =  int(47/period_year)#int(42/period_year) # period starting which people do not renegotiate/divroce
         Tmeet = int(47/period_year)#int(42/period_year) # period starting which you do not meet anyone
-        dm=7
+        dm=6
         
         #Measure of People
         p['Nfe']=0.25#3
@@ -60,7 +60,7 @@ class ModelSetup(object):
         p['sigma_psi']   = 0.11
         p['multpsi']   = 10/2.996194651745017#-1.0
         p['R_t'] = [1.02**period_year]*T
-        p['n_psi_t']     = [31]*T#[11]*T
+        p['n_psi_t']     = [21]*T#[11]*T
         p['beta_t'] = [0.98**period_year]*T
         p['A'] =1.0  # consumption in couple: c = (1/A)*[c_f^(1+rho) + c_m^(1+rho)]^(1/(1+rho))
         p['crra_power'] = 1.5
@@ -391,10 +391,10 @@ class ModelSetup(object):
             p['n_zf_t']      = [5]*Tret + [5]*(T-Tret)
             p['n_zm_t']      = [5]*Tret + [5]*(T-Tret)
             exogrid['zf_t'],  exogrid['zf_t_mat'],exogrid['zm_t'],  exogrid['zm_t_mat']=dict(),dict(),dict(),dict()
-            exogrid['zf_t']['e'],  exogrid['zf_t_mat']['e'] = rouw_nonst(p['T'],p['sig_zf']['e']*period_year**0.5,p['sig_zf_0']['e'],p['n_zf_t'][0])
-            exogrid['zf_t']['n'],  exogrid['zf_t_mat']['n'] = rouw_nonst(p['T'],p['sig_zf']['n']*period_year**0.5,p['sig_zf_0']['n'],p['n_zf_t'][0])
-            exogrid['zm_t']['e'],  exogrid['zm_t_mat']['e'] = rouw_nonst(p['T'],p['sig_zm']['e']*period_year**0.5,p['sig_zm_0']['e'],p['n_zm_t'][0])
-            exogrid['zm_t']['n'],  exogrid['zm_t_mat']['n'] = rouw_nonst(p['T'],p['sig_zm']['n']*period_year**0.5,p['sig_zm_0']['n'],p['n_zm_t'][0])
+            exogrid['zf_t']['e'],  exogrid['zf_t_mat']['e'] = tauchen_nonst(p['T'],p['sig_zf']['e']*period_year**0.5,p['sig_zf_0']['e'],p['n_zf_t'][0])
+            exogrid['zf_t']['n'],  exogrid['zf_t_mat']['n'] = tauchen_nonst(p['T'],p['sig_zf']['n']*period_year**0.5,p['sig_zf_0']['n'],p['n_zf_t'][0])
+            exogrid['zm_t']['e'],  exogrid['zm_t_mat']['e'] = tauchen_nonst(p['T'],p['sig_zm']['e']*period_year**0.5,p['sig_zm_0']['e'],p['n_zm_t'][0])
+            exogrid['zm_t']['n'],  exogrid['zm_t_mat']['n'] = tauchen_nonst(p['T'],p['sig_zm']['n']*period_year**0.5,p['sig_zm_0']['n'],p['n_zm_t'][0])
             
      
             ################################
@@ -626,7 +626,7 @@ class ModelSetup(object):
 
         
         # construct finer grid for bargaining
-        ntheta_fine = 5*self.ntheta # actual number may be a bit bigger
+        ntheta_fine = 7*self.ntheta # actual number may be a bit bigger
         self.thetagrid_fine = np.unique(np.concatenate( (self.thetagrid,np.linspace(self.thetamin,self.thetamax,ntheta_fine,dtype=self.dtype)) ))
         self.ntheta_fine = self.thetagrid_fine.size
         

@@ -175,9 +175,9 @@ def v_ren_vt(setup,V,marriage,dd,edu,desc,t,return_extra=False,return_vdiv_only=
             # #First: cohabitation versus separation
             # v_out_nor_1, vf_out_1, vm_out_1, itheta_out_1,_ = \
             #     v_ren_core_two_opts_with_int(
-            #                V[descrc]['V'][None,...],
-            #                V[descrc]['VF'][None,...], 
-            #                V[descrc]['VM'][None,...], 
+            #                 V[descrc]['V'][None,...],
+            #                 V[descrc]['VF'][None,...], 
+            #                 V[descrc]['VM'][None,...], 
             #                         vf_n, vm_n,
             #                         itht, wntht, thtgrid)  
                 
@@ -185,9 +185,9 @@ def v_ren_vt(setup,V,marriage,dd,edu,desc,t,return_extra=False,return_vdiv_only=
             # #Second: Marriage versus envelop
             # v_out_nor, vf_out, vm_out, itheta_out,_ = \
             #     v_ren_core_two_opts_with_int2(
-            #                V[descrm]['V'][None,...],
-            #                V[descrm]['VF'][None,...], 
-            #                V[descrm]['VM'][None,...], 
+            #                 V[descrm]['V'][None,...],
+            #                 V[descrm]['VF'][None,...], 
+            #                 V[descrm]['VM'][None,...], 
             #                         vf_out_1, vm_out_1,
             #                         itht, wntht, thtgrid)  
              
@@ -198,7 +198,7 @@ def v_ren_vt(setup,V,marriage,dd,edu,desc,t,return_extra=False,return_vdiv_only=
             # #Adjust thetaout
             # nomar=(itheta_out<0)
             # itheta_out[nomar]=itheta_out_1[nomar]
-#            
+            
 
             
             

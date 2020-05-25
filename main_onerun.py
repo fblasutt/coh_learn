@@ -46,7 +46,7 @@ if __name__ == '__main__':
     #For graphs later
     graphs=True
     #Build  data moments and pickle them
-    #dat_moments(period=1,sampling_number=1,transform=1)
+    dat_moments(period=1,sampling_number=1,transform=1)
     
          
     #Initialize the file with parameters
@@ -70,7 +70,7 @@ if __name__ == '__main__':
     x0 = np.array([0.44474121,  0.42749023*1.2,  27.0759082,   0.2302002,   0.003989648,  0.0,-0.06185889,  1.1963916,   0.77988281*1.2])
     x0 = np.array([0.44474121,  0.42749023*1.2,  0.0759082,   0.2302002,   0.000001,  0.0,-0.06185889,  1.1963916,   0.77988281*1.2])   
     x0 = np.array([0.8296875,   0.238125,    0.79570312,  0.59226563,  0.36492187,  0.01349219, -0.08658594,  1.03046875,  0.2703125])   
-    x0 = np.array([0.4296875,   0.638125,    0.149570312,  0.59226563,  0.36492187,  0.0000, -0.08658594,  1.03046875,  0.5703125])   
+    x0 = np.array([0.75822509765625, 0.030224609375, 0.40762451171875, 0.48373779296875, 0.45178955078125, -0.077394775390625,1.30259521484375,0.32880859375000004])   
     
 
 
@@ -83,8 +83,8 @@ if __name__ == '__main__':
     out, mdl, agents, res = mdl_resid(x0,return_format=['distance','models','agents','scaled residuals'],
                                       #load_from=['mdl_save_bil_le.pkl'],#'mdl_save_uni.pkl'],
                                       solve_transition=False,                                    
-                                      #save_to=['mdl_save_bil_le.pkl'],#'mdl_save_uni.pkl'],
-                                      #store_path=path,
+                                      save_to=['mdl_save_bil_le.pkl'],#'mdl_save_uni.pkl'],
+                                      store_path=path,
                                       verbose=True,calibration_report=False,draw=graphs,graphs=graphs,
                                       welf=False) #Switch to true for decomposition of welfare analysis
                          

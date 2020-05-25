@@ -129,7 +129,7 @@ def v_optimize_couple(money_in,sgrid,EV,mgrid,utilint,xint,ls,beta,ushift,
 
 
 
-#@njit(parallel=True)
+@njit(parallel=True)
 def v_couple_par(money,sgrid,EV,mgrid,u_on_mgrid,x_on_mgrid,beta,uadd,V_opt,i_opt,c_opt,x_opt,s_opt):
     # this is a looped version of the optimizer
     # the last two things are outputs
@@ -226,7 +226,7 @@ def v_couple_par_int(money_i,sgrid,EV_slice,mgrid,u_on_mgrid,x_on_mgrid,beta,uad
         c_opt_i[ind_theta] = money_i - x_opt_i[ind_theta] - sgrid[io]
         s_opt_i[ind_theta] = sgrid[io]        
        
-        assert Vo > -1e20
+        #assert Vo > -1e20
 
     return i_opt_i, V_opt_i, x_opt_i, c_opt_i, s_opt_i
 
