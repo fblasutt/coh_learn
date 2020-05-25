@@ -23,10 +23,10 @@ if __name__ == '__main__':
     N=1000000
     T=10
     np.random.seed(19)
-    
-    sigma0=0.233565744
-    sigmae=0.23565744
-    sigmamu=0.8
+   
+    sigma0=1.0
+    sigmae=0.030224609375
+    sigmamu=0.32880859375000004
     
     shocke0=np.random.normal(0.0, sigma0, N)
     shockmu=np.reshape(np.random.normal(0.0, sigmamu, N*T),(N,T))
@@ -39,6 +39,7 @@ if __name__ == '__main__':
     noise=np.ones(shocke.shape)*-1
     pred=np.ones(shocke.shape)*-1
     upred=np.ones(shocke.shape)*-1
+    error=np.ones(shocke.shape)*-1
     
     K,sigmav=kalman(1.0,sigmae**2,sigmamu**2,sigma0**2,T)
         
@@ -48,7 +49,7 @@ if __name__ == '__main__':
         noise[:,i]=true[:,i]+shockmu[:,i]
         pred[:,i]=0 if i==0 else upred[:,i-1]
         upred[:,i]=pred[:,i]+K[i]*(noise[:,i]-pred[:,i]) 
-    
+        error[:,i]=np.absolute(upred[:,i]-true[:,i])
     
     trueu=true[:,1:]-true[:,0:-1]
     nex=np.zeros(true.shape)
@@ -60,7 +61,7 @@ if __name__ == '__main__':
     print(stdint-np.std(upredu,axis=0))
     print(stdint)
     print(np.std(upredu,axis=0))
-    
+    print(np.mean(error,axis=0))
     pos0=(shockmu[:,0]>=0.0)
     pose0=(shocke[:,0]>=0.0)
     pos1=(shockmu[:,1]>=0.0)

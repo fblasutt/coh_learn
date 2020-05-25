@@ -57,7 +57,7 @@ def mc_init_normal(sigma,X,N=1000,shocks=None):
     return abs(ran[:,np.newaxis]-X).argmin(axis=1)
 
 
-def mc_init_normal_corr(mean,X,shocks=None,target=None):
+def mc_init_normal_corr(mean,X,shocks=None,target=None,previous=None):
     
     import numpy as np
     
@@ -65,20 +65,24 @@ def mc_init_normal_corr(mean,X,shocks=None,target=None):
     initial= mc_init_normal_array(mean,X,shocks=shocks,adjust=adjust)
     #stdm=np.std(X[mean])
     
+    if previous is None:
+        prev=np.zeros(shocks.shape)
+    else:
+        prev=previous
        
     def f(x):
         #print(x)
-        return np.std(X[mc_init_normal_array(mean,X,shocks=shocks,adjust=x)])-target
+        return (np.std(X[mc_init_normal_array(mean,X,shocks=shocks,adjust=x)]-prev))/target-1
        
     
-    if (np.std(X[initial])/target)>1.1 or (np.std(X[initial])/target)<0.9:
+    if ((np.std(X[initial]-prev))/target)>1.00001 or ((np.std(X[initial]-prev))/target)<0.99999:
         
         #lb=adjust*0.5 if adjust<1 else 1/adjust*1.5
         #ub=1/adjust*1.5 if adjust<1 else adjust*0.5
         if (f(0)<0 and f(6)>0):
             sol = optimize.root_scalar(f, x0=adjust,bracket=[0, 6], maxiter=200,xtol=0.0001,method='bisect')      
             initial=mc_init_normal_array(mean,X,shocks=shocks,adjust=sol.root)
-            
+            adjust=sol.root
         
         return initial,adjust
     else:

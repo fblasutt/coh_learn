@@ -39,7 +39,7 @@ if __name__ == '__main__':
     
     
     #Build  data moments and pickle them
-    dat_moments(period=1,sampling_number=1,transform=1) # refresh
+    dat_moments(period=1,sampling_number=100,weighting=True,transform=1)
     
     
     
@@ -67,7 +67,7 @@ if __name__ == '__main__':
     
 
     #Tik Tak Optimization
-    param=tiktak(N=20000,N_st=100,skip_local=False,skip_global=False)
+    param=tiktak(N=10000,N_st=100,skip_local=False,skip_global=False)
     
     print('f is {} and x is {}'.format(param[0],param[1]))
     

@@ -203,6 +203,14 @@ def mdl_resid(x=None,save_to=None,load_from=None,return_format=['distance'],
     with open('freq.pkl', 'rb') as file:
         freq=pickle.load(file)
    
+
+    adjusta=Agents( mdl_list ,age_uni['female'],female=True,edu='e',
+                   pswitchlist=None,verbose=False,N=100000,
+                   T=mdl.setup.pars['dm']+2,draw=draw,getadj=True)
+    
+    with open('adjusta.pkl', 'rb') as file:
+        adjust=pickle.load(file)
+   
     #Get Number of simulated agent, malea and female
     N=15000
     Nf=int(N*freq['fem'])#age_uni['share_female'])
@@ -212,13 +220,13 @@ def mdl_resid(x=None,save_to=None,load_from=None,return_format=['distance'],
     Nfe=int(Nf*mdl.setup.pars['Nfe'])
     Nfn=Nf-int(Nf*mdl.setup.pars['Nfe'])
    
-    agents_feme = Agents( mdl_list ,age_uni['female'],female=True,edu='e',pswitchlist=None,verbose=False,N=Nfe,draw=draw)
+    agents_feme = Agents( mdl_list ,age_uni['female'],female=True,edu='e',pswitchlist=None,verbose=False,N=Nfe,draw=draw,array_adjust=adjust)
    
-    agents_male = Agents( mdl_list ,age_uni['male'],female=False,edu='e',pswitchlist=None,verbose=False,N=Nme,draw=draw)
+    agents_male = Agents( mdl_list ,age_uni['male'],female=False,edu='e',pswitchlist=None,verbose=False,N=Nme,draw=draw,array_adjust=adjust)
    
-    agents_femn = Agents( mdl_list ,age_uni['female'],female=True,edu='n',pswitchlist=None,verbose=False,N=Nfn,draw=draw)
+    agents_femn = Agents( mdl_list ,age_uni['female'],female=True,edu='n',pswitchlist=None,verbose=False,N=Nfn,draw=draw,array_adjust=adjust)
    
-    agents_maln = Agents( mdl_list ,age_uni['male'],female=False,edu='n',pswitchlist=None,verbose=False,N=Nmn,draw=draw)
+    agents_maln = Agents( mdl_list ,age_uni['male'],female=False,edu='n',pswitchlist=None,verbose=False,N=Nmn,draw=draw,array_adjust=adjust)
    
     agents_pooled = AgentsPooled([agents_feme,agents_male,agents_femn,agents_maln])#AgentsPooled([agents_femn,agents_maln])#
     

@@ -9,11 +9,12 @@ import numpy as np
 
 from mc_tools import mc_simulate, int_prob,mc_init_normal_array,int_proba,mc_init_normal_corr
 from gridvec import VecOnGrid
+import pickle
 
 
 class Agents:
 
-    def __init__(self,Mlist,age_uni,female=False,edu=None,pswitchlist=None,N=15000,T=None,verbose=True,nosim=False,draw=False):
+    def __init__(self,Mlist,age_uni,female=False,edu=None,pswitchlist=None,N=15000,T=None,verbose=True,nosim=False,draw=False,getadj=False,array_adjust=None):
             
             
         np.random.seed(8)
@@ -24,10 +25,12 @@ class Agents:
         if type(Mlist) is not list:
             Mlist = [Mlist]
             
-        
+
+            
         #Draw graphs?
         self.draw=draw
         
+        self.getadj=getadj
         #Unilateral Divorce
         self.Mlist = Mlist
         self.Vlist = [M.V for M in Mlist]
@@ -40,6 +43,14 @@ class Agents:
             T = self.Mlist[0].setup.pars['T']
             
         self.setup = self.Mlist[0].setup
+        
+                
+        if  self.getadj:
+            self.adjust=np.zeros(self.setup.pars['dm']+1)
+        else:
+            self.adjust=array_adjust
+            
+            
         self.state_names = self.setup.state_names
         self.N = N
         self.T = T
@@ -183,6 +194,12 @@ class Agents:
         else:
             self.policy_ind[:] = 0
             
+            
+            
+            
+        ###########################
+        #SIMULATE THE MODEL
+        ###########################
         if not nosim: self.simulate()
         
         
@@ -203,7 +220,9 @@ class Agents:
                     self.statenext(dd,t)
                 self.timer('Simulations, iteration',verbose=self.verbose)
         
-        
+        if self.getadj: 
+            with open('adjusta.pkl', 'wb+') as file:   
+                pickle.dump(self.adjust,file)   
         #return self.gsavings, self.iexo, self.state,self.gtheta
     
     
@@ -358,7 +377,10 @@ class Agents:
                 def single():
 
                     isedu=(self.partnert[ind_raw,t]<self.setup.prob[self.sex][self.edu]['e']) 
-                    for eo in ['e','n']:
+                    
+                    grid_edu=['e']  if  self.getadj else ['e','n']
+                    
+                    for eo in grid_edu:
                         
                       
                         keepthis=isedu if eo=='e' else ~isedu 
@@ -409,21 +431,26 @@ class Agents:
                         target=self.setup.pars['sigma_psi_init']
                         #ipsi,adjust=mc_init_normal_corr(mean,grid,shocks=shocks,target=target)
                         
-                        adjust=1.0
-                        ipsi=mc_init_normal_array(mean,grid,shocks=shocks,adjust=adjust)              
-                        mean1=adjust*shocks
+                        if self.getadj:
+                            ipsi,adjust=mc_init_normal_corr(mean,grid,shocks=shocks,target=target)  
+                            self.adjust[0]=adjust
+                            
+                            
+                        ipsi=mc_init_normal_array(mean,grid,shocks=shocks,adjust=self.adjust[0])
+                        
+                        mean1=self.adjust[0]*shocks
                         self.predl[ind,t+1]=grid[abs(mean1[:,np.newaxis]-grid).argmin(axis=1)] 
                         shk=grid[ipsi]
                         
-#                        adjust=self.setup.pars['sigma_psi_init']/np.std(shk)
-#                        ipsi=mc_init_normal_array(mean,grid,shocks=shocks,adjust=adjust)              
-#                        mean1=adjust*shocks
-#                        self.predl[ind,t+1]=grid[ipsi]#grid[abs(mean1[:,np.newaxis]-grid).argmin(axis=1)] 
-#                       
+                        # adjust=self.setup.pars['sigma_psi_init']/np.std(shk)
+                        # ipsi=mc_init_normal_array(mean,grid,shocks=shocks,adjust=adjust)              
+                        # mean1=adjust*shocks
+                        # self.predl[ind,t+1]=grid[ipsi]#grid[abs(mean1[:,np.newaxis]-grid).argmin(axis=1)] 
+                      
 
 
-                        shk=grid[ipsi]
-                        #print('The shock of predicted love is {}, true is {}, while theoricals are {} and {}'.format(np.std(shk),np.std(self.truel[ind,t+1]),self.setup.pars['sigma_psi_init'],self.setup.pars['sigma_psi']*self.setup.pars['sigma_psi_mult']))
+                        # shk=grid[ipsi]
+                        print('The shock of predicted love is {}, true is {}, while theoricals are {} and {}'.format(np.std(shk),np.std(self.truel[ind,t+1]),self.setup.pars['sigma_psi_init'],self.setup.pars['sigma_psi']*self.setup.pars['sigma_psi_mult']))
                         
                         
                         
@@ -460,13 +487,14 @@ class Agents:
                         
                         assert np.all(~i_nomeet[i_agree])
                         
-#                        i_agree_mar1=(np.ones(i_agree_mar.shape,dtype=np.int32)==1)
-#                        i_agree_mar=i_agree_mar1.copy()
-#                        i_agree_coh=(np.ones(i_agree_mar.shape,dtype=np.int32)==0)
-#                        i_disagree_or_nomeet=(np.ones(i_agree_mar.shape,dtype=np.int32)==0)
-#                        i_nomeet=(np.ones(i_agree_mar.shape,dtype=np.int32)==0)
-#                        i_disagree_and_meet=(np.ones(i_agree_mar.shape,dtype=np.int32)==0)
-#                        
+                        if self.getadj:
+                            i_agree_mar1=(np.ones(i_agree_mar.shape,dtype=np.int32)==1)
+                            i_agree_mar=i_agree_mar1.copy()
+                            i_agree_coh=(np.ones(i_agree_mar.shape,dtype=np.int32)==0)
+                            i_disagree_or_nomeet=(np.ones(i_agree_mar.shape,dtype=np.int32)==0)
+                            i_nomeet=(np.ones(i_agree_mar.shape,dtype=np.int32)==0)
+                            i_disagree_and_meet=(np.ones(i_agree_mar.shape,dtype=np.int32)==0)
+    #                        
                         
                         
                         nmar, ncoh, ndis, nnom = np.sum(i_agree_mar),np.sum(i_agree_coh),np.sum(i_disagree_and_meet),np.sum(i_nomeet)
@@ -562,26 +590,26 @@ class Agents:
                     mean=(1.0-self.setup.K[dd+1])*self.predl[ind,t]+(self.setup.K[dd+1])*self.truel[ind,t]
                     grid=self.setup.exogrid.psi_t[dd][t+1]
                     shocks=self.setup.K[dd+1]*(self.shocke[ind,t+1]+self.shockmu[ind,t+1])
-                    target=np.sqrt(np.var(mean)+self.setup.sigmad[dd]**2)
+                    target=self.setup.sigmad[dd]#np.sqrt(self.setup.pars['sigma_psi_init']**2+self.setup.sigmad[dd]**2)#np.sqrt(np.var(mean)+self.setup.sigmad[dd]**2)
                     #ipsi,adjust=mc_init_normal_corr(mean,grid,shocks=shocks,target=target)
                     
+                    if self.getadj:
+                        ipsi,adjust=mc_init_normal_corr(mean,grid,shocks=shocks,target=target,previous=self.setup.exogrid.psi_t[max(prev,0)][t][ipsio])               
+                        self.adjust[dd+1]=adjust
+                      
+                    ipsi=mc_init_normal_array(mean,grid,shocks=shocks,adjust=self.adjust[dd+1])
                     
-                    adjust=1.0
-                    ipsi=mc_init_normal_array(mean,grid,shocks=shocks,adjust=adjust)                  
-                    mean1=mean+adjust*shocks             
+                    #mean1=mean+self.adjust[dd+1]*shocks             
                     bef=self.setup.exogrid.psi_t[max(prev,0)][t][ipsio]
                     aft=self.setup.exogrid.psi_t[dd][t+1][ipsi]
                     diffe=bef-aft
-#                    
-#                    adjust=self.setup.sigmad[dd]/np.std(diffe)
-#                    ipsi=mc_init_normal_array(mean,grid,shocks=shocks,adjust=adjust)    
-#                    mean1=mean+adjust*shocks             
-#                    bef=self.setup.exogrid.psi_t[max(prev,0)][t][ipsio]
-#                    aft=self.setup.exogrid.psi_t[dd][t+1][ipsi]
-#                    diffe=bef-aft    
                     
-                    #print('In {}, the mean of past prediction is {}, average error is {}'.format(dd,np.mean(self.predl[ind,t]),np.mean(np.absolute(bef-aft))))
-                    #print('The standard deviation of innovation in {} is {}, theorical is {}'.format(dd,np.std(diffe),self.setup.sigmad[dd]))
+  
+                    
+                    print(1111,self.adjust)
+                    #print('In {}, the mean of past prediction is {}, average error is {}'.format(dd,np.mean(self.predl[ind,t]),np.mean(np.absolute(aft-self.truel[ind,t+1]))))
+                    print('In {}, the mean of past prediction is {}, average error is {}'.format(dd,np.mean(self.predl[ind,t]),np.mean(np.absolute(bef-aft))))
+                    print('The standard deviation of innovation in {} is {}, theorical is {}'.format(dd,np.std(diffe),self.setup.sigmad[dd]))
                     #print('target is {} actual variance is{},in grid is {}'.format(target,np.std(mean1),np.std(self.predl[ind,t+1])))
                     
                     self.predl[ind,t+1]=aft#grid[abs(mean1[:,np.newaxis]-grid).argmin(axis=1)] 
@@ -612,8 +640,9 @@ class Agents:
                          
                     bil_bribing = ('Bribing' in decision)
                     
-                    #i_stay2=np.ones(i_stay.shape,dtype=bool)
-                    #i_stay=i_stay2.copy()
+                    if self.getadj:
+                        i_stay2=np.ones(i_stay.shape,dtype=bool)
+                        i_stay=i_stay2.copy()
                     i_div = ~i_stay    
                     
                     #ifem=decision['Divorce'][0][isc,iall][...,None]<self.Mlist[ipol].V[t]['Couple, M']['VF'][isc,iall,:]
