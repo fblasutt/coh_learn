@@ -42,7 +42,7 @@ def mdl_resid(x=None,save_to=None,load_from=None,return_format=['distance'],
     else:
         from calibration_params import calibration_params     
         lb, ub, x0, keys, translator = calibration_params()        
-        if verbose: print('Calibration adjusts {}'.format(keys))        
+        print('Calibration adjusts {}'.format(keys))        
         if x is None: x = x0
         params = translator(x) # this converts x to setup parameters according to what is in calibration_params
     

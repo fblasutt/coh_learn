@@ -415,11 +415,11 @@ class Agents:
                         self.predl[ind,t+1]=grid[abs(mean1[:,np.newaxis]-grid).argmin(axis=1)] 
                         shk=grid[ipsi]
                         
-                        adjust=self.setup.pars['sigma_psi_init']/np.std(shk)
-                        ipsi=mc_init_normal_array(mean,grid,shocks=shocks,adjust=adjust)              
-                        mean1=adjust*shocks
-                        self.predl[ind,t+1]=grid[ipsi]#grid[abs(mean1[:,np.newaxis]-grid).argmin(axis=1)] 
-                       
+#                        adjust=self.setup.pars['sigma_psi_init']/np.std(shk)
+#                        ipsi=mc_init_normal_array(mean,grid,shocks=shocks,adjust=adjust)              
+#                        mean1=adjust*shocks
+#                        self.predl[ind,t+1]=grid[ipsi]#grid[abs(mean1[:,np.newaxis]-grid).argmin(axis=1)] 
+#                       
 
 
                         shk=grid[ipsi]
@@ -572,13 +572,13 @@ class Agents:
                     bef=self.setup.exogrid.psi_t[max(prev,0)][t][ipsio]
                     aft=self.setup.exogrid.psi_t[dd][t+1][ipsi]
                     diffe=bef-aft
-                    
-                    adjust=self.setup.sigmad[dd]/np.std(diffe)
-                    ipsi=mc_init_normal_array(mean,grid,shocks=shocks,adjust=adjust)    
-                    mean1=mean+adjust*shocks             
-                    bef=self.setup.exogrid.psi_t[max(prev,0)][t][ipsio]
-                    aft=self.setup.exogrid.psi_t[dd][t+1][ipsi]
-                    diffe=bef-aft    
+#                    
+#                    adjust=self.setup.sigmad[dd]/np.std(diffe)
+#                    ipsi=mc_init_normal_array(mean,grid,shocks=shocks,adjust=adjust)    
+#                    mean1=mean+adjust*shocks             
+#                    bef=self.setup.exogrid.psi_t[max(prev,0)][t][ipsio]
+#                    aft=self.setup.exogrid.psi_t[dd][t+1][ipsi]
+#                    diffe=bef-aft    
                     
                     #print('In {}, the mean of past prediction is {}, average error is {}'.format(dd,np.mean(self.predl[ind,t]),np.mean(np.absolute(bef-aft))))
                     #print('The standard deviation of innovation in {} is {}, theorical is {}'.format(dd,np.std(diffe),self.setup.sigmad[dd]))

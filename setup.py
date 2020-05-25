@@ -34,7 +34,7 @@ class ModelSetup(object):
         Tbef=int(2/period_year)
         Tren =  int(47/period_year)#int(42/period_year) # period starting which people do not renegotiate/divroce
         Tmeet = int(47/period_year)#int(42/period_year) # period starting which you do not meet anyone
-        dm=6
+        dm=4
         
         #Measure of People
         p['Nfe']=0.25#3
@@ -626,7 +626,7 @@ class ModelSetup(object):
 
         
         # construct finer grid for bargaining
-        ntheta_fine = 7*self.ntheta # actual number may be a bit bigger
+        ntheta_fine = 5*self.ntheta # actual number may be a bit bigger
         self.thetagrid_fine = np.unique(np.concatenate( (self.thetagrid,np.linspace(self.thetamin,self.thetamax,ntheta_fine,dtype=self.dtype)) ))
         self.ntheta_fine = self.thetagrid_fine.size
         
