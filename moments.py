@@ -617,21 +617,25 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     labor_par=labor_par[incoupler]
      
     mean_fls_m=0.0  
-    picky=(state_par[:]==2) & (ages==5) 
-    picko=(state_par[:]==2) & (ages==15) 
-    mean_fls_m=np.zeros((2)) 
-    if picky.any():mean_fls_m[0]=np.mean(labor_par[picky])  
-    if picko.any():mean_fls_m[1]=np.mean(labor_par[picko])  
+    picky=(state_par[:]==2) & (ages>=5) & (ages<=6)  
+    pickm=(state_par[:]==2) & (ages>=9) & (ages<=11)
+    picko=(state_par[:]==2) & (ages>=14) & (ages<=16)
+    mean_fls_m=np.zeros((3)) 
+    if picky.any():mean_fls_m[0]=np.mean(labor_par[picky]*setup.ls_levels[-1])  
+    if pickm.any():mean_fls_m[1]=np.mean(labor_par[pickm]*setup.ls_levels[-1])  
+    if picko.any():mean_fls_m[2]=np.mean(labor_par[picko]*setup.ls_levels[-1])  
         
     mean_fls_c=0.0  
-    picky=(state_par[:]==3) & (ages==5) 
-    picko=(state_par[:]==3) & (ages==15) 
-    mean_fls_c=np.zeros((2)) 
-    if picky.any():mean_fls_c[0]=np.mean(labor_par[picky])  
-    if picko.any():mean_fls_c[1]=np.mean(labor_par[picko])   
+    picky=(state_par[:]==3) & (ages>=5) & (ages<=6)  
+    pickm=(state_par[:]==3) & (ages>=9) & (ages<=11)
+    picko=(state_par[:]==3) & (ages>=14) & (ages<=16)
+    mean_fls_c=np.zeros((3)) 
+    if picky.any():mean_fls_c[0]=np.mean(labor_par[picky]*setup.ls_levels[-1])  
+    if pickm.any():mean_fls_c[1]=np.mean(labor_par[pickm]*setup.ls_levels[-1])  
+    if picko.any():mean_fls_c[2]=np.mean(labor_par[picko]*setup.ls_levels[-1])   
       
-    small=mean_fls_c<0.0001*np.ones((2)) 
-    mean_fls_c[small]=0.0001*np.ones((2))[small] 
+    small=mean_fls_c<0.0001*np.ones((3)) 
+    mean_fls_c[small]=0.0001*np.ones((3))[small] 
 
     moments['flsm']=mean_fls_m
     moments['flsc']=mean_fls_c
@@ -1902,14 +1906,14 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
              
  
          
-        lg=2 
+        lg=3
         # create plot    
-        plt.plot(np.array([25,35]), moments['flsc'], linestyle='--',linewidth=1.5,color="b", label='Simulated-C')    
-        plt.plot(np.array([25,35]), flsc_d,linewidth=1.5,color="b", label='Data-C')  
-        plt.plot(np.array([25,35]), moments['flsm'], linestyle='--',linewidth=1.5,color="r", label='Simulated-M')    
-        plt.plot(np.array([25,35]), flsm_d,linewidth=1.5,color="r", label='Data-M')  
-        plt.fill_between(np.array([25,35]), flsc_i[0,0:lg], flsc_i[1,0:lg],alpha=0.2,facecolor='b')   
-        plt.fill_between(np.array([25,35]), flsm_i[0,0:lg], flsm_i[1,0:lg],alpha=0.2,facecolor='r')   
+        plt.plot(np.array([25,30,35]), moments['flsc'], linestyle='--',linewidth=1.5,color="b", label='Simulated-C')    
+        plt.plot(np.array([25,30,35]), flsc_d,linewidth=1.5,color="b", label='Data-C')  
+        plt.plot(np.array([25,30,35]), moments['flsm'], linestyle='--',linewidth=1.5,color="r", label='Simulated-M')    
+        plt.plot(np.array([25,30,35]), flsm_d,linewidth=1.5,color="r", label='Data-M')  
+        plt.fill_between(np.array([25,30,35]), flsc_i[0,0:lg], flsc_i[1,0:lg],alpha=0.2,facecolor='b')   
+        plt.fill_between(np.array([25,30,35]), flsm_i[0,0:lg], flsm_i[1,0:lg],alpha=0.2,facecolor='r')   
         plt.ylabel('FLS mar and coh')
         plt.xlabel('Age')
         plt.legend(loc='best', fontsize='x-small',frameon=False)  

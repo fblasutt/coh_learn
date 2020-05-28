@@ -8,7 +8,7 @@ Created on Fri Jan 24 16:50:59 2020
 import numpy as np
 from scipy.optimize import brentq
 
-def int_sol(m_in,newton=True,step=1e-6,nint=2000,*,A,alp,sig,xi,lam,kap,lbr,mt=0.0):
+def int_sol(m_in,newton=False,step=1e-6,nint=2000,*,A,alp,sig,xi,lam,kap,lbr,mt=0.0):
     m_in = np.atleast_1d(m_in)    
     
     def foc_expression(x):

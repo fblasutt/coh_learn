@@ -164,14 +164,14 @@ def v_ren_vt(setup,V,marriage,dd,edu,desc,t,return_extra=False,return_vdiv_only=
         descrc,descrm=setup.desc_i[edu[0]][edu[1]]['C'],setup.desc_i[edu[0]][edu[1]]['M']
         
         if not ugpu:
-            # v_out_nor, vf_out, vm_out, itheta_out, switch = \
-            #     v_ren_core_two_opts_with_int(
-            #                 np.stack([V[descrc]['V'], V[descrm]['V']]),
-            #                 np.stack([V[descrc]['VF'],V[descrm]['VF']]), 
-            #                 np.stack([V[descrc]['VM'],V[descrm]['VM']]), 
-            #                         vf_n, vm_n,
-            #                         itht, wntht, thtgrid)     
-                
+#             v_out_nor, vf_out, vm_out, itheta_out, switch = \
+#                 v_ren_core_two_opts_with_int(
+#                             np.stack([V[descrc]['V'], V[descrm]['V']]),
+#                             np.stack([V[descrc]['VF'],V[descrm]['VF']]), 
+#                             np.stack([V[descrc]['VM'],V[descrm]['VM']]), 
+#                                     vf_n, vm_n,
+#                                     itht, wntht, thtgrid)     
+#                
             #First: cohabitation versus separation
             v_out_nor_1, vf_out_1, vm_out_1, itheta_out_1,_ = \
                 v_ren_core_two_opts_with_int(

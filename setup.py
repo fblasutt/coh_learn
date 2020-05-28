@@ -60,7 +60,7 @@ class ModelSetup(object):
         p['sigma_psi']   = 0.11
         p['multpsi']   = 10/2.996194651745017#-1.0
         p['R_t'] = [1.02**period_year]*T
-        p['n_psi_t']     = [21]*T#[11]*T
+        p['n_psi_t']     = [21]*T#[21]*T
         p['beta_t'] = [0.98**period_year]*T
         p['A'] =1.0  # consumption in couple: c = (1/A)*[c_f^(1+rho) + c_m^(1+rho)]^(1/(1+rho))
         p['crra_power'] = 1.5
@@ -68,14 +68,14 @@ class ModelSetup(object):
         p['sigma_psi_init']=1.0
         p['sig_partner_a'] = 0.1#0.5
         p['sig_partner_z'] = 1.0#1.0#0.4 #This is crazy powerful for the diff in diff estimate
-        p['sig_partner_mult'] = 1.5
+        p['sig_partner_mult'] = 1.12
         p['dump_factor_z'] = 0.4#0.78#0.85#0.8
-        p['mean_partner_z_female'] = 0.00#+0.03
-        p['mean_partner_z_male'] =  0.00#-0.03
+        p['mean_partner_z_female'] = -0.15#+0.03
+        p['mean_partner_z_male'] =  -0.1#-0.03
         p['mean_partner_a_female'] = 0.0#0.1
         p['mean_partner_a_male'] = 0.0#-0.1
         p['m_bargaining_weight'] = 0.5
-        p['pmeet'] = 0.5
+        p['pmeet'] = 1.0
         p['pmeet1'] = 0.0
         
         p['z_drift'] = -0.09#-0.2
@@ -340,8 +340,8 @@ class ModelSetup(object):
         
         
         # female labor supply
-        self.ls_levels = np.array([0.0,0.8],dtype=self.dtype)
-        self.mlevel=0.8
+        self.ls_levels = np.array([0.0,0.75],dtype=self.dtype)
+        self.mlevel=0.75
         #self.ls_utilities = np.array([p['uls'],0.0],dtype=self.dtype)
         self.ls_pdown = np.array([p['pls'],0.0],dtype=self.dtype)
         self.nls = len(self.ls_levels)
@@ -737,8 +737,8 @@ class ModelSetup(object):
         mmax = ezfmax + ezmmax + np.max(self.pars['R_t'])*self.amax1
         mint = (ezfmax + ezmmax) # poin where more dense grid begins
         
-        ndense = 600
-        nm = 1500
+        ndense = 6000
+        nm = 15000
         
         gsparse = np.linspace(mint,mmax,nm-ndense)
         gdense = np.linspace(mmin,mint,ndense+1) # +1 as there is a common pt

@@ -80,8 +80,12 @@ def fun(x):
             
             
             
-        res=dfols.solve(q, xc, rhobeg = 0.1, rhoend=1e-3, maxfun=100, bounds=(xl,xu),
-                        scaling_within_bounds=True,objfun_has_noise=False, print_progress=True)
+        res=dfols.solve(q, xc, rhobeg = 0.075, rhoend=1e-3, maxfun=50, bounds=(xl,xu),
+                        npt=len(xc)+5,scaling_within_bounds=True, 
+                        user_params={'tr_radius.gamma_dec':0.75,'tr_radius.gamma_inc':1.5,
+                                     'tr_radius.alpha1':0.5,'tr_radius.alpha2':0.75,
+                                     'regression.momentum_extra_steps':True},
+                        objfun_has_noise=False)
          
         #res=pybobyqa.solve(q, xc, rhobeg = 0.001, rhoend=1e-6, maxfun=80, bounds=(xl,xu),
          #               scaling_within_bounds=True,objfun_has_noise=False,print_progress=True)

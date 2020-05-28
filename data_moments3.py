@@ -236,6 +236,8 @@ def compute(dpi,dco,dma,period=3,transform=1):
     data_m_panda['ecoh']=0.0
     data_m_panda.loc[data_m_panda['cohl']>0.1,'ecoh']=1.0   
     data_m_panda['lcoh']=np.log(data_m_panda['cohl']+0.001)    
+    #data_m_panda['age2']=data_m_panda['age']**2
+    #data_m_panda['age3']=data_m_panda['age']**3
     #data_m_panda['age2']=data_m_panda['age']**2   
     
             
@@ -285,27 +287,59 @@ def compute(dpi,dco,dma,period=3,transform=1):
     weightsa=np.array(dpi['weight'])[dpi['sex']==2]
     wgt=np.reshape(np.repeat(weightsa,dime),(len(weightsa),dime))
     
+    #Get education
+    edua=np.array(dpi['college'])[dpi['sex']==2]
+    edu=np.reshape(np.repeat(edua,dime),(len(edua),dime))
+    
+    
+    #Get partner education
+    #eduap=np.array(dpi['edusp'])[dpi['sex']==2]
+    #edup=np.reshape(np.repeat(eduap,dime),(len(eduap),dime))
+    
     #Drop nan values
+    edu=np.array(edu)[np.isnan(labor)==False]
     status=np.array(status)[np.isnan(labor)==False]
     agebf=np.array(ageb)[np.isnan(labor)==False]
     wgt=np.array(wgt)[np.isnan(labor)==False]
     labor=np.array(labor)[np.isnan(labor)==False]
     
-    flsm,flsc=np.zeros((2)),np.zeros((2))
-    #FLFP at age 25 and 35 
-    flsm[0]=1.0-np.average(labor[(status>=200) & (agebf>=300) & (agebf<312) ]==0,
-                 weights=wgt[(status>=200) & (agebf>=300) & (agebf<312) ])
+    flsm,flsc=np.zeros((3)),np.zeros((3))
+    #FLFP at age 25 and 30 and 35  24-26//29-31//34-36
+    labor=labor/160.0
+    flsm[0]=np.average(labor[(status>=200) &  (agebf>=300-12) & (agebf<312+12) ],
+                 weights=wgt[(status>=200) &  (agebf>=300-12) & (agebf<312+12)  ])
     
-    flsc[0]=1.0-np.average(labor[(status>=100) & (status<200)  & (agebf>=300) & (agebf<312)]==0,
-                 weights=wgt[(status>=100) & (status<200)  & (agebf>=300) & (agebf<312)])
+    flsc[0]=np.average(labor[(status>=100) & (status<200)  & (agebf>=300-12) & (agebf<312+12) ],
+                 weights=wgt[(status>=100) & (status<200)  & (agebf>=300-12) & (agebf<312+12) ])
     
-    flsm[1]=1.0-np.average(labor[(status>=200) & (agebf>=420) & (agebf<432) ]==0,
-                 weights=wgt[(status>=200) & (agebf>=420) & (agebf<432) ])
+    flsm[1]=np.average(labor[(status>=200) &  (agebf>=360-12) & (agebf<372+12)  ],
+                 weights=wgt[(status>=200) & (agebf>=360-12) & (agebf<372+12) ])
     
-    flsc[1]=1.0-np.average(labor[(status>=100) & (status<420)  & (agebf>=360) & (agebf<432)]==0,
-                weights=wgt[(status>=100) & (status<420)  & (agebf>=360) & (agebf<432)])
+    flsc[1]=np.average(labor[(status>=100) & (status<200)  & (agebf>=360-12) & (agebf<372+12) ],
+                weights=wgt[(status>=100) & (status<200)  & (agebf>=360-12) & (agebf<372+12) ])
     
     
+    flsm[2]=np.average(labor[(status>=200) &  (agebf>=420-12) & (agebf<432+12)  ],
+                 weights=wgt[(status>=200) & (agebf>=420-12) & (agebf<432+12) ])
+    
+    flsc[2]=np.average(labor[(status>=100) & (status<200)  & (agebf>=420-12) & (agebf<432+12) ],
+                weights=wgt[(status>=100) & (status<200)  & (agebf>=420-12) & (agebf<432+12) ])
+    
+    data_rel=np.array(np.stack((labor,agebf,status,edu),axis=0).T)     
+    data_rel_panda=pd.DataFrame(data=data_rel,columns=['lab','age','status','edu'])
+    data_rel_panda.drop(data_rel_panda[data_rel_panda['status']<100].index, inplace=True)
+    #data_rel.drop(data_rel[data_rel['edup']>21].index, inplace=True)
+    #data_rel.drop(data_rel[data_rel['edup']<0].index, inplace=True)
+    
+    data_rel_panda['marriage']=1.0
+    data_rel_panda.loc[(data_rel_panda['status']>=100) & (data_rel_panda['status']<200),'marriage']=0.0  
+    data_rel_panda['labor']=1.0
+    data_rel_panda.loc[data_rel_panda['lab']==0,'labor']=0.0  
+    data_rel_panda.loc[data_rel_panda['lab']>160,'lab']=160.0
+    
+    FE_ols = smf.ols(formula='labor ~ edu+marriage+age', data = data_rel_panda.dropna()).fit()  
+    #flsc[1]=FE_ols.params['marriage']
+    #Women average 68-men 78
    
     
     ########################################
@@ -394,14 +428,14 @@ def dat_moments(sampling_number=5,weighting=False,covariances=False,relative=Fal
        
            
     #Import Data   
-    dpeople=pd.read_csv('full.csv') 
+    dpeople=pd.read_csv('full1.csv') 
     dcoh=pd.read_csv('cohab.csv') 
     dmar=pd.read_csv('mar.csv')      
 
        
-    dpeople['weight']=1.0
-    dcoh['weight']=1.0
-    dmar['weight']=1.0
+    #dpeople['weight']=1.0
+    #dcoh['weight']=1.0
+    #dmar['weight']=1.0
    
 
     
@@ -508,7 +542,7 @@ def dat_moments(sampling_number=5,weighting=False,covariances=False,relative=Fal
         W=np.linalg.inv(W_in)   
            
         # normalize   
-        W = W/W.sum()   
+        #W = W/W.sum()   
           
     elif relative:  
           
@@ -522,7 +556,7 @@ def dat_moments(sampling_number=5,weighting=False,covariances=False,relative=Fal
     else:   
            
         #If no weighting, just use sum of squred deviations as the objective function           
-        W=np.diag(np.ones(len(hazm)+len(hazs)+len(hazd)+len(everc)+len(everm)+len(flscB)+len(flsm)+1))#two is for fls+beta_unid   
+        W=np.diag(np.ones(len(hazm)+len(hazs)+len(hazd)+len(everc)+len(everm)+len(flsc)+len(flsm)+1))#two is for fls+beta_unid   
            
     listofTuples = [("hazs" , hazs), ("hazm" , hazm),("hazd" , hazd),  
                     ("everc" , everc), ("everm" , everm),("everr_e" , everr_e),("everr_ne" , everr_ne),
