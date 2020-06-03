@@ -224,7 +224,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     educ_relsp[wedu]=1.0
     
     #Use this to construct hazards   
-    spells = np.stack((allspells_beg,allspells_len,allspells_end),axis=1)    
+    spells = np.stack((allspells_beg,allspells_len,allspells_end,educ_rels),axis=1)    
        
     #Use this for empirical analysis   
     spells_empiricalt=np.stack((allspells_beg,allspells_timeb,allspells_len,
@@ -334,8 +334,8 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         data_m_panda['lcoh']=np.log(data_m_panda['coh']+0.001)
         #dummy=pd.get_dummies(data_m_panda['age'])
         #data_m_panda=pd.concat([data_m_panda,dummy],axis=1)
-        data_m_panda['age2']=data_m_panda['age']**2   
-        data_m_panda['age3']=data_m_panda['age']**3   
+        #data_m_panda['age2']=data_m_panda['age']**2   
+        #data_m_panda['age3']=data_m_panda['age']**3   
         #data_m_panda['rel2']=data_m_panda['rel']**2   
         #data_m_panda['rel3']=data_m_panda['rel']**3   
     
@@ -343,7 +343,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         #Standard Cox   
         data_m_panda['endd']=1.0   
         data_m_panda.loc[data_m_panda['end']==2.0,'endd']=0.0   
-        data_m_panda1=data_m_panda.drop(columns=['rel', 'uni','coh','end','rel','edup']) 
+        data_m_panda1=data_m_panda.drop(columns=['rel', 'uni','coh','end','rel','edup','age','edu']) 
         cox_join=cph.fit(data_m_panda1, duration_col='duration', event_col='endd')   
         parm=cox_join.params_
         
@@ -362,7 +362,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         ref_dut[0]=1.0
         
         #Get paramter for education
-        beta_div_edu_s=cox_join.hazard_ratios_['edu']
+        beta_div_edu_s=1.0#cox_join.hazard_ratios_['edu']
         #beta_div_edup_s=cox_join.hazard_ratios_['edup']
         moments['beta_edu']= beta_div_edu_s
         moments['ref_coh']=ref_dut[1:5]
@@ -454,6 +454,28 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
              
     hazd.reverse()    
     hazd=np.array(hazd).T    
+    
+    
+    #Hazard of Divorce-Educated
+    where=all_spells['Couple, M'][:,-1]==1
+    all_spells_e=all_spells['Couple, M'][where,:]
+    hazde=list()    
+    lgh=len(all_spells_e[:,0])    
+    for t in range(mdl.setup.pars['T']):    
+             
+        cond=all_spells_e[:,1]==t+1    
+        temp=all_spells_e[cond,2]    
+        cond1=temp!=2    
+        temp1=temp[cond1]    
+        if lgh>0:    
+            haz1=len(temp1)/lgh    
+            lgh=lgh-len(temp)    
+        else:    
+            haz1=0.0    
+        hazde=[haz1]+hazde    
+             
+    hazde.reverse()    
+    hazde=np.array(hazde).T  
          
     #Hazard of Separation    
     hazs=list()    
@@ -472,7 +494,9 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         hazs=[haz1]+hazs    
              
     hazs.reverse()    
-    hazs=np.array(hazs).T    
+    hazs=np.array(hazs).T   
+    
+     
          
     #Hazard of Marriage (Cohabitation spells)    
     hazm=list()    
@@ -493,46 +517,56 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     hazm.reverse()    
     hazm=np.array(hazm).T    
          
-    #Transform hazards pooling moments 
-    mdl.setup.pars['ty']=2 
-    if mdl.setup.pars['ty']>1: 
-        #Divorce 
-        hazdp=list() 
-        pop=1 
-        for i in range(int(mdl.setup.pars['T']/(mdl.setup.pars['ty']))): 
-            haz1=hazd[mdl.setup.pars['ty']*i]*pop 
-            haz2=hazd[mdl.setup.pars['ty']*i+1]*(pop-haz1) 
-            hazdp=[(haz1+haz2)/pop]+hazdp  
-            pop=pop-(haz1+haz2) 
-        hazdp.reverse()    
-        hazdp=np.array(hazdp).T  
-        hazd=hazdp 
-             
-        #Separation and Marriage 
-        hazsp=list() 
-        hazmp=list() 
-        pop=1 
-        for i in range(int(mdl.setup.pars['T']/(mdl.setup.pars['ty']))): 
-            hazs1=hazs[mdl.setup.pars['ty']*i]*pop 
-            hazm1=hazm[mdl.setup.pars['ty']*i]*pop 
-             
-            hazs2=hazs[mdl.setup.pars['ty']*i+1]*(pop-hazs1-hazm1) 
-            hazm2=hazm[mdl.setup.pars['ty']*i+1]*(pop-hazs1-hazm1) 
-            hazsp=[(hazs1+hazs2)/pop]+hazsp 
-            hazmp=[(hazm1+hazm2)/pop]+hazmp 
-            pop=max(pop-(hazs1+hazs2+hazm1+hazm2),0.000001) 
-             
-        hazsp.reverse()    
-        hazsp=np.array(hazsp).T  
-        hazs=hazsp 
          
-        hazmp.reverse()    
-        hazmp=np.array(hazmp).T  
-        hazm=hazmp 
+    where=all_spells['Couple, C'][:,-1]==1
+    all_spells_e=all_spells['Couple, C'][where,:]
+    
+    
+    #Hazard of Separation    
+    hazse=list()    
+    lgh=len(all_spells_e[:,0])    
+    for t in range(mdl.setup.pars['T']):    
+             
+        cond=all_spells_e[:,1]==t+1    
+        temp=all_spells_e[cond,2]    
+        cond1=(temp>=0) & (temp<=1) 
+        temp1=temp[cond1]    
+        if lgh>0:    
+            haz1=len(temp1)/lgh    
+            lgh=lgh-len(temp)    
+        else:    
+            haz1=0.0    
+        hazse=[haz1]+hazse    
+             
+    hazse.reverse()    
+    hazse=np.array(hazse).T   
+    
+     
          
+    #Hazard of Marriage (Cohabitation spells)    
+    hazme=list()    
+    lgh=len(all_spells_e[:,0])    
+    for t in range(mdl.setup.pars['T']):    
+             
+        cond=all_spells_e[:,1]==t+1    
+        temp=all_spells_e[cond,2]    
+        cond1=temp==2    
+        temp1=temp[cond1]    
+        if lgh>0:    
+            haz1=len(temp1)/lgh    
+            lgh=lgh-len(temp)    
+        else:    
+            haz1=0.0    
+        hazme=[haz1]+hazme    
+             
+    hazme.reverse()    
+    hazme=np.array(hazme).T  
+    
+
     moments['hazard sep'] = hazs    
     moments['hazard div'] = hazd    
-    moments['hazard mar'] = hazm    
+    moments['hazard mar'] = hazm  
+    moments['hazard dive'] =hazde  
         
     
      
@@ -1390,7 +1424,8 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
             
             hazs_d=packed_data['hazs']   
             hazm_d=packed_data['hazm']   
-            hazd_d=packed_data['hazd']   
+            hazd_d=packed_data['hazd']  
+            hazde_d=packed_data['hazde']  
             everc_d=packed_data['everc']   
             everm_d=packed_data['everm']
             everr_e_d=packed_data['everr_e']
@@ -1403,7 +1438,8 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
             
             hazs_i=packed_data['hazsi']   
             hazm_i=packed_data['hazmi']   
-            hazd_i=packed_data['hazdi']   
+            hazd_i=packed_data['hazdi']
+            hazde_i=packed_data['hazdei']
             everc_i=packed_data['everci']   
             everm_i=packed_data['evermi']
             everr_e_i=packed_data['everr_ei']
@@ -1439,6 +1475,31 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         plt.xlabel('Duration - Years')    
         plt.ylabel('Hazard')    
         plt.savefig('hazd.pgf', bbox_inches = 'tight',pad_inches = 0)  
+        
+        
+        #############################################    
+        # Hazard of Divorce- Educated  
+        #############################################    
+        fig = plt.figure()    
+        f1=fig.add_subplot(2,1,1)    
+        lg=min(len(hazd_d),len(hazd))  
+        if lg<2:    
+            one='o'    
+            two='o'    
+        else:    
+            one='r'    
+            two='b'    
+        plt.plot(np.array(range(lg))+1, hazde[0:lg],one, linestyle='--',linewidth=1.5, label='Hazard of Divorce edu - S')    
+        plt.plot(np.array(range(lg))+1, hazde_d[0:lg],two,linewidth=1.5, label='Hazard of Divorce edy - D')    
+        plt.fill_between(np.array(range(lg))+1, hazde_i[0,0:lg], hazde_i[1,0:lg],alpha=0.2,facecolor='b') 
+        plt.legend(loc='best', ncol=1, fontsize='x-small',frameon=False)
+        #plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
+         #         fancybox=True, shadow=True, ncol=3, fontsize='x-small')    
+        plt.ylim(ymin=0)    
+        #plt.legend(loc='upper left', shadow=True, fontsize='x-small')    
+        plt.xlabel('Duration - Years')    
+        plt.ylabel('Hazard')    
+        plt.savefig('hazde.pgf', bbox_inches = 'tight',pad_inches = 0)  
              
         #############################################    
         # Hazard of Separation    
@@ -1457,6 +1518,22 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         plt.xlabel('Duration - Years')    
         plt.ylabel('Hazard')    
         plt.savefig('hazs.pgf', bbox_inches = 'tight',pad_inches = 0)  
+        
+        #############################################    
+        # Hazard of Separation    Educated
+        #############################################    
+        fig = plt.figure()    
+        f1=fig.add_subplot(2,1,1)    
+        lg=min(len(hazs_d),len(hazse))  
+        plt.plot(np.array(range(lg))+1, hazse[0:lg],one, linestyle='--',linewidth=1.5, label='Hazard of Separation Edu - S')    
+        plt.legend(loc='best', ncol=1, fontsize='x-small',frameon=False)
+        #plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
+         #         fancybox=True, shadow=True, ncol=3, fontsize='x-small')    
+        plt.ylim(ymin=0)    
+        #plt.legend(loc='upper left', shadow=True, fontsize='x-small')    
+        plt.xlabel('Duration - Years')    
+        plt.ylabel('Hazard')    
+        
             
              
         #############################################    
@@ -1477,7 +1554,24 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         plt.xlabel('Duration - Years')    
         plt.ylabel('Hazard')    
         plt.savefig('hazm.pgf', bbox_inches = 'tight',pad_inches = 0)  
-            
+        
+        
+        #############################################    
+        # Hazard of Marriage   Educated  
+        #############################################    
+        fig = plt.figure()    
+        f1=fig.add_subplot(2,1,1)    
+        lg=min(len(hazm_d),len(hazme))  
+    
+        plt.plot(np.array(range(lg))+1, hazme[0:lg],one, linestyle='--',linewidth=1.5, label='Hazard of Marriage Edu- S')    
+        plt.legend(loc='best', ncol=1, fontsize='x-small',frameon=False)
+        #plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
+         #         fancybox=True, shadow=True, ncol=3, fontsize='x-small')    
+        plt.ylim(ymin=0)    
+        #plt.legend(loc='upper left', shadow=True, fontsize='x-small')    
+        plt.xlabel('Duration - Edu Years')    
+        plt.ylabel('Hazard')    
+         
         ##########################################    
         # Assets Over the Live Cycle    
         ##########################################    

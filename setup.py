@@ -29,12 +29,12 @@ class ModelSetup(object):
         p = dict()       
         period_year=1#this can be 1,2,3 or 6
         transform=1#this tells how many periods to pull together for duration moments
-        T = int(62/period_year)
-        Tret = int(47/period_year) # first period when the agent is retired
+        T = int(62/period_year)#int(16/period_year)#
+        Tret = int(47/period_year) #int(15/period_year)# first period when the agent is retired
         Tbef=int(2/period_year)
-        Tren =  int(47/period_year)#int(42/period_year) # period starting which people do not renegotiate/divroce
-        Tmeet = int(47/period_year)#int(42/period_year) # period starting which you do not meet anyone
-        dm=6
+        Tren =int(47/period_year)# # int(15/period_year)int(42/period_year) # period starting which people do not renegotiate/divroce
+        Tmeet = int(47/period_year)#int(15/period_year)int(42/period_year) # period starting which you do not meet anyone
+        dm=4
         
         #Measure of People
         p['Nfe']=0.25#3
@@ -75,7 +75,7 @@ class ModelSetup(object):
         p['mean_partner_a_female'] = 0.0#0.1
         p['mean_partner_a_male'] = 0.0#-0.1
         p['m_bargaining_weight'] = 0.5
-        p['pmeet'] = 1.0
+        p['pmeet'] = 1.0#0.55
         p['pmeet1'] = 0.0
         
         p['z_drift'] = -0.09#-0.2
@@ -100,11 +100,11 @@ class ModelSetup(object):
         p['wtrend']['f'],p['wtrend']['m']=dict(),dict()
       
       
-        p['wtrend']['f']['e'] =[0.0*(t>=Tret)+(t<Tret)*(2.4129672 +.10766143*t -.00380598*t**2+.00004237*t**3) for t in range(T)]
-        p['wtrend']['f']['n'] =[0.0*(t>=Tret)+(t<Tret)*(2.147265 +.05892621*t -.00213548*t**2+.0000275*t**3) for t in range(T)]
+        p['wtrend']['f']['e'] =[0.0*(t>=Tret)+(t<Tret)*(-2+2.4129672 +.10766143*t -.00380598*t**2+.00004237*t**3) for t in range(T)]
+        p['wtrend']['f']['n'] =[0.0*(t>=Tret)+(t<Tret)*(-2+2.147265 +.05892621*t -.00213548*t**2+.0000275*t**3) for t in range(T)]
         
-        p['wtrend']['m']['e'] = [0.0*(t>=Tret)+(t<Tret)*(2.3142676  +.11127253*(t+2) -.00316829*(t+2)**2+ .00002856*(t+2)**3) for t in range(T)]
-        p['wtrend']['m']['n'] = [0.0*(t>=Tret)+(t<Tret)*(2.2978303  +.06156223*(t+2) -.00172878*(t+2)**2+ .00001568*(t+2)**3) for t in range(T)]
+        p['wtrend']['m']['e'] = [0.0*(t>=Tret)+(t<Tret)*(-2+2.3142676  +.11127253*(t+2) -.00316829*(t+2)**2+ .00002856*(t+2)**3) for t in range(T)]
+        p['wtrend']['m']['n'] = [0.0*(t>=Tret)+(t<Tret)*(-2+2.2978303  +.06156223*(t+2) -.00172878*(t+2)**2+ .00001568*(t+2)**3) for t in range(T)]
                 
 
 
@@ -112,43 +112,21 @@ class ModelSetup(object):
         p['wtrendp']=dict()
         p['wtrendp']['f'],p['wtrendp']['m']=dict(),dict()
       
-        p['wtrendp']['f']['e'] =[0.0*(t>=Tret)+(t<Tret)*(2.4129672 +.10766143*t -.00380598*t**2+.00004237*t**3) for t in range(T)]
-        p['wtrendp']['f']['n'] =[0.0*(t>=Tret)+(t<Tret)*(2.147265 +.05892621*t -.00213548*t**2+.0000275*t**3) for t in range(T)]
+        p['wtrendp']['f']['e'] =[0.0*(t>=Tret)+(t<Tret)*(-2+2.4129672 +.10766143*t -.00380598*t**2+.00004237*t**3) for t in range(T)]
+        p['wtrendp']['f']['n'] =[0.0*(t>=Tret)+(t<Tret)*(-2+2.147265 +.05892621*t -.00213548*t**2+.0000275*t**3) for t in range(T)]
         
-        p['wtrendp']['m']['e'] = [0.0*(t>=Tret)+(t<Tret)*(2.3142676  +.11127253*(t+2) -.00316829*(t+2)**2+ .00002856*(t+2)**3) for t in range(T)]
-        p['wtrendp']['m']['n'] = [0.0*(t>=Tret)+(t<Tret)*(2.2978303  +.06156223*(t+2) -.00172878*(t+2)**2+ .00001568*(t+2)**3) for t in range(T)]
+        p['wtrendp']['m']['e'] = [0.0*(t>=Tret)+(t<Tret)*(-2+2.3142676  +.11127253*(t+2) -.00316829*(t+2)**2+ .00002856*(t+2)**3) for t in range(T)]
+        p['wtrendp']['m']['n'] = [0.0*(t>=Tret)+(t<Tret)*(-2+2.2978303  +.06156223*(t+2) -.00172878*(t+2)**2+ .00001568*(t+2)**3) for t in range(T)]
                 
-
-        #         #Wages over time
-        # p['wtrend']=dict()
-        # p['wtrend']['f'],p['wtrend']['m']=dict(),dict()
-      
-        # p['wtrend']['f']['e'] =[0.0*(t>=Tret)+(t<Tret)*(2.3765402 +.12413066*t -.00431752*t**2+.00004882*t**3) for t in range(T)]
-        # p['wtrend']['f']['n'] =[0.0*(t>=Tret)+(t<Tret)*(-2+2.3765402 +.12413066*t -.00431752*t**2+.00004882*t**3) for t in range(T)]
-        
-        # p['wtrend']['m']['e'] =[0.0*(t>=Tret)+(t<Tret)*(2.3765402 +.12413066*t -.00431752*t**2+.00004882*t**3) for t in range(T)]
-        # p['wtrend']['m']['n'] =[0.0*(t>=Tret)+(t<Tret)*(-2+2.3765402 +.12413066*t -.00431752*t**2+.00004882*t**3)for t in range(T)]
         
 
-
-        # #Wages over time-partner
-        # p['wtrendp']=dict()
-        # p['wtrendp']['f'],p['wtrendp']['m']=dict(),dict()
-      
-        # p['wtrendp']['f']['e'] =[0.0*(t>=Tret)+(t<Tret)*(2.3765402 +.12413066*t -.00431752*t**2+.00004882*t**3) for t in range(T)]
-        # p['wtrendp']['f']['n'] =[0.0*(t>=Tret)+(t<Tret)*(-2+2.3765402 +.12413066*t -.00431752*t**2+.00004882*t**3) for t in range(T)]
-        
-        # p['wtrendp']['m']['e'] =[0.0*(t>=Tret)+(t<Tret)*(2.3765402 +.12413066*t -.00431752*t**2+.00004882*t**3) for t in range(T)]
-        # p['wtrendp']['m']['n'] =[0.0*(t>=Tret)+(t<Tret)*(-2+2.3765402 +.12413066*t -.00431752*t**2+.00004882*t**3)for t in range(T)]
-        
-
-                    
   
         p['util_lam'] = 0.19#0.4
         p['util_alp'] = 0.5
         p['util_xi'] = 1.07
         p['util_kap'] = (1-0.21)/(0.21)
         p['rprice_durables'] = 1.0#
+        p['u_shift']=0.0
         
 
         
@@ -156,6 +134,9 @@ class ModelSetup(object):
             assert (key in p), 'wrong name?'
             p[key] = value
             
+            
+        p['u_shift_mar'] = p['u_shift']
+        p['u_shift_coh'] =p['u_shift']#-0.02#-0.1
         #Adjust kappa and alpha to make sense of relative prices
         p['util_alp_m']=p['util_alp']*(1.0/(p['rprice_durables'])**(1.0-p['util_xi']))
         p['util_kap_m']=p['util_kap']*p['rprice_durables']**p['util_lam']
@@ -340,8 +321,8 @@ class ModelSetup(object):
         
         
         # female labor supply
-        self.ls_levels = np.array([0.0,0.75],dtype=self.dtype)
-        self.mlevel=0.75
+        self.ls_levels = np.array([0.0,1.0],dtype=self.dtype)
+        self.mlevel=1.0
         #self.ls_utilities = np.array([p['uls'],0.0],dtype=self.dtype)
         self.ls_pdown = np.array([p['pls'],0.0],dtype=self.dtype)
         self.nls = len(self.ls_levels)
@@ -459,13 +440,13 @@ class ModelSetup(object):
             print(self.K[0],self.K[1],self.K[2],self.K[3])
             #New way of getting transition matrix
             psit, matri=list(np.ones((T))),list(np.ones((T)))
-            sigmainitial=np.sqrt((self.pars['sigma_psi_init']/1.0)**2+(np.sum(self.sigmad**2)-len(self.sigmad)*self.sigmad[-1]**2))
-            sigmabase=np.sqrt([sigmainitial**2+(t)*self.sigmad[-1]**2 for t in range(T)])
+            sigmainitial=max(np.sqrt((self.pars['sigma_psi_init']/2.0)**2),np.sqrt((np.sum(self.sigmad**2)-len(self.sigmad)*self.sigmad[-1]**2)))
+            sigmabase=np.sqrt([sigmainitial**2+(t)*self.sigmad[-1]**2 for t in range(T+p['dm']+1)])
             sigmadp=np.concatenate((np.array([0.0]),self.sigmad))
             sigmadi=self.sigmad[::-1]
             for i in range(T):
                 
-                base=sigmabase[min(i+p['dm'],T-1)]**2-np.sum(self.sigmad**2)
+                base=sigmabase[i+p['dm']]**2-np.sum(self.sigmad**2)
                 sigp=np.sqrt([base+np.cumsum(sigmadp**2)[dd] for dd in range(p['dm']+1)])
                 #sigp=np.sqrt([base+np.sum(sigmadi[p['dm']-dd:]**2) for dd in range(p['dm']+1)])
                 psit[i],matri[i] = tauchen_nonstm(p['dm']+1,0.0,0.0,p['n_psi_t'][0],sd_z=sigp)
@@ -476,7 +457,7 @@ class ModelSetup(object):
                 
                 
                 #exogrid['psi_t'][dd], exogrid['psi_t_mat'][dd] = tauchen_nonst(p['T'],self.sigmad[dd],self.sigmad[dd],p['n_psi_t'][0])
-                exogrid['psi_t'][dd], exogrid['psi_t_mat'][dd] = tauchen_nonst(p['T'],self.sigmad[dd],np.sqrt(self.pars['sigma_psi_init']**2+self.sigmad[dd]**2)*period_year**0.5,p['n_psi_t'][0])
+                exogrid['psi_t'][dd], exogrid['psi_t_mat'][dd] = tauchen_nonst(p['T'],self.sigmad[dd],sigmabase[0:p['T']],p['n_psi_t'][0])
                 for i in range(T):
                     
                     if i<Tret:
@@ -1140,6 +1121,8 @@ def tauchen_drift(z_now,z_next,rho,sigma,mu):
     Pi = np.zeros((z_now.size,z_next.size),dtype=z_now.dtype)
     
     ez = rho*z_now + mu
+    for j in range(z_next.size):
+        Pi[j,:]=int_prob(z_next,mu=ez[j],sig=sigma)
     
     Pi[:,0] = normcdf_tr( ( z_next[0] + h_half - ez )/sigma)
     Pi[:,-1] = 1 - normcdf_tr( (z_next[-1] - h_half - ez ) / sigma )

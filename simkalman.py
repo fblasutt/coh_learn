@@ -26,7 +26,7 @@ if __name__ == '__main__':
    
     sigma0=1.0
     sigmae=0.030224609375
-    sigmamu=0.32880859375000004
+    sigmamu=1.0#0.32880859375000004
     
     shocke0=np.random.normal(0.0, sigma0, N)
     shockmu=np.reshape(np.random.normal(0.0, sigmamu, N*T),(N,T))

@@ -224,6 +224,12 @@ def compute(dpi,dco,dma,period=3,transform=1):
     
     hazd=hazards(dma,1,'dury','fail',hazd,int(12/period),'weight')  
     
+    #Hazard of Divorce-Educated
+    hazde=list()   
+    
+    data=dma[dma['college']==1]
+    hazde=hazards(data,1,'dury','fail',hazde,int(12/period),'weight')  
+    
   
     
     ###############################################
@@ -406,7 +412,7 @@ def compute(dpi,dco,dma,period=3,transform=1):
     freq={'Nfe':Nfe,'Nme':Nme,'fem':fem,'freq_c':freq_c}
        
     #Create a dictionary for saving simulated moments   
-    listofTuples = [("hazs" , hazs), ("hazm" , hazm),("hazd" , hazd),  
+    listofTuples = [("hazs" , hazs), ("hazm" , hazm),("hazd" , hazd),("hazde" , hazde),  
                     ("everc" , everc), ("everm" , everm),("everr_e" , everr_e),("everr_ne" , everr_ne),
                     ("flsc" , flsc),("flsm" , flsm),
                     ("beta_edu" , beta_edu),("ref_coh",ref_dut[1:5]),('ratio_mar',ratio_mar),
@@ -446,7 +452,8 @@ def dat_moments(sampling_number=5,weighting=False,covariances=False,relative=Fal
     
     hazs=dic['hazs']   
     hazm=dic['hazm']   
-    hazd=dic['hazd']   
+    hazd=dic['hazd'] 
+    hazde=dic['hazde'] 
     everc=dic['everc']   
     everm=dic['everm']
     everr_e=dic['everr_e']
@@ -471,6 +478,7 @@ def dat_moments(sampling_number=5,weighting=False,covariances=False,relative=Fal
     hazsB=np.zeros((len(hazs),boot))   
     hazmB=np.zeros((len(hazm),boot))   
     hazdB=np.zeros((len(hazd),boot))   
+    hazdeB=np.zeros((len(hazde),boot))   
     evercB=np.zeros((len(everc),boot))   
     evermB=np.zeros((len(everm),boot))   
     everr_eB=np.zeros((len(everr_e),boot))   
@@ -497,6 +505,7 @@ def dat_moments(sampling_number=5,weighting=False,covariances=False,relative=Fal
         hazsB[:,i]=dicti['hazs']   
         hazmB[:,i]=dicti['hazm']   
         hazdB[:,i]=dicti['hazd']   
+        hazdeB[:,i]=dicti['hazde']   
         evercB[:,i]=dicti['everc']   
         evermB[:,i]=dicti['everm']   
         everr_eB[:,i]=dicti['everr_e'] 
@@ -513,7 +522,8 @@ def dat_moments(sampling_number=5,weighting=False,covariances=False,relative=Fal
     ################################   
     hazmi=np.array((np.percentile(hazmB,2.5,axis=1),np.percentile(hazmB,97.5,axis=1)))   
     hazsi=np.array((np.percentile(hazsB,2.5,axis=1),np.percentile(hazsB,97.5,axis=1)))   
-    hazdi=np.array((np.percentile(hazdB,2.5,axis=1),np.percentile(hazdB,97.5,axis=1)))   
+    hazdi=np.array((np.percentile(hazdB,2.5,axis=1),np.percentile(hazdB,97.5,axis=1)))
+    hazdei=np.array((np.percentile(hazdeB,2.5,axis=1),np.percentile(hazdeB,97.5,axis=1)))
     everci=np.array((np.percentile(evercB,2.5,axis=1),np.percentile(evercB,97.5,axis=1)))   
     evermi=np.array((np.percentile(evermB,2.5,axis=1),np.percentile(evermB,97.5,axis=1)))   
     everr_ei=np.array((np.percentile(everr_eB,2.5,axis=1),np.percentile(everr_eB,97.5,axis=1)))   
@@ -528,7 +538,7 @@ def dat_moments(sampling_number=5,weighting=False,covariances=False,relative=Fal
     if weighting:   
            
         #Compute optimal Weighting Matrix   
-        col=np.concatenate((hazmB,hazsB,hazdB,evercB,evermB,flscB,flsmB,beta_eduB),axis=0)       
+        col=np.concatenate((hazmB,hazsB,hazdB,hazdeB,evercB,evermB,flscB,flsmB,beta_eduB),axis=0)       
         dim=len(col)   
         W_in=np.zeros((dim,dim))   
         for i in range(dim):   
@@ -547,7 +557,7 @@ def dat_moments(sampling_number=5,weighting=False,covariances=False,relative=Fal
     elif relative:  
           
         #Compute optimal Weighting Matrix   
-        col=np.concatenate((hazm,hazs,hazd,everc,everm,flsc,flsm,beta_edu*np.ones(1)),axis=0)       
+        col=np.concatenate((hazm,hazs,hazd,hazde,everc,everm,flsc,flsm,beta_edu*np.ones(1)),axis=0)       
         dim=len(col)   
         W=np.zeros((dim,dim))   
         for i in range(dim):   
@@ -556,13 +566,13 @@ def dat_moments(sampling_number=5,weighting=False,covariances=False,relative=Fal
     else:   
            
         #If no weighting, just use sum of squred deviations as the objective function           
-        W=np.diag(np.ones(len(hazm)+len(hazs)+len(hazd)+len(everc)+len(everm)+len(flsc)+len(flsm)+1))#two is for fls+beta_unid   
+        W=np.diag(np.ones(len(hazm)+len(hazs)+len(hazd)+len(hazde)+len(everc)+len(everm)+len(flsc)+len(flsm)+1))#two is for fls+beta_unid   
            
-    listofTuples = [("hazs" , hazs), ("hazm" , hazm),("hazd" , hazd),  
+    listofTuples = [("hazs" , hazs), ("hazm" , hazm),("hazd" , hazd),("hazde" , hazde),  
                     ("everc" , everc), ("everm" , everm),("everr_e" , everr_e),("everr_ne" , everr_ne),
                     ("flsc" , flsc),("flsm" , flsm),
                     ("beta_edu" , beta_edu),("ref_coh",ref_coh),("ratio_mar",ratio_mar),
-                    ("hazsi" , hazsi), ("hazmi" , hazmi),("hazdi" , hazdi),  
+                    ("hazsi" , hazsi), ("hazmi" , hazmi),("hazdi" , hazdi),  ("hazdei" , hazdei), 
                     ("everci" , everci), ("evermi" , evermi),("everr_ei" , everr_ei),("everr_nei" , everr_nei),
                     ("flsci" , flsci),("flsmi" , flsmi),
                     ("beta_edui" , beta_edui),("ref_cohi",ref_cohi),("ratio_mari",ratio_mari),("W",W)]   

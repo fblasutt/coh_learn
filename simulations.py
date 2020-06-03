@@ -361,7 +361,7 @@ class Agents:
                 
           
                 
-                if self.verbose: print('At t = {} count of {} is {}'.format(t,sname,np.sum(is_state)))
+                if self.verbose:print('At t = {} count of {} is {}'.format(t,sname,np.sum(is_state)))#
                 
                 if not np.any(is_state):
                     continue
@@ -377,8 +377,11 @@ class Agents:
                 def single():
 
                     isedu=(self.partnert[ind_raw,t]<self.setup.prob[self.sex][self.edu]['e']) 
+                    if  self.getadj:
+                        isedu=np.ones(isedu.shape,dtype=bool) 
                     
                     grid_edu=['e']  if  self.getadj else ['e','n']
+                    
                     
                     for eo in grid_edu:
                         
@@ -450,7 +453,8 @@ class Agents:
 
 
                         # shk=grid[ipsi]
-                        #print('The shock of predicted love is {}, true is {}, while theoricals are {} and {}'.format(np.std(shk),np.std(self.truel[ind,t+1]),self.setup.pars['sigma_psi_init'],self.setup.pars['sigma_psi']*self.setup.pars['sigma_psi_mult']))
+                        if self.getadj:
+                            print('The shock of predicted love is {}, while theoricals are {}'.format(np.std(shk),self.setup.pars['sigma_psi_init']))
                         
                         
                         
@@ -606,10 +610,10 @@ class Agents:
                     
   
                     
-                    #print(1111,self.adjust)
-                    #print('In {}, the mean of past prediction is {}, average error is {}'.format(dd,np.mean(self.predl[ind,t]),np.mean(np.absolute(aft-self.truel[ind,t+1]))))
+                    if self.getadj:
+                        print('In {}, the mean of past prediction is {}, average error is {}'.format(dd,np.mean(self.predl[ind,t]),np.mean(np.absolute(aft-self.truel[ind,t+1]))))
                     #print('In {}, the mean of past prediction is {}, average error is {}'.format(dd,np.mean(self.predl[ind,t]),np.mean(np.absolute(bef-aft))))
-                    #print('The standard deviation of innovation in {} is {}, theorical is {}'.format(dd,np.std(diffe),self.setup.sigmad[dd]))
+                        print('The standard deviation of innovation in {} is {}, theorical is {}'.format(dd,np.std(diffe),self.setup.sigmad[dd]))
                     #print('target is {} actual variance is{},in grid is {}'.format(target,np.std(mean1),np.std(self.predl[ind,t+1])))
                     
                     self.predl[ind,t+1]=aft#grid[abs(mean1[:,np.newaxis]-grid).argmin(axis=1)] 

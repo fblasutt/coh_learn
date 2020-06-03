@@ -28,7 +28,16 @@ def calibration_params(xin=None,xfix=None):
               sigma_psi_mu=(0.4, 1.2, 0.001)
                         )
              
-    
+    params = OrderedDict(
+          zlost=(0.12, 0.55, 0.1),
+          sigma_psi=(0.05, 0.5, 0.01),#sigma_psi=(0.005, 0.8, 0.01),
+          multpsi=(0.06, 0.30, 0.2),#sigma_psi_mult=(0.5, 5.0, 0.02),
+          util_alp=(40.0, 170.0, 0.01),#util_alp=(0.01, 0.4, 0.25),
+          u_shift=(-0.25, 0.04, 0.01),
+          z_drift = (-0.2, -0.06, -0.001),#z_drift = (-0.3, 0.0, -0.1)
+          util_xi=(1.62, 1.80, 0.001),
+          sigma_psi_mu=(0.4, 1.0, 0.001)
+                    )
     # update params is some dict with values was supplied
     if xin is not None:
         assert type(xin) is dict

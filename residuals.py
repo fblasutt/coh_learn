@@ -170,7 +170,6 @@ def mdl_resid(x=None,save_to=None,load_from=None,return_format=['distance'],
         for i in age_dist:
            
             summa+=age_dist[i]
-            change[int(summa1*len(change[:])/sum(age_dist.values())):int(summa*len(change[:])/sum(age_dist.values()))]=(i-18)/mdl.setup.pars['py']
             summa1+=age_dist[i]
         change=np.sort(change, axis=0) 
         
@@ -205,12 +204,13 @@ def mdl_resid(x=None,save_to=None,load_from=None,return_format=['distance'],
    
 
     adjusta=Agents( mdl_list ,age_uni['female'],female=True,edu='e',
-                   pswitchlist=None,verbose=False,N=100000,
+                   pswitchlist=None,verbose=False,N=10000,
                    T=mdl.setup.pars['dm']+2,draw=draw,getadj=True)
+    
     
     with open('adjusta.pkl', 'rb') as file:
         adjust=pickle.load(file)
-   
+    #adjust=adjust/adjust
     #Get Number of simulated agent, malea and female
     N=15000
     Nf=int(N*freq['fem'])#age_uni['share_female'])
@@ -249,7 +249,8 @@ def mdl_resid(x=None,save_to=None,load_from=None,return_format=['distance'],
     #(hazm,hazs,hazd,mar,coh,fls_ratio,W)
     hazs_d=packed_data['hazs']   
     hazm_d=packed_data['hazm']   
-    hazd_d=packed_data['hazd']   
+    hazd_d=packed_data['hazd'] 
+    hazde_d=packed_data['hazde'] 
     everc_d=packed_data['everc']   
     everm_d=packed_data['everm']
     everr_e_d=packed_data['everr_e']
@@ -260,14 +261,15 @@ def mdl_resid(x=None,save_to=None,load_from=None,return_format=['distance'],
     ref_coh_d=packed_data['ref_coh']
     ratio_mar_d=packed_data['ratio_mar']
     W=packed_data['W']
-    dat=np.concatenate((hazm_d,hazs_d,hazd_d,everc_d,everm_d,flsc_d,flsm_d,beta_edu_d*np.ones(1)),axis=0)
+    dat=np.concatenate((hazm_d,hazs_d,hazd_d,hazde_d,everc_d,everm_d,flsc_d,flsm_d,beta_edu_d*np.ones(1)),axis=0)
     
 
     #Get Simulated Data
 
     hazs_s=moments['hazard sep'][0:len(hazm_d)]   
     hazm_s=moments['hazard mar'][0:len(hazs_d)]   
-    hazd_s=moments['hazard div'][0:len(hazd_d)]   
+    hazd_s=moments['hazard div'][0:len(hazd_d)]
+    hazde_s=moments['hazard dive'][0:len(hazde_d)]
     everc_s=moments['everc'][0:len(everc_d)]
     everm_s=moments['everm'][0:len(everm_d)]
     everr_e_s=moments['everr_e'][0:len(everr_e_d)]
@@ -277,7 +279,7 @@ def mdl_resid(x=None,save_to=None,load_from=None,return_format=['distance'],
     beta_edu_s=moments['beta_edu']
     ref_coh_s=moments['ref_coh']  
     ratio_mar_s=moments['ratio_mar'] 
-    sim=np.concatenate((hazm_s,hazs_s,hazd_s,everc_s,everm_s,flsc_s,flsm_s,beta_edu_s*np.ones(1)),axis=0)
+    sim=np.concatenate((hazm_s,hazs_s,hazd_s,hazde_s,everc_s,everm_s,flsc_s,flsm_s,beta_edu_s*np.ones(1)),axis=0)
 
 
 
@@ -298,6 +300,7 @@ def mdl_resid(x=None,save_to=None,load_from=None,return_format=['distance'],
         print('')
         print('')
         print('Hazd is {}'.format(hazd_s))
+        print('Hazde is {}'.format(hazde_s))
         print('Hazs is {}'.format(hazs_s))        
         print('Hazm is {}'.format(hazm_s))
         print('Everc is {}'.format(everc_s))
