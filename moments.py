@@ -685,21 +685,32 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         full_flsm={'e':{'e':np.array([0.0,0.0]),'n':np.array([0.0,0.0])},'n':{'e':np.array([0.0,0.0]),'n':np.array([0.0,0.0])}}
         full_flsc={'e':{'e':np.array([0.0,0.0]),'n':np.array([0.0,0.0])},'n':{'e':np.array([0.0,0.0]),'n':np.array([0.0,0.0])}}
          
+        
+        if setup.pars['Tren']<31:
+            i=3
+            m=9
+            f=12
+            
+        else:
+            i=5
+            m=15
+            f=30
+            
         for e in ['e','n']:
             for eo in ['e','n']:
             
                
-                picky=(state[:,5:15]==2) & (educ[:,5:15]==e) & (edup[:,5:15]==eo) & (female[:,5:15]==1)
-                picko=(state[:,15:30]==2) & (educ[:,15:30]==e) & (edup[:,15:30]==eo) & (female[:,15:30]==1)
+                picky=(state[:,i:m]==2) & (educ[:,i:m]==e) & (edup[:,i:m]==eo) & (female[:,i:m]==1)
+                picko=(state[:,m:f]==2) & (educ[:,m:f]==e) & (edup[:,m:f]==eo) & (female[:,m:f]==1)
                
-                if picky.any():full_flsm[e][eo][0]=np.mean(np.array(labor[:,5:15])[picky])  
-                if picko.any():full_flsm[e][eo][1]=np.mean(np.array(labor[:,15:30])[picko])  
+                if picky.any():full_flsm[e][eo][0]=np.mean(np.array(labor[:,i:m])[picky])  
+                if picko.any():full_flsm[e][eo][1]=np.mean(np.array(labor[:,m:f])[picko])  
                     
-                picky=(state[:,5:15]==3) & (educ[:,5:15]==e) & (edup[:,5:15]==eo) & (female[:,5:15]==1)
-                picko=(state[:,15:30]==3) & (educ[:,15:30]==e) & (edup[:,15:30]==eo) & (female[:,15:30]==1)
+                picky=(state[:,i:m]==3) & (educ[:,i:m]==e) & (edup[:,i:m]==eo) & (female[:,i:m]==1)
+                picko=(state[:,m:f]==3) & (educ[:,m:f]==e) & (edup[:,m:f]==eo) & (female[:,m:f]==1)
                
-                if picky.any():full_flsc[e][eo][0]=np.mean(np.array(labor[:,5:15])[picky])  
-                if picko.any():full_flsc[e][eo][1]=np.mean(np.array(labor[:,15:30])[picko])  
+                if picky.any():full_flsc[e][eo][0]=np.mean(np.array(labor[:,i:m])[picky])  
+                if picko.any():full_flsc[e][eo][1]=np.mean(np.array(labor[:,m:f])[picko])  
      
      
     ########################################################### 
@@ -734,8 +745,10 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     years_model=np.linspace(20,35,int(15/mdl.setup.pars['py']))   
     
     #Find the right entries for creating moments    
-    pos=[0, 5, 10, 15]
-    
+    if setup.pars['Tren']<31:
+        pos=[0,4, 8, 12]
+    else:
+        pos=[0, 5, 10, 15]
     #Approximation if more than 5 years in one period    
     if len(pos)<4:    
         for i in range(4-len(pos)):    
@@ -882,26 +895,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
                 Frelt1[ist,t]=np.sum(is_state1)    
                  
                       
-        #Now, before saving the moments, take interval of 5 years    
-        # if (mdl.setup.pars['Tret']>=mdl.setup.pars['Tret']):            
-        Freltt=relt[:,:mdl.setup.pars['Tret']-mdl.setup.pars['Tbef']+1]    
-        years=np.linspace(20,50,7)    
-        years_model=np.linspace(20,50,int(30/mdl.setup.pars['py']))    
-            
-        #Find the right entries for creating moments    
-        pos=list()    
-        for j in range(len(years)):    
-            pos=pos+[np.argmin(np.abs(years_model-years[j]))]    
-            
-        #Approximation if more than 5 years in one period    
-        if len(pos)<7:    
-            for i in range(7-len(pos)):    
-                pos=pos+[pos[-1]]    
-        pos=np.array(pos)    
-            
-            
-            
-        Freltt=Freltt[:,pos]    
+       
              
         #Update N to the new sample size    
         #N=len(state)    
@@ -1350,13 +1344,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         wage_fpt_mod=wage_fp[:,agei:agef] 
         labor_w_mod=labor_w[:,agei:agef]
         
-        #Net worh
-        net_f_c=np.mean(assets_w_mod[nsinglefc1_mod]/(wage_ft_mod[nsinglefc1_mod]*setup.ls_levels[-1]+wage_mpt_mod[nsinglefc1_mod]))
-        net_f_m=np.mean(assets_w_mod[nsinglefm1_mod]/(wage_ft_mod[nsinglefm1_mod]*setup.ls_levels[-1]+wage_mpt_mod[nsinglefm1_mod]))
-        net_m_c=np.mean(assets_w_mod[nsinglefc2_mod]/(wage_fpt_mod[nsinglefc2_mod]*setup.ls_levels[-1]+wage_mt_mod[nsinglefc2_mod]))
-        net_m_m=np.mean(assets_w_mod[nsinglefm2_mod]/(wage_fpt_mod[nsinglefm2_mod]*setup.ls_levels[-1]+wage_mt_mod[nsinglefm2_mod]))
-        
-        
+
         #Wages correlations
         corr=np.corrcoef(np.log(wage_ft[nsinglefc1]*setup.ls_levels[-1]),np.log(wage_mpt[nsinglefc1])) 
         corr1=np.corrcoef(np.log(wage_ft[nsinglefm1]*setup.ls_levels[-1]),np.log(wage_mpt[nsinglefm1])) 
@@ -1367,32 +1355,12 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         share_mcm=np.mean(wage_fpt[nsinglefc2]*setup.ls_levels[-1]/(wage_mt[nsinglefc2]+wage_fpt[nsinglefc2]*setup.ls_levels[-1])) 
         share_mmm=np.mean(wage_fpt[nsinglefm2]*setup.ls_levels[-1]/(wage_mt[nsinglefm2]+wage_fpt[nsinglefm2]*setup.ls_levels[-1])) 
         
-        #Correlation hh earnings and assets
-        medassetsc1=np.median(assets_w_mod[nsinglefc1_mod1])
-        medassetsm1=np.median(assets_w_mod[nsinglefm1_mod1])
-        medassetsc2=np.median(assets_w_mod[nsinglefc2_mod1])
-        medassetsm2=np.median(assets_w_mod[nsinglefm2_mod1])
-        medincomec1=np.median(wage_ft_mod[nsinglefc1_mod1]*setup.ls_levels[labor_w_mod[nsinglefc1_mod1]]+wage_mpt_mod[nsinglefc1_mod1])
-        medincomem1=np.median(wage_ft_mod[nsinglefm1_mod1]*setup.ls_levels[labor_w_mod[nsinglefm1_mod1]]+wage_mpt_mod[nsinglefm1_mod1])
-        medincomec2=np.median(wage_fpt_mod[nsinglefc2_mod1]*setup.ls_levels[labor_w_mod[nsinglefc2_mod1]]+wage_mt_mod[nsinglefc2_mod1])
-        medincomem2=np.median(wage_fpt_mod[nsinglefm2_mod1]*setup.ls_levels[labor_w_mod[nsinglefm2_mod1]]+wage_mt_mod[nsinglefm2_mod1])
-        
-        sh_f_c=np.mean((assets_w_mod[nsinglefc1_mod1]>medassetsc1)[(wage_ft_mod[nsinglefc1_mod1]*setup.ls_levels[labor_w_mod[nsinglefc1_mod1]]+wage_mpt_mod[nsinglefc1_mod1]>medincomec1)])
-        sh_f_m=np.mean((assets_w_mod[nsinglefm1_mod1]>medassetsm1)[(wage_ft_mod[nsinglefm1_mod1]*setup.ls_levels[labor_w_mod[nsinglefm1_mod1]]+wage_mpt_mod[nsinglefm1_mod1]>medincomem1)])
-        sh_m_c=np.mean((assets_w_mod[nsinglefc2_mod1]>medassetsc2)[(wage_fpt_mod[nsinglefc2_mod1]*setup.ls_levels[labor_w_mod[nsinglefc2_mod1]]+wage_mt_mod[nsinglefc2_mod1]>medincomec2)])
-        sh_m_m=np.mean((assets_w_mod[nsinglefm2_mod1]>medassetsm2)[(wage_fpt_mod[nsinglefm2_mod1]*setup.ls_levels[labor_w_mod[nsinglefm2_mod1]]+wage_mt_mod[nsinglefm2_mod1]>medincomem2)])
-        
-        #Results
+
         print('FM Correlation in potential wages for cohabitaiton is {}, for marriage only is {}'.format(corr[0,1],corr1[0,1]) )   
         print('MM Correlation in potential wages for cohabitaiton is {}, for marriage only is {}'.format(corrm[0,1],corrm1[0,1]) )   
         print('FM Share wages earned by female in cohabitaiton is {}, for marriage only is {}'.format(share_fcm,share_fmm) )   
         print('MM Share wages earned by female in cohabitaiton is {}, for marriage only is {}'.format(share_mcm,share_mmm) )  
-        print('FM share wealthy if incom>median for coh is {}, for marriage only is {}'.format(sh_f_c,sh_f_m) )   
-        print('MM share wealthy if incom>median for coh is {}, for marriage only is {}'.format(sh_m_c,sh_m_m) )  
-        print('FM median networth age 50-60 for cohabitaiton is {}, for marriage only is {}'.format(net_f_c,net_f_m) )   
-        print('MM median networth age 50-60 for cohabitaiton is {}, for marriage only is {}'.format(net_m_c,net_m_m) )  
-             
-        
+
         #Get useful package for denisty plots 
         import seaborn as sns 
          
@@ -2011,6 +1979,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         plt.ylabel('FLS mar and coh')
         plt.xlabel('Age')
         plt.legend(loc='best', fontsize='x-small',frameon=False)  
+        plt.ylim(ymax=1.0,ymin=0.0) 
         
         #plt.ylim(ymax=0.1)    
         #plt.xlim(xmax=1.0,xmin=0.0)    
@@ -2033,6 +2002,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         plt.plot(np.array([25,35]), full_flsm['n']['e'], linewidth=1.5,color="y", label='fls-ne-M')  
         plt.plot(np.array([25,35]), full_flsc['n']['n'], linestyle='--',linewidth=1.5,color="g", label='fls-nn-C')  
         plt.plot(np.array([25,35]), full_flsm['n']['n'], linewidth=1.5,color="g", label='fls-nn-M')  
+        plt.ylim(ymax=1.0,ymin=0.0) 
         plt.ylabel('FLS mar and coh')
         plt.xlabel('Age')
         plt.legend(loc='best', fontsize='x-small',frameon=False)  

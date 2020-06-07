@@ -17,6 +17,7 @@ from scipy import optimize
 from scipy import sparse
 
 
+
 import gc
 import os 
 import psutil
@@ -29,11 +30,11 @@ class ModelSetup(object):
         p = dict()       
         period_year=1#this can be 1,2,3 or 6
         transform=1#this tells how many periods to pull together for duration moments
-        T = int(62/period_year)#int(16/period_year)#
-        Tret = int(47/period_year) #int(15/period_year)# first period when the agent is retired
+        T = int(40/period_year)#int(16/period_year)#
+        Tret =int(36/period_year) #int(15/period_year)#  first period when the agent is retired
         Tbef=int(2/period_year)
-        Tren =int(47/period_year)# # int(15/period_year)int(42/period_year) # period starting which people do not renegotiate/divroce
-        Tmeet = int(47/period_year)#int(15/period_year)int(42/period_year) # period starting which you do not meet anyone
+        Tren =int(36/period_year)#int(15/period_year)# # int(42/period_year) # period starting which people do not renegotiate/divroce
+        Tmeet =int(36/period_year)#int(15/period_year)# int(42/period_year) # period starting which you do not meet anyone
         dm=4
         
         #Measure of People
@@ -51,10 +52,10 @@ class ModelSetup(object):
         p['Tbef'] = Tbef
         p['sig_zf_0']  = {'e':.5449176,'n':.5449176}#{'e':3.522707,'n':2.853316}#
         p['sig_zf']    = {'e':.0247495**(0.5),'n':.0124777**(0.5)} #{'e':.02**(0.5),'n':.02**(0.5)}#{'e':.0272437**(0.5),'n':.0272437**(0.5)}#
-        p['n_zf_t']      = [5]*Tret + [1]*(T-Tret)
         p['sig_zm_0']  =  {'e':.5449176,'n':.5449176}#{'e':.5449176,'n':.5449176} #{'e':3.500857,'n':2.433748}#
         p['sig_zm']    =  {'e':.0272437**(0.5),'n':.0122437**(0.5)}# {'e':.025014**(0.5),'n':.025014**(0.5)}#
-        p['n_zm_t']      = [5]*Tret + [1]*(T-Tret)
+        p['n_zf_t']      = [5]*Tret + [5]*(T-Tret)
+        p['n_zm_t']      = [5]*Tret + [5]*(T-Tret)
         p['sigma_psi_mult'] = 0.28
         p['sigma_psi_mu'] = 0.1#1.0#nthe1.1
         p['sigma_psi']   = 0.11
@@ -62,21 +63,21 @@ class ModelSetup(object):
         p['R_t'] = [1.02**period_year]*T
         p['n_psi_t']     = [21]*T#[21]*T
         p['beta_t'] = [0.98**period_year]*T
-        p['A'] =1.0  # consumption in couple: c = (1/A)*[c_f^(1+rho) + c_m^(1+rho)]^(1/(1+rho))
+        p['A'] =1.0 # consumption in couple: c = (1/A)*[c_f^(1+rho) + c_m^(1+rho)]^(1/(1+rho))
         p['crra_power'] = 1.5
         p['couple_rts'] = 0.0
         p['sigma_psi_init']=1.0
         p['sig_partner_a'] = 0.1#0.5
         p['sig_partner_z'] = 1.0#1.0#0.4 #This is crazy powerful for the diff in diff estimate
-        p['sig_partner_mult'] = 1.12
+        p['sig_partner_mult'] = 0.9#1.12
         p['dump_factor_z'] = 0.4#0.78#0.85#0.8
-        p['mean_partner_z_female'] = -0.15#+0.03
+        p['mean_partner_z_female'] = -0.05#+0.03
         p['mean_partner_z_male'] =  -0.1#-0.03
         p['mean_partner_a_female'] = 0.0#0.1
         p['mean_partner_a_male'] = 0.0#-0.1
         p['m_bargaining_weight'] = 0.5
         p['pmeet'] = 1.0#0.55
-        p['pmeet1'] = 0.0
+        p['pmeet1'] = -0.0
         
         p['z_drift'] = -0.09#-0.2
         
@@ -136,7 +137,7 @@ class ModelSetup(object):
             
             
         p['u_shift_mar'] = p['u_shift']
-        p['u_shift_coh'] =p['u_shift']#-0.02#-0.1
+        p['u_shift_coh'] =p['u_shift']#-0.016#-0.1
         #Adjust kappa and alpha to make sense of relative prices
         p['util_alp_m']=p['util_alp']*(1.0/(p['rprice_durables'])**(1.0-p['util_xi']))
         p['util_kap_m']=p['util_kap']*p['rprice_durables']**p['util_lam']
@@ -321,8 +322,8 @@ class ModelSetup(object):
         
         
         # female labor supply
-        self.ls_levels = np.array([0.0,1.0],dtype=self.dtype)
-        self.mlevel=1.0
+        self.ls_levels = np.array([0.0,.75],dtype=self.dtype)
+        self.mlevel=.75
         #self.ls_utilities = np.array([p['uls'],0.0],dtype=self.dtype)
         self.ls_pdown = np.array([p['pls'],0.0],dtype=self.dtype)
         self.nls = len(self.ls_levels)
@@ -369,13 +370,12 @@ class ModelSetup(object):
             # FIXME: this uses number of points from 0th entry. 
             # in principle we can generalize this
             
-            p['n_zf_t']      = [5]*Tret + [5]*(T-Tret)
-            p['n_zm_t']      = [5]*Tret + [5]*(T-Tret)
+
             exogrid['zf_t'],  exogrid['zf_t_mat'],exogrid['zm_t'],  exogrid['zm_t_mat']=dict(),dict(),dict(),dict()
-            exogrid['zf_t']['e'],  exogrid['zf_t_mat']['e'] = tauchen_nonst(p['T'],p['sig_zf']['e']*period_year**0.5,p['sig_zf_0']['e'],p['n_zf_t'][0])
-            exogrid['zf_t']['n'],  exogrid['zf_t_mat']['n'] = tauchen_nonst(p['T'],p['sig_zf']['n']*period_year**0.5,p['sig_zf_0']['n'],p['n_zf_t'][0])
-            exogrid['zm_t']['e'],  exogrid['zm_t_mat']['e'] = tauchen_nonst(p['T'],p['sig_zm']['e']*period_year**0.5,p['sig_zm_0']['e'],p['n_zm_t'][0])
-            exogrid['zm_t']['n'],  exogrid['zm_t_mat']['n'] = tauchen_nonst(p['T'],p['sig_zm']['n']*period_year**0.5,p['sig_zm_0']['n'],p['n_zm_t'][0])
+            exogrid['zf_t']['e'],  exogrid['zf_t_mat']['e'] = rouw_nonst(p['T'],p['sig_zf']['e']*period_year**0.5,p['sig_zf_0']['e'],p['n_zf_t'][0])
+            exogrid['zf_t']['n'],  exogrid['zf_t_mat']['n'] = rouw_nonst(p['T'],p['sig_zf']['n']*period_year**0.5,p['sig_zf_0']['n'],p['n_zf_t'][0])
+            exogrid['zm_t']['e'],  exogrid['zm_t_mat']['e'] = rouw_nonst(p['T'],p['sig_zm']['e']*period_year**0.5,p['sig_zm_0']['e'],p['n_zm_t'][0])
+            exogrid['zm_t']['n'],  exogrid['zm_t_mat']['n'] = rouw_nonst(p['T'],p['sig_zm']['n']*period_year**0.5,p['sig_zm_0']['n'],p['n_zm_t'][0])
             
      
             ################################
@@ -440,13 +440,13 @@ class ModelSetup(object):
             print(self.K[0],self.K[1],self.K[2],self.K[3])
             #New way of getting transition matrix
             psit, matri=list(np.ones((T))),list(np.ones((T)))
-            sigmainitial=max(np.sqrt((self.pars['sigma_psi_init']/2.0)**2),np.sqrt((np.sum(self.sigmad**2)-len(self.sigmad)*self.sigmad[-1]**2)))
+            sigmainitial=np.sqrt((self.pars['sigma_psi_init']/2.0)**2)+(np.sum(self.sigmad**2)-len(self.sigmad)*self.sigmad[-1]**2)
             sigmabase=np.sqrt([sigmainitial**2+(t)*self.sigmad[-1]**2 for t in range(T+p['dm']+1)])
             sigmadp=np.concatenate((np.array([0.0]),self.sigmad))
             sigmadi=self.sigmad[::-1]
             for i in range(T):
                 
-                base=sigmabase[i+p['dm']]**2-np.sum(self.sigmad**2)
+                base=sigmabase[i+p['dm']]**2-np.sum(self.sigmad**2)+0.0001
                 sigp=np.sqrt([base+np.cumsum(sigmadp**2)[dd] for dd in range(p['dm']+1)])
                 #sigp=np.sqrt([base+np.sum(sigmadi[p['dm']-dd:]**2) for dd in range(p['dm']+1)])
                 psit[i],matri[i] = tauchen_nonstm(p['dm']+1,0.0,0.0,p['n_psi_t'][0],sd_z=sigp)
@@ -502,7 +502,7 @@ class ModelSetup(object):
                 
                 #FBad shock women
                 zf_bad = [tauchen_drift(exogrid['zf_t'][e][t].copy(), exogrid['zf_t'][e][t+1].copy(), 
-                                                1.0, p['sig_zf'][e], p['z_drift'])
+                                                1.0, p['sig_zf'][e], p['z_drift'], exogrid['zf_t_mat'][e][t])
                                     for t in range(self.pars['Tret']-1) ]
                         
                 #Account for retirement here
@@ -827,12 +827,12 @@ class ModelSetup(object):
         for iz in range(n_zown):
             p_psi = int_prob(psi_couple,mu=0.0,sig=sigma_psi_init)
             if female:
-                p_zm  = int_prob(z_partner, mu=setup.pars['dump_factor_z']*z_partner[iz]+
+                p_zm  = int_prob(z_partner, mu=setup.pars['dump_factor_z']*z_own[iz]+
                                   mean,sig=0.0001+(1-setup.pars['dump_factor_z'])**0.5*sig_z_partner*setup.pars['sig_partner_mult'])
                                             
                 p_zf  = zmat_own[iz,:]
             else:
-                p_zf  = int_prob(z_partner, mu=setup.pars['dump_factor_z']*z_partner[iz]+ 
+                p_zf  = int_prob(z_partner, mu=setup.pars['dump_factor_z']*z_own[iz]+ 
                                  mean,sig=0.0001+(1-setup.pars['dump_factor_z'])**0.5*sig_z_partner*setup.pars['sig_partner_mult'])
                                             
                 p_zm  = zmat_own[iz,:]
@@ -1107,7 +1107,7 @@ class DivorceCosts(object):
         return share_f
        
         
-def tauchen_drift(z_now,z_next,rho,sigma,mu):
+def tauchen_drift(z_now,z_next,rho,sigma,mu,mat):
     z_now = np.atleast_1d(z_now)
     z_next = np.atleast_1d(z_next)
     if z_next.size == 1:
@@ -1119,16 +1119,46 @@ def tauchen_drift(z_now,z_next,rho,sigma,mu):
     h_half = d[0]/2
     
     Pi = np.zeros((z_now.size,z_next.size),dtype=z_now.dtype)
+    Pii = np.zeros((z_now.size,z_next.size),dtype=z_now.dtype)
     
     ez = rho*z_now + mu
+    
+    
+    def f(x):
+        
+        pi=int_prob(z_next,mu=x,sig=sigma)
+        return np.exp(ez[j])/np.exp(np.sum(z_next*pi))-1.0
+
     for j in range(z_next.size):
         Pi[j,:]=int_prob(z_next,mu=ez[j],sig=sigma)
+        if(ez[j]-np.sum(z_next*Pi[j,:])<-0.01):
+            
+            if (f(ez[j]-1.0)>0 and f(ez[j]+1.0)<0):
+                sol = optimize.root_scalar(f, x0=ez[j],bracket=[ez[j]-1.0, ez[j]+1.0], maxiter=200,xtol=0.0001,method='bisect')
+                mu1=sol.root
+            #mu1=rho*z_now[j]+mu-(-ez[j]+np.sum(z_next*Pi[j,:]))
+                Pi[j,:]=int_prob(z_next,mu=mu1,sig=sigma)
+            
+        
+   
+       
+            
+            # if(-mu1+np.sum(z_next*Pi[j,:])<-0.01):
+            #     mu1=mu1-(-mu1+np.sum(z_next*Pi[j,:]))
+            #     Pi[j,:]=int_prob(z_next,mu=mu1,sig=sigma)
+                
+            # if(-mu1+np.sum(z_next*Pi[j,:])>0.01):
+            #     mu2=mu1+(-mu1+np.sum(z_next*Pi[j,:]))
+            #     Pi[j,:]=int_prob(z_next,mu=mu2,sig=sigma)
+        
+
     
-    Pi[:,0] = normcdf_tr( ( z_next[0] + h_half - ez )/sigma)
-    Pi[:,-1] = 1 - normcdf_tr( (z_next[-1] - h_half - ez ) / sigma )
-    for j in range(1,z_next.size - 1):
-        Pi[:,j] = normcdf_tr( ( z_next[j] + h_half - ez )/sigma) - \
-                    normcdf_tr( ( z_next[j] - h_half - ez )/sigma)
+    # Pi[:,0] = normcdf_tr( ( z_next[0] + h_half - ez )/sigma)
+    # Pi[:,-1] = 1 - normcdf_tr( (z_next[-1] - h_half - ez ) / sigma )
+    # for j in range(1,z_next.size - 1):
+    #     Pi[:,j] = normcdf_tr( ( z_next[j] + h_half - ez )/sigma) - \
+    #         normcdf_tr( ( z_next[j] - h_half - ez )/sigma)
+    for j in range(z_next.size):print(ez[j],np.sum(z_next*Pi[j,:]))
     return Pi
         
 

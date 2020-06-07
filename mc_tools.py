@@ -171,8 +171,9 @@ def combine_matrices(a,b,Pia,Pib,check=False,trim=False,trim_level=0.00001):
     # this combines INDEPENDENT transition matrices Pia and Pib
     grid = mat_combine(a,b)
     
+    shap=Pia.shape[0]*Pib.shape[0] if ((Pia is not None) and (Pib is not None)) else None
     Pi = np.kron(Pia,Pib) if ((Pia is not None) and (Pib is not None)) else None
-    Pi = np.einsum('ik,jl', Pia, Pib).reshape(25,25) if ((Pia is not None) and (Pib is not None)) else None
+    Pi = np.einsum('ik,jl', Pia, Pib).reshape(shap,shap) if ((Pia is not None) and (Pib is not None)) else None
     if Pi is not None:
         if check:
             assert(all(abs(np.sum(Pi,axis=1)-1)<1e-5))

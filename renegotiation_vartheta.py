@@ -23,8 +23,8 @@ else:
 from renegotiation_vartheta_gpu import v_ren_gpu_oneopt, v_ren_gpu_twoopt
         
 
-def v_ren_vt(setup,V,marriage,dd,edu,desc,t,return_extra=False,return_vdiv_only=False,rescale=True,
-             thetafun=None, mixed_rescale=True):
+def v_ren_vt(setup,V,marriage,dd,edu,desc,t,return_extra=False,return_vdiv_only=False,rescale=False,
+             thetafun=None, mixed_rescale=False):
     # this returns value functions for couple that entered the period with
     # (s,Z,theta) from the grid and is allowed to renegotiate them or breakup
     # 
@@ -52,8 +52,8 @@ def v_ren_vt(setup,V,marriage,dd,edu,desc,t,return_extra=False,return_vdiv_only=
       
         
     if marriage:
-        moneyf = setup.exogrid.zf_t[edu[0]][t]+setup.pars['wtrend']['m'][edu[0]][t]
-        moneym = setup.exogrid.zf_t[edu[1]][t]+setup.pars['wtrend']['m'][edu[1]][t]
+        moneyf = setup.exogrid.zf_t[edu[0]][t]+setup.pars['wtrend']['f'][edu[0]][t]
+        moneym = setup.exogrid.zm_t[edu[1]][t]+setup.pars['wtrend']['m'][edu[1]][t]
         money_ataxf=np.exp(np.log(1.0-dc.money_lost_f_ez)+(1.0+0.0)*moneyf)
         money_ataxm=np.exp(np.log(1.0-dc.money_lost_m_ez)+(1.0+0.0)*moneym)
     
@@ -66,18 +66,18 @@ def v_ren_vt(setup,V,marriage,dd,edu,desc,t,return_extra=False,return_vdiv_only=
         kap = setup.pars['util_kap_m']
         xf,cf,uf=int_sol(np.exp(moneyf)*setup.mlevel,A=1,alp=alp,sig=sig,xi=xi,lam=lam,kap=kap,lbr=setup.mlevel,mt=1.0-setup.mlevel)
         xm,cm,um=int_sol(np.exp(moneym)*setup.mlevel,A=1,alp=alp,sig=sig,xi=xi,lam=lam,kap=kap,lbr=setup.mlevel,mt=1.0-setup.mlevel)
-        xfd,cfd,ufd=int_sol(money_ataxf*setup.mlevel,A=1,alp=alp,sig=sig,xi=xi,lam=lam,kap=kap,lbr=setup.mlevel,mt=1.0-setup.mlevel)
-        xmd,cmd,umd=int_sol(money_ataxm*setup.mlevel,A=1,alp=alp,sig=sig,xi=xi,lam=lam,kap=kap,lbr=setup.mlevel,mt=1.0-setup.mlevel)
+        xfd,cfd,ufd=int_sol(money_ataxf*setup.mlevel,A=A,alp=alp,sig=sig,xi=xi,lam=lam,kap=kap,lbr=setup.mlevel,mt=1.0-setup.mlevel)
+        xmd,cmd,umd=int_sol(money_ataxm*setup.mlevel,A=A,alp=alp,sig=sig,xi=xi,lam=lam,kap=kap,lbr=setup.mlevel,mt=1.0-setup.mlevel)
         
         V_df=V[setup.desc_i['f'][edu[0]]]['V']-setup.u_single_pub(cf,xf,setup.mlevel)+setup.u_single_pub(cfd,xfd,setup.mlevel)
         V_dm=V[setup.desc_i['m'][edu[1]]]['V']-setup.u_single_pub(cm,xm,setup.mlevel)+setup.u_single_pub(cmd,xmd,setup.mlevel)
   
     else:
     
-        moneyf = setup.exogrid.zf_t[edu[0]][t]+setup.pars['wtrend']['m'][edu[0]][t]
-        moneym = setup.exogrid.zf_t[edu[1]][t]+setup.pars['wtrend']['m'][edu[1]][t]
-        money_ataxf=np.exp(np.log(1.0-0.0)+(1.0-0.0)*moneyf)
-        money_ataxm=np.exp(np.log(1.0-0.0)+(1.0-0.0)*moneym)
+        moneyf = setup.exogrid.zf_t[edu[0]][t]+setup.pars['wtrend']['f'][edu[0]][t]
+        moneym = setup.exogrid.zm_t[edu[1]][t]+setup.pars['wtrend']['m'][edu[1]][t]
+        money_ataxf=np.exp(np.log(1.0-0.2)+(1.0-0.0)*moneyf)
+        money_ataxm=np.exp(np.log(1.0-0.2)+(1.0-0.0)*moneym)
     
         
         A=setup.pars['A']
@@ -88,8 +88,8 @@ def v_ren_vt(setup,V,marriage,dd,edu,desc,t,return_extra=False,return_vdiv_only=
         kap = setup.pars['util_kap_m']
         xf,cf,uf=int_sol(np.exp(moneyf)*setup.mlevel,A=1,alp=alp,sig=sig,xi=xi,lam=lam,kap=kap,lbr=setup.mlevel,mt=1.0-setup.mlevel)
         xm,cm,um=int_sol(np.exp(moneym)*setup.mlevel,A=1,alp=alp,sig=sig,xi=xi,lam=lam,kap=kap,lbr=setup.mlevel,mt=1.0-setup.mlevel)
-        xfd,cfd,ufd=int_sol(money_ataxf*setup.mlevel,A=1,alp=alp,sig=sig,xi=xi,lam=lam,kap=kap,lbr=setup.mlevel,mt=1.0-setup.mlevel)
-        xmd,cmd,umd=int_sol(money_ataxm*setup.mlevel,A=1,alp=alp,sig=sig,xi=xi,lam=lam,kap=kap,lbr=setup.mlevel,mt=1.0-setup.mlevel)
+        xfd,cfd,ufd=int_sol(money_ataxf*setup.mlevel,A=A,alp=alp,sig=sig,xi=xi,lam=lam,kap=kap,lbr=setup.mlevel,mt=1.0-setup.mlevel)
+        xmd,cmd,umd=int_sol(money_ataxm*setup.mlevel,A=A,alp=alp,sig=sig,xi=xi,lam=lam,kap=kap,lbr=setup.mlevel,mt=1.0-setup.mlevel)
         
         V_df=V[setup.desc_i['f'][edu[0]]]['V']-setup.u_single_pub(cf,xf,setup.mlevel)+setup.u_single_pub(cfd,xfd,setup.mlevel)
         V_dm=V[setup.desc_i['m'][edu[1]]]['V']-setup.u_single_pub(cm,xm,setup.mlevel)+setup.u_single_pub(cmd,xmd,setup.mlevel)
