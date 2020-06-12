@@ -30,12 +30,12 @@ class ModelSetup(object):
         p = dict()       
         period_year=1#this can be 1,2,3 or 6
         transform=1#this tells how many periods to pull together for duration moments
-        T = int(40/period_year)#int(16/period_year)#
-        Tret =int(36/period_year) #int(15/period_year)#  first period when the agent is retired
+        T = int(64/period_year)#
+        Tret =int(48/period_year) #int(15/period_year)#  first period when the agent is retired
         Tbef=int(2/period_year)
-        Tren =int(36/period_year)#int(15/period_year)# # int(42/period_year) # period starting which people do not renegotiate/divroce
-        Tmeet =int(36/period_year)#int(15/period_year)# int(42/period_year) # period starting which you do not meet anyone
-        dm=4
+        Tren =int(48/period_year)#int(15/period_year)# # int(42/period_year) # period starting which people do not renegotiate/divroce
+        Tmeet =int(48/period_year)#int(15/period_year)#i int(42/period_year) # period starting which you do not meet anyone
+        dm=9
         
         #Measure of People
         p['Nfe']=0.25#3
@@ -50,12 +50,12 @@ class ModelSetup(object):
         p['Tret'] = Tret
         p['Tren'] = Tren
         p['Tbef'] = Tbef
-        p['sig_zf_0']  = {'e':.5449176,'n':.5449176}#{'e':3.522707,'n':2.853316}#
-        p['sig_zf']    = {'e':.0247495**(0.5),'n':.0124777**(0.5)} #{'e':.02**(0.5),'n':.02**(0.5)}#{'e':.0272437**(0.5),'n':.0272437**(0.5)}#
-        p['sig_zm_0']  =  {'e':.5449176,'n':.5449176}#{'e':.5449176,'n':.5449176} #{'e':3.500857,'n':2.433748}#
-        p['sig_zm']    =  {'e':.0272437**(0.5),'n':.0122437**(0.5)}# {'e':.025014**(0.5),'n':.025014**(0.5)}#
-        p['n_zf_t']      = [5]*Tret + [5]*(T-Tret)
-        p['n_zm_t']      = [5]*Tret + [5]*(T-Tret)
+        p['sig_zf_0']  = {'e':.5694464,'n':.6121695}#{'e':3.522707,'n':2.853316}#
+        p['sig_zf']    = {'e':.0256186**(0.5),'n':.0149161**(0.5)} #{'e':.02**(0.5),'n':.02**(0.5)}#{'e':.0272437**(0.5),'n':.0272437**(0.5)}#
+        p['sig_zm_0']  =  {'e':.5673833,'n':.5504325}#{'e':.5449176,'n':.5449176} #{'e':3.500857,'n':2.433748}#
+        p['sig_zm']    =  {'e':.0316222**(0.5),'n':.0229727**(0.5)}# {'e':.025014**(0.5),'n':.025014**(0.5)}#
+        p['n_zf_t']      = [3]*Tret + [3]*(T-Tret)
+        p['n_zm_t']      = [3]*Tret + [3]*(T-Tret)
         p['sigma_psi_mult'] = 0.28
         p['sigma_psi_mu'] = 0.1#1.0#nthe1.1
         p['sigma_psi']   = 0.11
@@ -68,15 +68,16 @@ class ModelSetup(object):
         p['couple_rts'] = 0.0
         p['sigma_psi_init']=1.0
         p['sig_partner_a'] = 0.1#0.5
-        p['sig_partner_z'] = 1.0#1.0#0.4 #This is crazy powerful for the diff in diff estimate
-        p['sig_partner_mult'] = 0.9#1.12
+        p['sig_partner_z'] = 1.2#1.0#0.4 #This is crazy powerful for the diff in diff estimate
+        p['sig_partner_mult'] = 1.2#1.12
         p['dump_factor_z'] = 0.4#0.78#0.85#0.8
-        p['mean_partner_z_female'] = -0.05#+0.03
+        p['mean_partner_z_female'] = -0.25#+0.03
         p['mean_partner_z_male'] =  -0.1#-0.03
-        p['mean_partner_a_female'] = 0.0#0.1
+        p['mean_partner_a_female'] = -0.0#0.1
         p['mean_partner_a_male'] = 0.0#-0.1
         p['m_bargaining_weight'] = 0.5
-        p['pmeet'] = 1.0#0.55
+        p['pmeete'] = 0.2#0.55
+        p['pmeetn'] = 0.8
         p['pmeet1'] = -0.0
         
         p['z_drift'] = -0.09#-0.2
@@ -101,11 +102,11 @@ class ModelSetup(object):
         p['wtrend']['f'],p['wtrend']['m']=dict(),dict()
       
       
-        p['wtrend']['f']['e'] =[0.0*(t>=Tret)+(t<Tret)*(-2+2.4129672 +.10766143*t -.00380598*t**2+.00004237*t**3) for t in range(T)]
-        p['wtrend']['f']['n'] =[0.0*(t>=Tret)+(t<Tret)*(-2+2.147265 +.05892621*t -.00213548*t**2+.0000275*t**3) for t in range(T)]
+        p['wtrend']['f']['e'] =[0.0*(t>=Tret)+(t<Tret)*(2.6304016 +.09084669*(t+p['Tbef']) -.00296899*(t+p['Tbef'])**2+.00003033*(t+p['Tbef'])**3) for t in range(T)]
+        p['wtrend']['f']['n'] =[0.0*(t>=Tret)+(t<Tret)*(2.2360833 +.05854567*(t+p['Tbef']) -.00205413*(t+p['Tbef'])**2+.00002566*(t+p['Tbef'])**3) for t in range(T)]
         
-        p['wtrend']['m']['e'] = [0.0*(t>=Tret)+(t<Tret)*(-2+2.3142676  +.11127253*(t+2) -.00316829*(t+2)**2+ .00002856*(t+2)**3) for t in range(T)]
-        p['wtrend']['m']['n'] = [0.0*(t>=Tret)+(t<Tret)*(-2+2.2978303  +.06156223*(t+2) -.00172878*(t+2)**2+ .00001568*(t+2)**3) for t in range(T)]
+        p['wtrend']['m']['e'] = [0.0*(t>=Tret-2)+(t<Tret-2)*(2.3854005  +.11658547*(t+2+p['Tbef']) -.00314674*(t+2+p['Tbef'])**2+ .00002645*(t+2+p['Tbef'])**3) for t in range(T)]
+        p['wtrend']['m']['n'] = [0.0*(t>=Tret-2)+(t<Tret-2)*(2.411279   +.06341459*(t+2+p['Tbef']) -.00163945*(t+2+p['Tbef'])**2+ .00001333*(t+2+p['Tbef'])**3) for t in range(T)]
                 
 
 
@@ -113,13 +114,12 @@ class ModelSetup(object):
         p['wtrendp']=dict()
         p['wtrendp']['f'],p['wtrendp']['m']=dict(),dict()
       
-        p['wtrendp']['f']['e'] =[0.0*(t>=Tret)+(t<Tret)*(-2+2.4129672 +.10766143*t -.00380598*t**2+.00004237*t**3) for t in range(T)]
-        p['wtrendp']['f']['n'] =[0.0*(t>=Tret)+(t<Tret)*(-2+2.147265 +.05892621*t -.00213548*t**2+.0000275*t**3) for t in range(T)]
+        p['wtrendp']['f']['e'] =[0.0*(t>=Tret)+(t<Tret)*(2.6304016 +.09084669*(t+p['Tbef']) -.00296899*(t+p['Tbef'])**2+.00003033*(t+p['Tbef'])**3) for t in range(T)]
+        p['wtrendp']['f']['n'] =[0.0*(t>=Tret)+(t<Tret)*(2.2360833 +.05854567*(t+p['Tbef']) -.00205413*(t+p['Tbef'])**2+.00002566*(t+p['Tbef'])**3) for t in range(T)]
         
-        p['wtrendp']['m']['e'] = [0.0*(t>=Tret)+(t<Tret)*(-2+2.3142676  +.11127253*(t+2) -.00316829*(t+2)**2+ .00002856*(t+2)**3) for t in range(T)]
-        p['wtrendp']['m']['n'] = [0.0*(t>=Tret)+(t<Tret)*(-2+2.2978303  +.06156223*(t+2) -.00172878*(t+2)**2+ .00001568*(t+2)**3) for t in range(T)]
+        p['wtrendp']['m']['e'] = [0.0*(t>=Tret-2)+(t<Tret-2)*(2.3854005  +.11658547*(t+2+p['Tbef']) -.00314674*(t+2+p['Tbef'])**2+ .00002645*(t+2+p['Tbef'])**3) for t in range(T)]
+        p['wtrendp']['m']['n'] = [0.0*(t>=Tret-2)+(t<Tret-2)*(2.411279   +.06341459*(t+2+p['Tbef']) -.00163945*(t+2+p['Tbef'])**2+ .00001333*(t+2+p['Tbef'])**3) for t in range(T)]
                 
-        
 
   
         p['util_lam'] = 0.19#0.4
@@ -145,14 +145,17 @@ class ModelSetup(object):
             
 
         #Get the probability of meeting, adjusting for year-period
-        p_meet=p['pmeet']
+        p_meete=p['pmeete']
+        p_meetn=p['pmeetn']
         p_meet1=p['pmeet1']
         for j in range(period_year-1):
             p_meet=p_meet+(1-p_meet)*p['pmeet']
             
             
-        # timing here    
-        p['pmeet_t'] =[0.0*(t>=Tmeet)+(t<Tret)*(min(max(p_meet+p_meet1*t,0),1)) for t in range(T)]
+        # timing here 
+        p['pmeet_t']=dict()
+        p['pmeet_t']['n'] =[0.0*(t>=Tmeet)+(t<Tret)*(min(max(p_meetn+p_meet1*t,0),1)) for t in range(T)]#[0.0*(t>=Tmeet)+(t<Tret)*1 for t in range(T)]
+        p['pmeet_t']['e'] =[0.0*(t>=Tmeet)+(t<Tret)*(min(max(p_meete+p_meet1*t,0),1)) for t in range(T)]
         p['can divorce'] = [True]*Tren + [False]*(T-Tren)
         
 
@@ -387,7 +390,7 @@ class ModelSetup(object):
                 
                 #Get median income before retirement using men model income in Tret-1
                 #+ ratio of men and female labor income for the rest
-                yret=(1.73377+(.8427056/1.224638)*1.73377* 0.3246206)/(1+0.3246206)
+                yret=3.1#(1.73377+(.8427056/1.224638)*1.73377* 0.3246206)/(1+0.3246206)
                 thresh1=0.38*yret
                 thresh2=1.59*yret
                 
@@ -446,7 +449,7 @@ class ModelSetup(object):
             sigmadi=self.sigmad[::-1]
             for i in range(T):
                 
-                base=sigmabase[i+p['dm']]**2-np.sum(self.sigmad**2)+0.0001
+                base=max(sigmabase[i+p['dm']]**2-np.sum(self.sigmad**2)+0.01,0.001)
                 sigp=np.sqrt([base+np.cumsum(sigmadp**2)[dd] for dd in range(p['dm']+1)])
                 #sigp=np.sqrt([base+np.sum(sigmadi[p['dm']-dd:]**2) for dd in range(p['dm']+1)])
                 psit[i],matri[i] = tauchen_nonstm(p['dm']+1,0.0,0.0,p['n_psi_t'][0],sd_z=sigp)
@@ -1073,6 +1076,7 @@ class DivorceCosts(object):
                  assets_kept = 1.0, # how many assets of couple are splited (the rest disappears)
                  u_lost_m=0.0,u_lost_f=0.0, # pure utility losses b/c of divorce
                  money_lost_m=0.0,money_lost_f=0.0, # pure money (asset) losses b/c of divorce
+                 prog=0.0,
                  money_lost_m_ez=0.0,money_lost_f_ez=0.0, # money losses proportional to exp(z) b/c of divorce
                  eq_split=1.0 #The more of less equal way assets are split within divorce
                  ): # 
@@ -1086,6 +1090,7 @@ class DivorceCosts(object):
         self.money_lost_m_ez = money_lost_m_ez
         self.money_lost_f_ez = money_lost_f_ez
         self.eq_split = eq_split
+        self.prog=prog
         
     def shares_if_split(self,income_share_f):
         

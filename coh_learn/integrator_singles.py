@@ -16,7 +16,8 @@ from marriage import v_mar_igrid, v_no_mar
 
 def ev_single(setup,V,sown,female,ef,em,desc,dd,t,trim_lvl=0.001,decc=None):
     # expected value of single person meeting a partner with a chance pmeet
-    pmeet = setup.dtype( setup.pars['pmeet_t'][t] )
+    ed=ef if female else em
+    pmeet = setup.dtype( setup.pars['pmeet_t'][ed][t] )
     
     skip_mar = (pmeet < 1e-5)
     
@@ -137,12 +138,12 @@ def ev_single_meet(setup,V,sown,female,ef,em,desc,dd,t,skip_mar=False,trim_lvl=0
         
        # if dec_c is not None:
         #coh=((i_mar==False) & ((i_mar*decm + (~i_mar)*decc)==True))
-        coh=((i_mar*decm + (~i_mar)*decc)==True)
-        if np.any(coh):
-            indsi=inds[coh[0,:]]
-            thtci=thtc[coh]
-            ass=np.ones(i_mar[coh].shape,dtype=np.int32)*0
-            i_mar[coh]=(~dec_c['Cohabitation preferred to Marriage'][ass,indsi,thtci])
+        # coh=((i_mar*decm + (~i_mar)*decc)==True)
+        # if np.any(coh):
+        #     indsi=inds[coh[0,:]]
+        #     thtci=thtc[coh]
+        #     ass=np.ones(i_mar[coh].shape,dtype=np.int32)*0
+        #     i_mar[coh]=(~dec_c['Cohabitation preferred to Marriage'][ass,indsi,thtci])
             
         dec[:,:,iconv[:,i]] = (i_mar*decm + (~i_mar)*decc)[:,None,:]        
         tht[:,:,iconv[:,i]] = (i_mar*thtm + (~i_mar)*thtc)[:,None,:]

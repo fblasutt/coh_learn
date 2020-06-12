@@ -343,7 +343,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         #Standard Cox   
         data_m_panda['endd']=1.0   
         data_m_panda.loc[data_m_panda['end']==2.0,'endd']=0.0   
-        data_m_panda1=data_m_panda.drop(columns=['rel', 'uni','coh','end','rel','edup','age','edu']) 
+        data_m_panda1=data_m_panda.drop(columns=['rel', 'uni','coh','end','rel','edup','age']) 
         cox_join=cph.fit(data_m_panda1, duration_col='duration', event_col='endd')   
         parm=cox_join.params_
         
@@ -362,7 +362,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         ref_dut[0]=1.0
         
         #Get paramter for education
-        beta_div_edu_s=1.0#cox_join.hazard_ratios_['edu']
+        beta_div_edu_s=cox_join.hazard_ratios_['edu']
         #beta_div_edup_s=cox_join.hazard_ratios_['edup']
         moments['beta_edu']= beta_div_edu_s
         moments['ref_coh']=ref_dut[1:5]
@@ -610,7 +610,8 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     #Cut the first two periods give new 'length'    
     lenn=mdl.setup.pars['T']-mdl.setup.pars['Tbef']    
     assets_t=assets_t[:,mdl.setup.pars['Tbef']:mdl.setup.pars['T']]    
-    iexo=iexo[:,mdl.setup.pars['Tbef']:mdl.setup.pars['T']]    
+    iexo=iexo[:,mdl.setup.pars['Tbef']:mdl.setup.pars['T']] 
+    state_old=state
     state=state[:,mdl.setup.pars['Tbef']:mdl.setup.pars['T']] 
     state_true=state_true[:,mdl.setup.pars['Tbef']:mdl.setup.pars['T']]    
     labor=labor[:,mdl.setup.pars['Tbef']:mdl.setup.pars['T']]        
@@ -643,26 +644,28 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     agegridtemp=np.reshape(np.repeat(agetemp,len(state[:,0])),(len(state[:,0]),len(agetemp)),order='F')  
     agegrid=np.reshape(agegridtemp,resha) 
     
-    incouple= (state==2) | (state==3)  
+    incouple= ((state==2) | (state==3)) & (female==1)
     incoupler=np.reshape(incouple,resha)
     ages=agegrid[incoupler]
     state_par=np.reshape(state,resha)[incoupler]
     labor_par=np.reshape(labor,resha) 
     labor_par=labor_par[incoupler]
+    #female_par=np.reshape(female,resha)[incoupler]
+    
      
     mean_fls_m=0.0  
-    picky=(state_par[:]==2) & (ages>=5) & (ages<=6)  
-    pickm=(state_par[:]==2) & (ages>=9) & (ages<=11)
-    picko=(state_par[:]==2) & (ages>=14) & (ages<=16)
+    picky=(state_par[:]==2) & (ages>=5) & (ages<=6) #& (female_par[:]==1)
+    pickm=(state_par[:]==2) & (ages>=9) & (ages<=11) #& (female_par[:]==1)
+    picko=(state_par[:]==2) & (ages>=14) & (ages<=16) #& (female_par[:]==1)
     mean_fls_m=np.zeros((3)) 
     if picky.any():mean_fls_m[0]=np.mean(labor_par[picky]*setup.ls_levels[-1])  
     if pickm.any():mean_fls_m[1]=np.mean(labor_par[pickm]*setup.ls_levels[-1])  
     if picko.any():mean_fls_m[2]=np.mean(labor_par[picko]*setup.ls_levels[-1])  
         
     mean_fls_c=0.0  
-    picky=(state_par[:]==3) & (ages>=5) & (ages<=6)  
-    pickm=(state_par[:]==3) & (ages>=9) & (ages<=11)
-    picko=(state_par[:]==3) & (ages>=14) & (ages<=16)
+    picky=(state_par[:]==3) & (ages>=5) & (ages<=6) #& (female_par[:]==1)
+    pickm=(state_par[:]==3) & (ages>=9) & (ages<=11) #& (female_par[:]==1)
+    picko=(state_par[:]==3) & (ages>=14) & (ages<=16) #& (female_par[:]==1)
     mean_fls_c=np.zeros((3)) 
     if picky.any():mean_fls_c[0]=np.mean(labor_par[picky]*setup.ls_levels[-1])  
     if pickm.any():mean_fls_c[1]=np.mean(labor_par[pickm]*setup.ls_levels[-1])  
@@ -727,8 +730,8 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
                  
              
             #Arrays for preparation    
-            is_state = (np.any(state[:,:t+1]==ist,1))           
-            is_state1 = (state[:,t]==ist)    
+            is_state = (((np.any(state_old[:,:max(t+3,0)]==ist,1))  & (female[:,0]==1))  |  ((np.any(state_old[:,:max(t+1,0)]==ist,1))  & (female[:,0]==0)))   
+            is_state1 = (state[:,t]==ist) 
             
             if not (np.any(is_state) or np.any(is_state1)): continue    
              
@@ -788,7 +791,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
                  
              
             #Arrays for preparation    
-            is_state = (np.any(state[:,:t+1]>1,1)) & (educ[:,t+1]==ed)          
+            is_state = ((np.any(state_old[:,:max(t+3,0)]>1,1)) & (educ[:,t+1]==ed) & (female[:,0]==1)) |  ((np.any(state_old[:,:max(t+1,0)]>1,1)) & (educ[:,max(t-1,0)]==ed) & (female[:,0]==0))      
             is_state1 = (state[:,t]>1)    
             
             if not (np.any(is_state) or np.any(is_state1)): continue    
@@ -918,6 +921,8 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         wage_mc=np.zeros(len(state[0,:])) 
         wage_fm=np.zeros(len(state[0,:])) 
         wage_mm=np.zeros(len(state[0,:])) 
+        wage_fr=np.zeros(len(state[0,:])) 
+        wage_mr=np.zeros(len(state[0,:])) 
          
         wage_f2=np.zeros(state.shape) 
         wage_m2=np.zeros(state.shape) 
@@ -928,6 +933,8 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         wage_mpc=np.zeros(len(state[0,:])) 
         wage_fpm=np.zeros(len(state[0,:])) 
         wage_mpm=np.zeros(len(state[0,:])) 
+        wage_fpr=np.zeros(len(state[0,:])) 
+        wage_mpr=np.zeros(len(state[0,:])) 
          
         wage_fs=np.zeros(len(state[0,:])) 
         wage_ms=np.zeros(len(state[0,:])) 
@@ -936,11 +943,15 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         var_wage_mc=np.zeros(len(state[0,:])) 
         var_wage_fm=np.zeros(len(state[0,:])) 
         var_wage_mm=np.zeros(len(state[0,:])) 
+        var_wage_fr=np.zeros(len(state[0,:])) 
+        var_wage_mr=np.zeros(len(state[0,:])) 
          
         var_wage_fpc=np.zeros(len(state[0,:])) 
         var_wage_mpc=np.zeros(len(state[0,:])) 
         var_wage_fpm=np.zeros(len(state[0,:])) 
         var_wage_mpm=np.zeros(len(state[0,:])) 
+        var_wage_fpr=np.zeros(len(state[0,:])) 
+        var_wage_mpr=np.zeros(len(state[0,:])) 
          
         #For assets 
         assets_fc=np.zeros(len(state[0,:])) 
@@ -1001,6 +1012,8 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
             nsinglemc=(imale) & (state[:,i]==3) 
             nsinglefm=(ifemale) & (state[:,i]==2) 
             nsinglemm=(imale) & (state[:,i]==2) 
+            nsinglefr=(ifemale) & (state[:,i]>=2) 
+            nsinglemr=(imale) & (state[:,i]>=2) 
              
             singlef2=(ifemale2) & (state[:,i]==0) 
             singlem2=(imale2) & (state[:,i]==1)        
@@ -1210,11 +1223,35 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
             np.concatenate((setup.pars['wtrend']['m']['e'][i]+setup.exogrid.zm_t['e'][i][((setup.all_indices(i,iexo[:,i]))[2])][(nsinglefm) & (edupp[:,i]=='e')],            
                            setup.pars['wtrend']['m']['n'][i]+setup.exogrid.zm_t['n'][i][((setup.all_indices(i,iexo[:,i]))[2])][(nsinglefm) & (edupp[:,i]=='n')])))
             
-            
+                       
             
             if np.any(nsinglemm):wage_fpm[i]=np.mean(
             np.concatenate((setup.pars['wtrend']['f']['e'][i]+setup.exogrid.zf_t['e'][i][((setup.all_indices(i,iexo[:,i]))[1])][(nsinglemm) & (edupp[:,i]=='e')],            
                             setup.pars['wtrend']['f']['n'][i]+setup.exogrid.zf_t['n'][i][((setup.all_indices(i,iexo[:,i]))[1])][(nsinglemm) & (edupp[:,i]=='n')])))
+     
+        
+            #Marriage Income 
+            if np.any(nsinglefr):wage_fr[i]=np.mean(
+            np.concatenate((setup.pars['wtrend']['f']['e'][i]+setup.exogrid.zf_t['e'][i][((setup.all_indices(i,iexo[:,i]))[1])][(nsinglefr) & (educ[:,i]=='e')],            
+                            setup.pars['wtrend']['f']['n'][i]+setup.exogrid.zf_t['n'][i][((setup.all_indices(i,iexo[:,i]))[1])][(nsinglefr) & (educ[:,i]=='n')])))
+            
+            
+            
+            if np.any(nsinglemr):wage_mr[i]=np.mean(
+            np.concatenate((setup.pars['wtrend']['m']['e'][i]+setup.exogrid.zm_t['e'][i][((setup.all_indices(i,iexo[:,i]))[2])][(nsinglemr) & (educ[:,i]=='e')],            
+                            setup.pars['wtrend']['m']['n'][i]+setup.exogrid.zm_t['n'][i][((setup.all_indices(i,iexo[:,i]))[2])][(nsinglemr) & (educ[:,i]=='n')])))
+            
+            
+            
+            if np.any(nsinglefr):wage_mpr[i]=np.mean(
+            np.concatenate((setup.pars['wtrend']['m']['e'][i]+setup.exogrid.zm_t['e'][i][((setup.all_indices(i,iexo[:,i]))[2])][(nsinglefr) & (edupp[:,i]=='e')],            
+                           setup.pars['wtrend']['m']['n'][i]+setup.exogrid.zm_t['n'][i][((setup.all_indices(i,iexo[:,i]))[2])][(nsinglefr) & (edupp[:,i]=='n')])))
+            
+                       
+            
+            if np.any(nsinglemr):wage_fpr[i]=np.mean(
+            np.concatenate((setup.pars['wtrend']['f']['e'][i]+setup.exogrid.zf_t['e'][i][((setup.all_indices(i,iexo[:,i]))[1])][(nsinglemr) & (edupp[:,i]=='e')],            
+                            setup.pars['wtrend']['f']['n'][i]+setup.exogrid.zf_t['n'][i][((setup.all_indices(i,iexo[:,i]))[1])][(nsinglemr) & (edupp[:,i]=='n')])))
      
             if np.any(nsinglefm):var_wage_fm[i]=np.var(
             np.concatenate((setup.pars['wtrend']['f']['e'][i]+setup.exogrid.zf_t['e'][i][((setup.all_indices(i,iexo[:,i]))[1])][(nsinglefm) & (educ[:,i]=='e')],            
@@ -1238,7 +1275,28 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
             np.concatenate((setup.pars['wtrend']['f']['e'][i]+setup.exogrid.zf_t['e'][i][((setup.all_indices(i,iexo[:,i]))[1])][(nsinglemm) & (edupp[:,i]=='e')],            
                             setup.pars['wtrend']['f']['n'][i]+setup.exogrid.zf_t['n'][i][((setup.all_indices(i,iexo[:,i]))[1])][(nsinglemm) & (edupp[:,i]=='n')])))
                        
-
+            if np.any(nsinglefr):var_wage_fr[i]=np.var(
+            np.concatenate((setup.pars['wtrend']['f']['e'][i]+setup.exogrid.zf_t['e'][i][((setup.all_indices(i,iexo[:,i]))[1])][(nsinglefr) & (educ[:,i]=='e')],            
+                           setup.pars['wtrend']['f']['n'][i]+setup.exogrid.zf_t['n'][i][((setup.all_indices(i,iexo[:,i]))[1])][(nsinglefr) & (educ[:,i]=='n')])))
+            
+            
+            
+            if np.any(nsinglemr):var_wage_mr[i]=np.var(
+            np.concatenate((setup.pars['wtrend']['m']['e'][i]+setup.exogrid.zm_t['e'][i][((setup.all_indices(i,iexo[:,i]))[2])][(nsinglemr) & (educ[:,i]=='e')] ,            
+                            setup.pars['wtrend']['m']['n'][i]+setup.exogrid.zm_t['n'][i][((setup.all_indices(i,iexo[:,i]))[2])][(nsinglemr) & (educ[:,i]=='n')]) ))
+            
+            
+            
+            if np.any(nsinglefr):var_wage_mpr[i]=np.var(
+            np.concatenate((setup.pars['wtrend']['m']['e'][i]+setup.exogrid.zm_t['e'][i][((setup.all_indices(i,iexo[:,i]))[2])][(nsinglefr) & (edupp[:,i]=='e')] ,            
+                            setup.pars['wtrend']['m']['n'][i]+setup.exogrid.zm_t['n'][i][((setup.all_indices(i,iexo[:,i]))[2])][(nsinglefr) & (edupp[:,i]=='n')]) ))
+            
+            
+            
+            if np.any(nsinglemr):var_wage_fpr[i]=np.var(
+            np.concatenate((setup.pars['wtrend']['f']['e'][i]+setup.exogrid.zf_t['e'][i][((setup.all_indices(i,iexo[:,i]))[1])][(nsinglemr) & (edupp[:,i]=='e')],            
+                            setup.pars['wtrend']['f']['n'][i]+setup.exogrid.zf_t['n'][i][((setup.all_indices(i,iexo[:,i]))[1])][(nsinglemr) & (edupp[:,i]=='n')])))
+                       
             
              
         #Log Income over time 
@@ -1424,7 +1482,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         # Hazard of Divorce    
         #############################################    
         fig = plt.figure()    
-        f1=fig.add_subplot(2,1,1)    
+        f1=fig.add_subplot(1.5,1,1)    
         lg=min(len(hazd_d),len(hazd))  
         if lg<2:    
             one='o'    
@@ -1432,17 +1490,40 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         else:    
             one='r'    
             two='b'    
-        plt.plot(np.array(range(lg))+1, hazd[0:lg],one, linestyle='--',linewidth=1.5, label='Hazard of Divorce - S')    
-        plt.plot(np.array(range(lg))+1, hazd_d[0:lg],two,linewidth=1.5, label='Hazard of Divorce - D')    
+        plt.plot(np.array(range(lg))+1, hazd[0:lg],one, linestyle='--',linewidth=1.5, label='Simulation')    
+        plt.plot(np.array(range(lg))+1, hazd_d[0:lg],two,linewidth=1.5, label='Data')    
         plt.fill_between(np.array(range(lg))+1, hazd_i[0,0:lg], hazd_i[1,0:lg],alpha=0.2,facecolor='b') 
-        plt.legend(loc='best', ncol=1, fontsize='x-small',frameon=False)
+        plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15),    
+                  fancybox=True, shadow=True, ncol=2, fontsize=14)   
+        plt.ylim(ymin=0)    
+        #plt.legend(loc='upper left', shadow=True, fontsize='x-small')    
+        plt.xlabel('Duration - Years', fontsize=16)    
+        plt.ylabel('Hazard', fontsize=16)    
+        plt.savefig('hazd.pgf', bbox_inches = 'tight',pad_inches = 0)  
+        
+        
+        #############################################    
+        # Hazard of Divorce    
+        #############################################    
+        fig = plt.figure()    
+        f1=fig.add_subplot(2,1,1)    
+        lg=min(len(hazd_d),len(hazd))  
+        if lg<2:    
+            one='o'    
+            two='o'    
+        else:    
+            one='r'    
+            two='b'      
+        plt.plot(np.array(range(lg))+1, hazd_d[0:lg],two,linewidth=1.5)    
+        plt.fill_between(np.array(range(lg))+1, hazd_i[0,0:lg], hazd_i[1,0:lg],alpha=0.2,facecolor='b') 
         #plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
          #         fancybox=True, shadow=True, ncol=3, fontsize='x-small')    
         plt.ylim(ymin=0)    
         #plt.legend(loc='upper left', shadow=True, fontsize='x-small')    
         plt.xlabel('Duration - Years')    
         plt.ylabel('Hazard')    
-        plt.savefig('hazd.pgf', bbox_inches = 'tight',pad_inches = 0)  
+        plt.savefig('hazd_data.pgf', bbox_inches = 'tight',pad_inches = 0)  
+        
         
         
         #############################################    
@@ -1460,31 +1541,29 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         plt.plot(np.array(range(lg))+1, hazde[0:lg],one, linestyle='--',linewidth=1.5, label='Hazard of Divorce edu - S')    
         plt.plot(np.array(range(lg))+1, hazde_d[0:lg],two,linewidth=1.5, label='Hazard of Divorce edy - D')    
         plt.fill_between(np.array(range(lg))+1, hazde_i[0,0:lg], hazde_i[1,0:lg],alpha=0.2,facecolor='b') 
-        plt.legend(loc='best', ncol=1, fontsize='x-small',frameon=False)
-        #plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
-         #         fancybox=True, shadow=True, ncol=3, fontsize='x-small')    
+        plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15),    
+                  fancybox=True, shadow=True, ncol=2, fontsize=14)     
         plt.ylim(ymin=0)    
         #plt.legend(loc='upper left', shadow=True, fontsize='x-small')    
-        plt.xlabel('Duration - Years')    
-        plt.ylabel('Hazard')    
+        plt.xlabel('Duration - Years', fontsize=16)    
+        plt.ylabel('Hazard', fontsize=16)    
         plt.savefig('hazde.pgf', bbox_inches = 'tight',pad_inches = 0)  
              
         #############################################    
         # Hazard of Separation    
         #############################################    
         fig = plt.figure()    
-        f1=fig.add_subplot(2,1,1)    
+        f1=fig.add_subplot(1.5,1,1)    
         lg=min(len(hazs_d),len(hazs))  
-        plt.plot(np.array(range(lg))+1, hazs[0:lg],one, linestyle='--',linewidth=1.5, label='Hazard of Separation - S')    
-        plt.plot(np.array(range(lg))+1, hazs_d[0:lg],two,linewidth=1.5, label='Hazard of Separation - D')    
+        plt.plot(np.array(range(lg))+1, hazs[0:lg],one, linestyle='--',linewidth=1.5, label='Simulation')    
+        plt.plot(np.array(range(lg))+1, hazs_d[0:lg],two,linewidth=1.5, label='Data')    
         plt.fill_between(np.array(range(lg))+1, hazs_i[0,0:lg], hazs_i[1,0:lg],alpha=0.2,facecolor='b')  
-        plt.legend(loc='best', ncol=1, fontsize='x-small',frameon=False)
-        #plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
-         #         fancybox=True, shadow=True, ncol=3, fontsize='x-small')    
+        plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15),    
+                  fancybox=True, shadow=True, ncol=2, fontsize=14)      
         plt.ylim(ymin=0)    
         #plt.legend(loc='upper left', shadow=True, fontsize='x-small')    
-        plt.xlabel('Duration - Years')    
-        plt.ylabel('Hazard')    
+        plt.xlabel('Duration - Years', fontsize=16)    
+        plt.ylabel('Hazard', fontsize=16)    
         plt.savefig('hazs.pgf', bbox_inches = 'tight',pad_inches = 0)  
         
         #############################################    
@@ -1499,8 +1578,8 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
          #         fancybox=True, shadow=True, ncol=3, fontsize='x-small')    
         plt.ylim(ymin=0)    
         #plt.legend(loc='upper left', shadow=True, fontsize='x-small')    
-        plt.xlabel('Duration - Years')    
-        plt.ylabel('Hazard')    
+        plt.xlabel('Duration - Years', fontsize=16)    
+        plt.ylabel('Hazard', fontsize=16)    
         
             
              
@@ -1508,19 +1587,18 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         # Hazard of Marriage    
         #############################################    
         fig = plt.figure()    
-        f1=fig.add_subplot(2,1,1)    
+        f1=fig.add_subplot(1.5,1,1)    
         lg=min(len(hazm_d),len(hazm))  
     
-        plt.plot(np.array(range(lg))+1, hazm[0:lg],one, linestyle='--',linewidth=1.5, label='Hazard of Marriage - S')    
-        plt.plot(np.array(range(lg))+1, hazm_d[0:lg],two,linewidth=1.5, label='Hazard of Marriage - D')    
+        plt.plot(np.array(range(lg))+1, hazm[0:lg],one, linestyle='--',linewidth=1.5, label='Simulation')    
+        plt.plot(np.array(range(lg))+1, hazm_d[0:lg],two,linewidth=1.5, label='Data')    
         plt.fill_between(np.array(range(lg))+1, hazm_i[0,0:lg], hazm_i[1,0:lg],alpha=0.2,facecolor='b') 
-        plt.legend(loc='best', ncol=1, fontsize='x-small',frameon=False)
-        #plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
-         #         fancybox=True, shadow=True, ncol=3, fontsize='x-small')    
+        plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15),    
+                  fancybox=True, shadow=True, ncol=2, fontsize=14)     
         plt.ylim(ymin=0)    
         #plt.legend(loc='upper left', shadow=True, fontsize='x-small')    
-        plt.xlabel('Duration - Years')    
-        plt.ylabel('Hazard')    
+        plt.xlabel('Duration - Years', fontsize=16)    
+        plt.ylabel('Hazard', fontsize=16)    
         plt.savefig('hazm.pgf', bbox_inches = 'tight',pad_inches = 0)  
         
         
@@ -1539,6 +1617,9 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         #plt.legend(loc='upper left', shadow=True, fontsize='x-small')    
         plt.xlabel('Duration - Edu Years')    
         plt.ylabel('Hazard')    
+        
+        
+     
          
         ##########################################    
         # Assets Over the Live Cycle    
@@ -1597,58 +1678,108 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
                   fancybox=True, shadow=True, ncol=len(state_codes), fontsize='x-small')    
         plt.xlabel('Age')    
-        plt.ylabel('Income')  
+        plt.ylabel('Income') 
+        
+        ########################
+        #Income and Data
+        ############################
+        fig = plt.figure()    
+        f3=fig.add_subplot(1.5,1,1)    
+         
+
+               
+        inc_men = pd.read_csv("divome.csv")  
+        lend=len(inc_men['wtmedian']) 
+        agea=np.array(range(lend))+20 
+        plt.scatter(agea, inc_men['wtmedian'], marker='o',color='b',s=60, facecolors='none',  label='Data') 
+        plt.plot(agea, log_inc_rel[0,1,:lend],'r',markersize=6, label='Simulations')
+        plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15),    
+                  fancybox=True, shadow=True, ncol=2, fontsize=14)    
+        plt.xlabel('Age', fontsize=16)    
+        plt.ylabel('Average Log Wage', fontsize=16)
+        plt.ylim(ymax=4.5,ymin=2.0) 
+        plt.savefig('em.pgf', bbox_inches = 'tight',pad_inches = 0)  
+        
+        
+        fig = plt.figure()    
+        f3=fig.add_subplot(1.5,1,1)    
+
+        inc_men = pd.read_csv("divomn.csv")  
+        plt.scatter(agea, inc_men['wtmedian'], marker='o',color='b',s=60, facecolors='none', label='Data') 
+        plt.plot(agea, log_inc_rel[1,1,:lend],'r',markersize=6, label='Simulations')
+        plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15),    
+                  fancybox=True, shadow=True, ncol=2, fontsize=14)    
+        plt.xlabel('Age', fontsize=16)    
+        plt.ylabel('Average Log Wage', fontsize=16)
+        plt.ylim(ymax=4.5,ymin=2.0) 
+        plt.savefig('nm.pgf', bbox_inches = 'tight',pad_inches = 0)  
+        
+        fig = plt.figure()    
+        f3=fig.add_subplot(1.5,1,1)  
+        inc_women = pd.read_csv("divofn.csv")  
+        plt.scatter(agea, inc_women['wtmedian'], marker='o',color='b',s=60, facecolors='none', label='Data') 
+        plt.plot(agea, log_inc_rel[1,0,mdl.setup.pars['Tbef']:lend+mdl.setup.pars['Tbef']],'r',markersize=6, label='Simulations')
+        plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15),    
+                  fancybox=True, shadow=True, ncol=2, fontsize=14)    
+        plt.xlabel('Age', fontsize=16)    
+        plt.ylabel('Average Log Wage', fontsize=16)
+        plt.ylim(ymax=4.5,ymin=2.0) 
+        plt.savefig('nf.pgf', bbox_inches = 'tight',pad_inches = 0)  
+        
+        
+        fig = plt.figure()    
+        f3=fig.add_subplot(1.5,1,1)  
+        inc_women = pd.read_csv("divofe.csv")  
+        plt.scatter(agea, inc_women['wtmedian'], marker='o',color='b',s=60, facecolors='none', label='Data') 
+        plt.plot(agea, log_inc_rel[0,0,mdl.setup.pars['Tbef']:lend+mdl.setup.pars['Tbef']],'r',markersize=6, label='Simulations')
+        plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15),    
+                  fancybox=True, shadow=True, ncol=2, fontsize=14)    
+        plt.xlabel('Age', fontsize=16)    
+        plt.ylabel('Average Log Wage', fontsize=16)
+        plt.ylim(ymax=4.5,ymin=2.0) 
+        plt.savefig('ef.pgf', bbox_inches = 'tight',pad_inches = 0)  
                      
          
         ##########################################    
         # More on Income 
         ##########################################  
-         
- 
-         
-        fig = plt.figure()    
-        f3=fig.add_subplot(2,1,1)    
-         
-        lend=len(wage_fs) 
-        agea=np.array(range(lend))+20 
-        
-        plt.plot(agea, wage_fs, marker='o',color='g',markersize=3, label='Women single') 
-        plt.plot(agea, wage_ms, marker='o',color='y',markersize=3, label='Men single') 
-        plt.plot(agea, wage_fc,color='r',markersize=3, label='Women coh') 
-        plt.plot(agea, wage_mc,color='b',markersize=3, label='Men coh') 
-        plt.plot(agea, wage_fm,color='m',markersize=3, label='Women mar') 
-        plt.plot(agea, wage_mm,color='k',markersize=3, label='Men mar') 
-        plt.plot(agea, wage_fpc,linestyle='--',color='r',markersize=3, label='Women coh-o') 
-        plt.plot(agea, wage_mpc,linestyle='--',color='b',markersize=3, label='Men coh-o') 
-        plt.plot(agea, wage_fpm,linestyle='--',color='m',markersize=3, label='Women mar-o') 
-        plt.plot(agea, wage_mpm,linestyle='--',color='k',markersize=3, label='Men mar-o') 
-        plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
-                  fancybox=True, shadow=True, ncol=len(state_codes), fontsize='x-small')    
-        plt.xlabel('Age')    
-        plt.ylabel('Log Income')  
-         
-        ##########################################    
-        # Variance Income 
-        ##########################################         
-        fig = plt.figure()    
-        f3=fig.add_subplot(2,1,1)    
-         
-        lend=len(wage_fs) 
-        agea=np.array(range(lend))+20 
-        
-        plt.plot(agea, var_wage_fc,color='r',markersize=3, label='Women coh') 
-        plt.plot(agea, var_wage_mc,color='b',markersize=3, label='Men coh') 
-        plt.plot(agea, var_wage_fm,color='m',markersize=3, label='Women mar') 
-        plt.plot(agea, var_wage_mm,color='k',markersize=3, label='Men mar') 
-        plt.plot(agea, var_wage_fpc,linestyle='--',color='r',markersize=3, label='Women coh-o') 
-        plt.plot(agea, var_wage_mpc,linestyle='--',color='b',markersize=3, label='Men coh-o') 
-        plt.plot(agea, var_wage_fpm,linestyle='--',color='m',markersize=3, label='Women mar-o') 
-        plt.plot(agea, var_wage_mpm,linestyle='--',color='k',markersize=3, label='Men mar-o') 
-        plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
-                  fancybox=True, shadow=True, ncol=len(state_codes), fontsize='x-small')    
-        plt.xlabel('Age')    
-        plt.ylabel('Log Income Variance')  
-         
+        if mdl.setup.pars['T']>60:
+
+            fig = plt.figure()    
+            f3=fig.add_subplot(1.5,1,1)    
+             
+            lend=len(wage_fs) 
+            agea=np.array(range(lend))+18
+                   
+            plt.plot(agea[5:60], wage_fr[5-mdl.setup.pars['Tbef']:60-mdl.setup.pars['Tbef']],color='b',markersize=3, label='Women (main person)') 
+            plt.plot(agea[5:60], wage_mr[5-mdl.setup.pars['Tbef']:60-mdl.setup.pars['Tbef']],color='k',markersize=3, label='Men (main person)') 
+            plt.plot(agea[5:60], wage_fpr[5-mdl.setup.pars['Tbef']:60-mdl.setup.pars['Tbef']],linestyle='--',color='r',markersize=3, label='Women (met person)') 
+            plt.plot(agea[5:60], wage_mpr[5-mdl.setup.pars['Tbef']:60-mdl.setup.pars['Tbef']],linestyle='--',color='m',markersize=3, label='Men (met person)') 
+            plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15),    
+                      fancybox=True, shadow=True, ncol=2, fontsize=14)    
+            plt.xlabel('Age', fontsize=16)    
+            plt.ylabel('Average Log Wage', fontsize=16)
+            plt.savefig('sy_minc.pgf', bbox_inches = 'tight',pad_inches = 0)  
+             
+            ##########################################    
+            # Variance Income 
+            ##########################################         
+            fig = plt.figure()    
+            f3=fig.add_subplot(1.5,1,1)    
+             
+            lend=len(wage_fs) 
+            agea=np.array(range(lend))+18
+            
+            plt.plot(agea[5:60], var_wage_fr[5-mdl.setup.pars['Tbef']:60-mdl.setup.pars['Tbef']],color='b',markersize=3, label='Women (main person)') 
+            plt.plot(agea[5:60], var_wage_mr[5-mdl.setup.pars['Tbef']:60-mdl.setup.pars['Tbef']],color='k',markersize=3, label='Men (main person)') 
+            plt.plot(agea[5:60], var_wage_fpr[5-mdl.setup.pars['Tbef']:60-mdl.setup.pars['Tbef']],linestyle='--',color='r',markersize=3, label='Women (met person)') 
+            plt.plot(agea[5:60], var_wage_mpr[5-mdl.setup.pars['Tbef']:60-mdl.setup.pars['Tbef']],linestyle='--',color='m',markersize=3, label='Men (met person)') 
+            plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15),    
+                      fancybox=True, shadow=True, ncol=2, fontsize=14)    
+            plt.xlabel('Age', fontsize=16)    
+            plt.ylabel('Log Wage Variance', fontsize=16)  
+            plt.savefig('sy_vinc.pgf', bbox_inches = 'tight',pad_inches = 0)
+             
         ##########################################    
         # Level Assets Assets 
         ##########################################         
@@ -1718,19 +1849,17 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         fig = plt.figure()    
         f3=fig.add_subplot(2,1,1)    
          
-        gridcd=np.linspace(1,Tmax,Tmax)
+        gridcd=np.array(np.linspace(1,Tmax,Tmax)-1,dtype=np.int16)
         
-        plt.plot(gridcd[1:5], ref_coh_d,color='b',markersize=3, label='Data') 
-        plt.fill_between(gridcd[1:5], ref_coh_i[0,:], ref_coh_i[1,:],alpha=0.2,facecolor='g')
-        plt.plot(gridcd[1:5], ref_dut[1:5],linestyle='--',color='r',markersize=3, label='Simulation') 
-        plt.plot(gridcd[1:5], raw_dut[1:5],linestyle='--',color='y',markersize=3, label='Simulation')  
+        plt.plot(gridcd[0:5], ref_coh_d,color='b',markersize=3, label='Data') 
+        plt.fill_between(gridcd[0:5], ref_coh_i[0,:], ref_coh_i[1,:],alpha=0.2,facecolor='g')
+        plt.plot(gridcd[0:5], ref_dut[0:5],linestyle='--',color='r',markersize=3, label='Simulation') 
+        #plt.plot(gridcd[0:5], raw_dut[0:5],linestyle='--',color='y',markersize=3, label='Simulation')  
         plt.yticks(np.arange(0, 2, 0.2))
-        plt.legend(loc='best', ncol=1, fontsize='x-small',frameon=False)
-        #plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
-         #         fancybox=True, shadow=True, ncol=len(state_codes), fontsize='x-small')    
-        plt.xlabel('Premarital Cohabitation (years)')    
-        plt.ylabel('Relative Hazard of Divorce')  
-        
+        plt.legend(loc='best', fontsize='x-small',frameon=False,ncol=2)     
+        plt.xlabel('Premarital Cohabitation Duration (yrs)')    
+        plt.ylabel('Rel. Haz. of Divorce')    
+        plt.savefig('prec.pgf', bbox_inches = 'tight',pad_inches = 0)
          
          
         ##########################################    
@@ -1791,21 +1920,19 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
 
       
         fig = plt.figure()    
-        f4=fig.add_subplot(2,1,1)    
+        f4=fig.add_subplot(1.5,1,1)    
         lg=min(len(everm_d),len(relt[1,:]))    
         xa=(5*np.array(range(lg))+20)   
-        plt.plot(xa, everm_d[0:lg],'g',linewidth=1.5, label='Married - D')    
-        plt.fill_between(xa, everm_i[0,0:lg], everm_i[1,0:lg],alpha=0.2,facecolor='g')    
-        plt.plot(xa, reltt[2,0:lg]/N,'g',linestyle='--',linewidth=1.5, label='Married - S')    
-        plt.plot(xa, everc_d[0:lg],'r',linewidth=1.5, label='Cohabiting - D')    
-        plt.fill_between(xa, everc_i[0,0:lg], everc_i[1,0:lg],alpha=0.2,facecolor='r')    
-        plt.plot(xa, reltt[3,0:lg]/N,'r',linestyle='--',linewidth=1.5, label='Cohabiting - S')    
-        plt.legend(loc='best', fontsize='x-small',frameon=False)
-        #plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
-         #         fancybox=True, shadow=True, ncol=len(state_codes), fontsize='x-small')    
+        plt.plot(xa, everm_d[0:lg],'b',linewidth=1.5, label='Married - D')    
+        plt.fill_between(xa, everm_i[0,0:lg], everm_i[1,0:lg],alpha=0.2,facecolor='b')    
+        plt.plot(xa, reltt[2,0:lg]/N,'r',linestyle='--',linewidth=1.5, label='Married - S')    
+        plt.plot(xa, everc_d[0:lg],'k',linewidth=1.5, label='Cohabiting - D')    
+        plt.fill_between(xa, everc_i[0,0:lg], everc_i[1,0:lg],alpha=0.2,facecolor='k')    
+        plt.plot(xa, reltt[3,0:lg]/N,'m',linestyle='--',linewidth=1.5, label='Cohabiting - S')    
+        plt.legend(loc='best', fontsize=14,frameon=False,ncol=2)    
         plt.ylim(ymax=1.0)    
-        plt.xlabel('Age')    
-        plt.ylabel('Share')    
+        plt.xlabel('Age', fontsize=16)    
+        plt.ylabel('Share',fontsize=16)    
         plt.margins(0,0)  
         plt.savefig('erel.pgf', bbox_inches = 'tight',pad_inches = 0)  
         
@@ -1813,22 +1940,22 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         # Relationship by Education
         ##########################################   
         fig = plt.figure()    
-        f4=fig.add_subplot(2,1,1)    
+        f4=fig.add_subplot(1.5,1,1)    
         lg=min(len(everm_d),len(relt[1,:]))    
         xa=(5*np.array(range(lg))+20)   
-        plt.plot(xa, everr_e_d,'g',linewidth=1.5, label='Rel College - D')    
-        plt.fill_between(xa, everr_e_i[0,:], everr_e_i[1,:],alpha=0.2,facecolor='g')    
-        plt.plot(xa, Ereltt[0,0:lg]/np.sum(educ[:,0]=='e'),'g',linestyle='--',linewidth=1.5, label='Rel College - S')    
-        plt.plot(xa, everr_ne_d,'r',linewidth=1.5, label='Rel NoCollege - D')    
-        plt.fill_between(xa, everr_ne_i[0,:], everr_ne_i[1,:],alpha=0.2,facecolor='r')    
-        plt.plot(xa, Ereltt[1,0:lg]/np.sum(educ[:,0]=='n'),'r',linestyle='--',linewidth=1.5, label='Rel NoCollege - S')   
-        plt.legend(loc='best', fontsize='x-small',frameon=False)
+        plt.plot(xa, everr_e_d,'b',linewidth=1.5, label='College - D')    
+        plt.fill_between(xa, everr_e_i[0,:], everr_e_i[1,:],alpha=0.2,facecolor='b')    
+        plt.plot(xa, Ereltt[0,0:lg]/np.sum(educ[:,0]=='e'),'r',linestyle='--',linewidth=1.5, label='College - S')    
+        plt.plot(xa, everr_ne_d,'k',linewidth=1.5, label='NoCollege - D')    
+        plt.fill_between(xa, everr_ne_i[0,:], everr_ne_i[1,:],alpha=0.2,facecolor='k')    
+        plt.plot(xa, Ereltt[1,0:lg]/np.sum(educ[:,0]=='n'),'m',linestyle='--',linewidth=1.5, label='NoCollege - S')   
+        plt.legend(loc='best', fontsize=14,frameon=False)
         #plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
          #         fancybox=True, shadow=True, ncol=len(state_codes), fontsize='x-small')  
 
         plt.ylim(ymax=1.0)    
-        plt.xlabel('Age')    
-        plt.ylabel('Share')    
+        plt.xlabel('Age', fontsize=16)    
+        plt.ylabel('Share', fontsize=16)    
         plt.margins(0,0)  
         plt.savefig('erel_edu.pgf', bbox_inches = 'tight',pad_inches = 0) 
        
@@ -1888,26 +2015,26 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
          
         ##########################################    
         # Distribution of Love - Cumulative 
-        #################################
-        #########   
+        ##########################################   
         fig = plt.figure()    
         f1=fig.add_subplot(2,1,1) 
          
         # evaluate the histogram 
         valuesc, basec = np.histogram(psi_check[changec], bins=1000) 
         valuesm, basem = np.histogram(psi_check[changem], bins=1000) 
-        valuesct, basect = np.histogram(psi_check[statecpsi], bins=1000) 
-        valuesmt, basemt = np.histogram(psi_check[statempsi], bins=1000) 
+        #valuesct, basect = np.histogram(psi_check[state==3], bins=1000) 
+        #valuesmt, basemt = np.histogram(psi_check[state==2], bins=1000) 
         #evaluate the cumulative 
         cumulativec = np.cumsum(valuesc) 
         cumulativem = np.cumsum(valuesm) 
-        cumulativect = np.cumsum(valuesct) 
-        cumulativemt = np.cumsum(valuesmt) 
+        #cumulativect = np.cumsum(valuesct) 
+        #cumulativemt = np.cumsum(valuesmt) 
         # plot the cumulative function 
         plt.plot(basec[:-1], cumulativec/max(cumulativec), c='red',label = 'Cohabitaition') 
         plt.plot(basem[:-1], cumulativem/max(cumulativem), c='blue',label = 'Marriage') 
-        plt.legend(loc='best', fontsize='x-small',frameon=False)
-        #plt.legend(loc='best', ncol=1, fontsize='x-small')    
+        #plt.plot(basect[:-1], cumulativect/max(cumulativect),linestyle='--', c='red',label = 'Cohabitaition-All') 
+        #plt.plot(basemt[:-1], cumulativemt/max(cumulativemt),linestyle='--', c='blue',label = 'Marriage-All') 
+        plt.legend(loc='best', fontsize='x-small',frameon=False,ncol=2)      
         plt.xlabel('Love Shock $\psi$')    
         plt.ylabel('Probability')  
         plt.savefig('psidist.pgf', bbox_inches = 'tight',pad_inches = 0)  
@@ -1955,6 +2082,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         plt.legend(loc='best', fontsize='x-small',frameon=False)   
         plt.xlabel('Female Pareto Weight')    
         plt.ylabel('Denisty')  
+        plt.savefig('thtdist.pgf', bbox_inches = 'tight',pad_inches = 0) 
          
          
          
@@ -1970,16 +2098,19 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
          
         lg=3
         # create plot    
-        plt.plot(np.array([25,30,35]), moments['flsc'], linestyle='--',linewidth=1.5,color="b", label='Simulated-C')    
-        plt.plot(np.array([25,30,35]), flsc_d,linewidth=1.5,color="b", label='Data-C')  
-        plt.plot(np.array([25,30,35]), moments['flsm'], linestyle='--',linewidth=1.5,color="r", label='Simulated-M')    
-        plt.plot(np.array([25,30,35]), flsm_d,linewidth=1.5,color="r", label='Data-M')  
-        plt.fill_between(np.array([25,30,35]), flsc_i[0,0:lg], flsc_i[1,0:lg],alpha=0.2,facecolor='b')   
-        plt.fill_between(np.array([25,30,35]), flsm_i[0,0:lg], flsm_i[1,0:lg],alpha=0.2,facecolor='r')   
-        plt.ylabel('FLS mar and coh')
+         
+        plt.plot(np.array([0,1,2]), flsc_d,linewidth=1.5,color="b", label='Cohabitation---D')  
+        plt.plot(np.array([0,1,2]), flsm_d,linewidth=1.5,color="k", label='Marriage---D')  
+        plt.fill_between(np.array([0,1,2]), flsc_i[0,0:lg], flsc_i[1,0:lg],alpha=0.2,facecolor='b')   
+        plt.fill_between(np.array([0,1,2]), flsm_i[0,0:lg], flsm_i[1,0:lg],alpha=0.2,facecolor='k')  
+        plt.plot(np.array([0,1,2]), moments['flsc'], linestyle='--',linewidth=1.5,color="r", label='Cohabitation---S') 
+        plt.plot(np.array([0,1,2]), moments['flsm'], linestyle='--',linewidth=1.5,color="m", label='Marriage---S')
+        plt.ylabel('FLS')
         plt.xlabel('Age')
-        plt.legend(loc='best', fontsize='x-small',frameon=False)  
+        plt.legend(loc='best', fontsize='x-small',frameon=False,ncol=2)     
+        plt.xticks(np.arange(3), ('24-26','29-31','34-36'))
         plt.ylim(ymax=1.0,ymin=0.0) 
+        plt.savefig('labor.pgf', bbox_inches = 'tight',pad_inches = 0)
         
         #plt.ylim(ymax=0.1)    
         #plt.xlim(xmax=1.0,xmin=0.0)    
@@ -2110,6 +2241,45 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         plt.xticks(x, ["Data","Simulation"] )  
         #plt.ylim(ymax=1.4)   
         #plt.xlim(xmax=1.0,xmin=0.0)   
+        
+        ##########################################   
+        # Divorce Cost
+        ##########################################   
+        fig = plt.figure()   
+        f6=fig.add_subplot(2,1,1)   
+            
+        
+
+        # create plot   
+        wage=np.linspace(0.001,2,1000)
+        atax=np.exp(np.log(1.0-mdl.setup.div_costs.money_lost_m_ez)+(1.0-mdl.setup.div_costs.prog)*np.log(10.65*wage))/10.65
+        atax=np.exp(np.log(1.0-mdl.setup.div_costs.money_lost_m_ez)+(1.0-mdl.setup.div_costs.prog)*np.log(wage))+0.75
+        plt.plot(wage,wage,color='b')
+        plt.plot(wage,atax,color='r')
+        plt.ylim(ymax=2,ymin=0.001)   
+        #plt.yscale('log')
+        #plt.xscale('log')
+        
+        
+        ############################################################ 
+        # Graph at the beginning-
+        ################################################################### 
+         
+        fig = plt.figure()    
+        f1=fig.add_subplot(2,1,1) 
+         
+        base=np.linspace(0,5,6,dtype=np.int16)
+        raw=np.array([1.0,1.21,0.82,0.79,0.58,0.46])
+        predicted=np.array([1.0,1.11,0.84,0.78,0.76,0.72])
+        # plot the cumulative function 
+        plt.plot(base,raw, c='red',label = 'Raw Data') 
+        plt.plot(base,predicted, c='blue',label = 'Model Prediction') 
+        plt.legend(loc='best', fontsize='x-small',frameon=False,ncol=2)  
+        plt.xlabel('Premarital Cohabitation Duration (Years)')    
+        plt.ylabel('Rel. Haz. of Divorce')  
+        plt.savefig('cohrel.pgf', bbox_inches = 'tight',pad_inches = 0)  
+        
+        
         ##########################################    
         # Put graphs together    
         ##########################################    

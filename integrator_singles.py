@@ -16,7 +16,8 @@ from marriage import v_mar_igrid, v_no_mar
 
 def ev_single(setup,V,sown,female,ef,em,desc,dd,t,trim_lvl=0.001,decc=None):
     # expected value of single person meeting a partner with a chance pmeet
-    pmeet = setup.dtype( setup.pars['pmeet_t'][t] )
+    ed=ef if female else em
+    pmeet = setup.dtype( setup.pars['pmeet_t'][ed][t] )
     
     skip_mar = (pmeet < 1e-5)
     

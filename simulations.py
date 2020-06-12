@@ -398,7 +398,7 @@ class Agents:
                         
                         # meet a partner
                         
-                        pmeet = self.Mlist[ipol].setup.pars['pmeet_t'][t] #timing checked
+                        pmeet = self.Mlist[ipol].setup.pars['pmeet_t'][self.edu][t] #timing checked
                         
                         
                         matches = self.Mlist[ipol].decisions[t][dd][ss][eo]

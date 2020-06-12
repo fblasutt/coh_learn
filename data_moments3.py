@@ -10,7 +10,7 @@ import pandas as pd
 import numpy as np   
 import pickle    
 import statsmodels.formula.api as smf   
-from lifelines import CoxPHFitter  
+from lifelines import CoxPHFitter,WeibullAFTFitter
    
 ################################   
 #Functions   
@@ -415,7 +415,7 @@ def compute(dpi,dco,dma,period=3,transform=1):
     listofTuples = [("hazs" , hazs), ("hazm" , hazm),("hazd" , hazd),("hazde" , hazde),  
                     ("everc" , everc), ("everm" , everm),("everr_e" , everr_e),("everr_ne" , everr_ne),
                     ("flsc" , flsc),("flsm" , flsm),
-                    ("beta_edu" , beta_edu),("ref_coh",ref_dut[1:5]),('ratio_mar',ratio_mar),
+                    ("beta_edu" , beta_edu),("ref_coh",ref_dut[0:5]),('ratio_mar',ratio_mar),
                     ("freq",freq)]   
     dic_mom=dict(listofTuples)   
        
