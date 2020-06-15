@@ -1419,18 +1419,66 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         print('FM Share wages earned by female in cohabitaiton is {}, for marriage only is {}'.format(share_fcm,share_fmm) )   
         print('MM Share wages earned by female in cohabitaiton is {}, for marriage only is {}'.format(share_mcm,share_mmm) )  
 
+        #For assortative mating
+        educ1=educ[:,0:30]
+        edup1=edup[:,0:30]
+        female1=female[:,0:30]
+        state1=state[:,0:30]
+        ee=(educ1=='e') & (edup1=='e')
+        ne=(educ1=='n') & (edup1=='e')
+        en=(educ1=='e') & (edup1=='n')
+        nn=(educ1=='n') & (edup1=='n')
+        print('Share m ee: f {}, m {}'.format(np.mean(ee[(edup1!='single') & (female1==1) & (state1==2)]),np.mean(ee[(edup1!='single') & (female1==0) & (state1==2)])))
+        print('Share m ne: f {}, m {}'.format(np.mean(ne[(edup1!='single') & (female1==1) & (state1==2)]),np.mean(ne[(edup1!='single') & (female1==0) & (state1==2)])))
+        print('Share m en: f {}, m {}'.format(np.mean(en[(edup1!='single') & (female1==1) & (state1==2)]),np.mean(en[(edup1!='single') & (female1==0) & (state1==2)])))
+        print('Share m nn: f {}, m {}'.format(np.mean(nn[(edup1!='single') & (female1==1) & (state1==2)]),np.mean(nn[(edup1!='single') & (female1==0) & (state1==2)])))
+        print('Share c ee: f {}, m {}'.format(np.mean(ee[(edup1!='single') & (female1==1) & (state1==3)]),np.mean(ee[(edup1!='single') & (female1==0) & (state1==3)])))
+        print('Share c ne: f {}, m {}'.format(np.mean(ne[(edup1!='single') & (female1==1) & (state1==3)]),np.mean(ne[(edup1!='single') & (female1==0) & (state1==3)])))
+        print('Share c en: f {}, m {}'.format(np.mean(en[(edup1!='single') & (female1==1) & (state1==3)]),np.mean(en[(edup1!='single') & (female1==0) & (state1==3)])))
+        print('Share c nn: f {}, m {}'.format(np.mean(nn[(edup1!='single') & (female1==1) & (state1==3)]),np.mean(nn[(edup1!='single') & (female1==0) & (state1==3)])))
+                
+
+
+         
+        #Construct fls by first and last point in trans matrix shocks
+        lmzz=np.mean(labor[:,0:25][((setup.all_indices(1,iexo[:,0:25]))[1]==0) & ((setup.all_indices(1,iexo[:,0:25]))[2]==0)  & (state[:,0:25]==2)])
+        lmzm=np.mean(labor[:,0:25][((setup.all_indices(1,iexo[:,0:25]))[1]==0) & ((setup.all_indices(1,iexo[:,0:25]))[2]==(setup.pars['n_zm_t'][0]-1))  & (state[:,0:25]==2)])         
+        lmmz=np.mean(labor[:,0:25][((setup.all_indices(1,iexo[:,0:25]))[1]==(setup.pars['n_zf_t'][0]-1)) & ((setup.all_indices(1,iexo[:,0:25]))[2]==0)  & (state[:,0:25]==2)])
+        lmmm=np.mean(labor[:,0:25][((setup.all_indices(1,iexo[:,0:25]))[1]==(setup.pars['n_zf_t'][0]-1)) & ((setup.all_indices(1,iexo[:,0:25]))[2]==(setup.pars['n_zm_t'][0]-1))  & (state[:,0:25]==2)])        
+        lczz=np.mean(labor[:,0:25][((setup.all_indices(1,iexo[:,0:25]))[1]==0) & ((setup.all_indices(1,iexo[:,0:25]))[2]==0)  & (state[:,0:25]==3)])
+        lczm=np.mean(labor[:,0:25][((setup.all_indices(1,iexo[:,0:25]))[1]==0) & ((setup.all_indices(1,iexo[:,0:25]))[2]==(setup.pars['n_zm_t'][0]-1))  & (state[:,0:25]==3)])         
+        lcmz=np.mean(labor[:,0:25][((setup.all_indices(1,iexo[:,0:25]))[1]==(setup.pars['n_zf_t'][0]-1)) & ((setup.all_indices(1,iexo[:,0:25]))[2]==0)  & (state[:,0:25]==3)])
+        lcmm=np.mean(labor[:,0:25][((setup.all_indices(1,iexo[:,0:25]))[1]==(setup.pars['n_zf_t'][0]-1)) & ((setup.all_indices(1,iexo[:,0:25]))[2]==(setup.pars['n_zm_t'][0]-1))  & (state[:,0:25]==3)])
+                                                            
+        lmzi=np.mean(labor[:,0:25][((setup.all_indices(1,iexo[:,0:25]))[1]==0) & ((setup.all_indices(1,iexo[:,0:25]))[2]==1)  & (state[:,0:25]==2)])
+        lmiz=np.mean(labor[:,0:25][((setup.all_indices(1,iexo[:,0:25]))[1]==1) & ((setup.all_indices(1,iexo[:,0:25]))[2]==0)  & (state[:,0:25]==2)])
+        lmmi=np.mean(labor[:,0:25][((setup.all_indices(1,iexo[:,0:25]))[1]==2) & ((setup.all_indices(1,iexo[:,0:25]))[2]==1)  & (state[:,0:25]==2)])
+        lmim=np.mean(labor[:,0:25][((setup.all_indices(1,iexo[:,0:25]))[1]==1) & ((setup.all_indices(1,iexo[:,0:25]))[2]==2)  & (state[:,0:25]==2)])
+        lmii=np.mean(labor[:,0:25][((setup.all_indices(1,iexo[:,0:25]))[1]==1) & ((setup.all_indices(1,iexo[:,0:25]))[2]==1)  & (state[:,0:25]==2)])
+        lczi=np.mean(labor[:,0:25][((setup.all_indices(1,iexo[:,0:25]))[1]==0) & ((setup.all_indices(1,iexo[:,0:25]))[2]==1)  & (state[:,0:25]==3)])
+        lciz=np.mean(labor[:,0:25][((setup.all_indices(1,iexo[:,0:25]))[1]==1) & ((setup.all_indices(1,iexo[:,0:25]))[2]==0)  & (state[:,0:25]==3)])
+        lcmi=np.mean(labor[:,0:25][((setup.all_indices(1,iexo[:,0:25]))[1]==2) & ((setup.all_indices(1,iexo[:,0:25]))[2]==1)  & (state[:,0:25]==3)])
+        lcim=np.mean(labor[:,0:25][((setup.all_indices(1,iexo[:,0:25]))[1]==1) & ((setup.all_indices(1,iexo[:,0:25]))[2]==2)  & (state[:,0:25]==3)])
+        lcii=np.mean(labor[:,0:25][((setup.all_indices(1,iexo[:,0:25]))[1]==1) & ((setup.all_indices(1,iexo[:,0:25]))[2]==1)  & (state[:,0:25]==3)])
+        
+        
+        
+        print('zz grid, m {} c{}'.format(lmzz,lczz))
+        print('zm grid, m {} c{}'.format(lmzm,lczm))
+        print('mz grid, m {} c{}'.format(lmmz,lcmz))
+        print('mm grid, m {} c{}'.format(lmmm,lcmm))
+        print('zi grid, m {} c{}'.format(lmzi,lczi))
+        print('iz grid, m {} c{}'.format(lmiz,lciz))
+        print('mi grid, m {} c{}'.format(lmmi,lcmi))
+        print('im grid, m {} c{}'.format(lmim,lcim))
+        print('ii grid, m {} c{}'.format(lmii,lcii))
+        
         #Get useful package for denisty plots 
         import seaborn as sns 
          
         #Print something useful for debug and rest    
         print('The share of singles choosing marriage is {0:.2f}'.format(sharem))    
-        cond=(state<2)    
-        if assets_t[cond].size:    
-            print('The max level of assets for singles is {:.2f}, the grid upper bound is {:.2f}'.format(np.amax(assets_t[cond]),max(mdl.setup.agrid_s)))    
-        cond=(state>1)    
-        if assets_t[cond].size:    
-            print('The max level of assets for couples is {:.2f}, the grid upper bound is {:.2f}'.format(np.amax(assets_t[cond]),max(mdl.setup.agrid_c)))    
-             
+ 
         #Setup a file for the graphs    
         import time
         timestr = time.strftime("%H%M%S")
@@ -2137,9 +2185,58 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         plt.ylabel('FLS mar and coh')
         plt.xlabel('Age')
         plt.legend(loc='best', fontsize='x-small',frameon=False)  
-  
+        
+        
+
+
     
        
+        ##########################################    
+        # FLS: Marriage vs. cohabitation  
+        ##########################################     
+        fig = plt.figure()    
+        f6=fig.add_subplot(2,1,1)    
+             
+ 
+        #Construct fls by first and last point in trans matrix shocks
+        lmzz=[np.mean([((setup.all_indices(1,iexo[:,25]))[1]==0) & ((setup.all_indices(1,iexo[:,25]))[2]==0)  & (state[:,25]==2)])/np.mean(state[:,25]==2),
+              np.mean([((setup.all_indices(1,iexo[:,35]))[1]==0) & ((setup.all_indices(1,iexo[:,35]))[2]==0)  & (state[:,35]==2)])/np.mean(state[:,35]==2)]
+
+        lmzm=[np.mean([((setup.all_indices(1,iexo[:,25]))[1]==0) & ((setup.all_indices(1,iexo[:,25]))[2]==(setup.pars['n_zm_t'][0]-1))  & (state[:,25]==2)])/np.mean(state[:,25]==2),
+              np.mean([((setup.all_indices(1,iexo[:,35]))[1]==0) & ((setup.all_indices(1,iexo[:,35]))[2]==(setup.pars['n_zm_t'][0]-1))  & (state[:,35]==2)])/np.mean(state[:,35]==2)]
+         
+        lmmz=[np.mean([((setup.all_indices(1,iexo[:,25]))[1]==(setup.pars['n_zf_t'][0]-1)) & ((setup.all_indices(1,iexo[:,25]))[2]==0)  & (state[:,25]==2)])/np.mean(state[:,25]==2),
+              np.mean([((setup.all_indices(1,iexo[:,35]))[1]==(setup.pars['n_zf_t'][0]-1)) & ((setup.all_indices(1,iexo[:,35]))[2]==0)  & (state[:,35]==2)])/np.mean(state[:,35]==2)]
+
+        lmmm=[np.mean([((setup.all_indices(1,iexo[:,25]))[1]==(setup.pars['n_zf_t'][0]-1)) & ((setup.all_indices(1,iexo[:,25]))[2]==(setup.pars['n_zm_t'][0]-1))  & (state[:,25]==2)])/np.mean(state[:,25]==2),
+              np.mean([((setup.all_indices(1,iexo[:,35]))[1]==(setup.pars['n_zf_t'][0]-1)) & ((setup.all_indices(1,iexo[:,35]))[2]==(setup.pars['n_zm_t'][0]-1))  & (state[:,35]==2)])/np.mean(state[:,35]==2)]
+        
+        lczz=[np.mean([((setup.all_indices(1,iexo[:,25]))[1]==0) & ((setup.all_indices(1,iexo[:,25]))[2]==0)  & (state[:,25]==3)])/np.mean(state[:,35]==3),
+              np.mean([((setup.all_indices(1,iexo[:,35]))[1]==0) & ((setup.all_indices(1,iexo[:,35]))[2]==0)  & (state[:,35]==3)])/np.mean(state[:,35]==3)]
+
+        lczm=[np.mean([((setup.all_indices(1,iexo[:,25]))[1]==0) & ((setup.all_indices(1,iexo[:,25]))[2]==(setup.pars['n_zm_t'][0]-1))  & (state[:,25]==3)])/np.mean(state[:,25]==3),
+              np.mean([((setup.all_indices(1,iexo[:,35]))[1]==0) & ((setup.all_indices(1,iexo[:,35]))[2]==(setup.pars['n_zm_t'][0]-1))  & (state[:,35]==3)])/np.mean(state[:,35]==3)]
+         
+        lcmz=[np.mean([((setup.all_indices(1,iexo[:,25]))[1]==(setup.pars['n_zf_t'][0]-1)) & ((setup.all_indices(1,iexo[:,25]))[2]==0)  & (state[:,25]==3)])/np.mean(state[:,25]==3),
+              np.mean([((setup.all_indices(1,iexo[:,35]))[1]==(setup.pars['n_zf_t'][0]-1)) & ((setup.all_indices(1,iexo[:,35]))[2]==0)  & (state[:,35]==3)])/np.mean(state[:,35]==3)]
+
+        lcmm=[np.mean([((setup.all_indices(1,iexo[:,25]))[1]==(setup.pars['n_zf_t'][0]-1)) & ((setup.all_indices(1,iexo[:,25]))[2]==(setup.pars['n_zm_t'][0]-1))  & (state[:,25]==3)])/np.mean(state[:,25]==3),
+              np.mean([((setup.all_indices(1,iexo[:,35]))[1]==(setup.pars['n_zf_t'][0]-1)) & ((setup.all_indices(1,iexo[:,35]))[2]==(setup.pars['n_zm_t'][0]-1))  & (state[:,35]==3)])/np.mean(state[:,35]==3)]
+                                                            
+        lg=2 
+        # create plot    
+        plt.plot(np.array([25,35]), lczz, linestyle='--',linewidth=1.5,color="b", label='00-C')  
+        plt.plot(np.array([25,35]), lmzz, linewidth=1.5,color="b", label='00-M')  
+        plt.plot(np.array([25,35]), lczm, linestyle='--',linewidth=1.5,color="r", label='01-C')  
+        plt.plot(np.array([25,35]), lmzm, linewidth=1.5,color="r", label='01-M')  
+        plt.plot(np.array([25,35]), lcmz, linestyle='--',linewidth=1.5,color="y", label='10-C')  
+        plt.plot(np.array([25,35]), lmmz, linewidth=1.5,color="y", label='10-M')  
+        plt.plot(np.array([25,35]), lcmm, linestyle='--',linewidth=1.5,color="g", label='11-C')  
+        plt.plot(np.array([25,35]), lmmm, linewidth=1.5,color="g", label='11-M')  
+        plt.ylim(ymin=0.0) 
+        plt.ylabel('Share married and cohabiting by grid by grid of income')
+        plt.xlabel('Age')
+        plt.legend(loc='best', fontsize='x-small',frameon=False)  
         
           
             

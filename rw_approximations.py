@@ -32,7 +32,7 @@ def normcdf_tr(z,nsd=5):
         
         return (st.norm.cdf(z)-pdown)/const
         
-def tauchen_nonst(T=40,sigma_persistent=0.05,sigma_init=0.2,npts=50,nsd=3):
+def tauchen_nonst(T=40,sigma_persistent=0.05,sigma_init=0.2,npts=50,nsd=1):
     import numpy as np
 
     # start with creating list of points

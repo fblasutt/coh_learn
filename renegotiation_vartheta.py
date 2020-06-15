@@ -55,19 +55,19 @@ def v_ren_vt(setup,V,marriage,dd,edu,desc,t,return_extra=False,return_vdiv_only=
         moneyf = setup.exogrid.zf_t[edu[0]][t]+setup.pars['wtrend']['f'][edu[0]][t]
         moneym = setup.exogrid.zm_t[edu[1]][t]+setup.pars['wtrend']['m'][edu[1]][t]
         
-        money_ataxf=np.exp(np.log(1.0-dc.money_lost_f_ez)+(1.0-dc.prog)*np.log(np.exp(moneyf)*0.55))/0.55
-        money_ataxm=np.exp(np.log(1.0-dc.money_lost_m_ez)+(1.0-dc.prog)*np.log(np.exp(moneym)*0.55))/0.55
-        whf=money_ataxf>np.exp(moneyf)
-        whm=money_ataxm>np.exp(moneym)
-        money_ataxm[whm]=np.exp(moneym)[whm]
-        money_ataxf[whf]=np.exp(moneyf)[whf]
+        money_ataxf=np.exp(np.log(1.0-dc.money_lost_f_ez)+(1.0-dc.prog)*np.log(np.exp(moneyf)))
+        money_ataxm=np.exp(np.log(1.0-dc.money_lost_m_ez)+(1.0-dc.prog)*np.log(np.exp(moneym)))
+        # whf=money_ataxf>np.exp(moneyf)
+        # whm=money_ataxm>np.exp(moneym)
+        # money_ataxm[whm]=np.exp(moneym)[whm]
+        # money_ataxf[whf]=np.exp(moneyf)[whf]
         
         money_ataxf=np.exp(np.log(1.0-dc.money_lost_f_ez)+(1.0-dc.prog)*np.log(np.exp(moneyf)))#+0.605#+0.65
         money_ataxm=np.exp(np.log(1.0-dc.money_lost_m_ez)+(1.0-dc.prog)*np.log(np.exp(moneym)))#+0.605#+0.65
-        whf=money_ataxf>np.exp(moneyf)
-        whm=money_ataxm>np.exp(moneym)
-        money_ataxm[whm]=np.exp(moneym)[whm]
-        money_ataxf[whf]=np.exp(moneyf)[whf] 
+        # whf=money_ataxf>np.exp(moneyf)
+        # whm=money_ataxm>np.exp(moneym)
+        # money_ataxm[whm]=np.exp(moneym)[whm]
+        # money_ataxf[whf]=np.exp(moneyf)[whf] 
 
         #money_ataxf=np.exp(moneyf)*(1.0-0.45) if edu[0]=='e' else np.exp(moneyf)*(1.0-0.10)
         #money_ataxm=np.exp(moneym)*(1.0-0.45) if edu[1]=='e' else np.exp(moneym)*(1.0-0.10)

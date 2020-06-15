@@ -144,7 +144,9 @@ if __name__ == '__main__':
    
     #Not really nice
     x0 = np.array([0.2054532226562499996, 0.0,0.2550547890625,   19.1,0.0,-0.15, 1.5,1.4])
-    x0 = np.array([0.3054532226562499996, 0.0,0.1550547890625,  10.1,0.0, -0.1, 1.5,1.8])
+    x0 = np.array([0.3054532226562499996, 0.0,0.1550547890625,  10.1,0.0, -0.15, 1.5,1.8])
+    x0 = np.array([0.8054532226562499996, 0.0,0.285250547890625,  18.1,-0.0, -0.15, 1.5,1.8])
+    #x0 = np.array([0.354532226562499996, 0.5,0.20250547890625,  28.1,0.0, -0.15, 1.5,0.0])
    
     
     #Ish...0.35
@@ -153,7 +155,7 @@ if __name__ == '__main__':
     #ok with 26
     #x0 = np.array([0.284532226562499996, 0.0,0.550547890625,  34.1,0.0,-0.15, 1.5,1.4])
     #x0 = np.array([0.384532226562499996, 0.0,0.450547890625,  34.1,0.0,-0.15, 1.5,1.4])
-    
+     
     #Cost 0.28 0.12
     #x0 = np.array([0.0, 0.0,0.4050547890625,  29.1,0.0,-0.15, 1.5,1.4])
   
@@ -194,7 +196,7 @@ if __name__ == '__main__':
                                       solve_transition=False,                                    
                                       #save_to=['mdl_save_bil_le.pkl'],#'mdl_save_uni.pkl'],
                                       store_path=path,
-                                      verbose=True,calibration_report=False,draw=graphs,graphs=graphs,
+                                       verbose=True,calibration_report=False,draw=graphs,graphs=graphs,
                                       welf=False) #Switch to true for decomposition of welfare analysis
                          
     print('Done. Residual in point x0 is {}'.format(out))
@@ -204,11 +206,11 @@ if __name__ == '__main__':
     #Indexes for the graphs
     if graphs:
         ai=0
-        zfi=3
-        zmi=3
+        zfi=0
+        zmi=2
         psii=0
-        ti=11
-        thi=5
+        ti=45
+        thi=9
         dd=0
         edu=['e','e']
          

@@ -69,18 +69,19 @@ class ModelSetup(object):
         p['sigma_psi_init']=1.0
         p['sig_partner_a'] = 0.1#0.5
         p['sig_partner_z'] = 1.2#1.0#0.4 #This is crazy powerful for the diff in diff estimate
-        p['sig_partner_mult'] = 1.2#1.12
-        p['dump_factor_z'] = 0.4#0.78#0.85#0.8
-        p['mean_partner_z_female'] = -0.25#+0.03
-        p['mean_partner_z_male'] =  -0.1#-0.03
+        p['sig_partner_mult'] = 0.75#1.12
+        p['dump_factor_z'] = 0.8#0.78#0.85#0.8
+        p['mean_partner_z_female'] = -0.1#+0.03
+        p['mean_partner_z_male'] =  0.05#-0.03
         p['mean_partner_a_female'] = -0.0#0.1
         p['mean_partner_a_male'] = 0.0#-0.1
         p['m_bargaining_weight'] = 0.5
-        p['pmeete'] = 0.2#0.55
-        p['pmeetn'] = 0.8
+        p['pmeete'] = 0.5#0.55
+        p['pmeetn'] = 0.99
         p['pmeet1'] = -0.0
+        p['correction']=0.0
         
-        p['z_drift'] = -0.09#-0.2
+        p['z_drift'] = -0.1#-0.2
         
         
         
@@ -102,11 +103,11 @@ class ModelSetup(object):
         p['wtrend']['f'],p['wtrend']['m']=dict(),dict()
       
       
-        p['wtrend']['f']['e'] =[0.0*(t>=Tret)+(t<Tret)*(2.6304016 +.09084669*(t+p['Tbef']) -.00296899*(t+p['Tbef'])**2+.00003033*(t+p['Tbef'])**3) for t in range(T)]
-        p['wtrend']['f']['n'] =[0.0*(t>=Tret)+(t<Tret)*(2.2360833 +.05854567*(t+p['Tbef']) -.00205413*(t+p['Tbef'])**2+.00002566*(t+p['Tbef'])**3) for t in range(T)]
+        p['wtrend']['f']['e'] =[t*p['correction']*(t<Tret)+0.0*(t>=Tret)+(t<Tret)*(2.6024992 +(.04391704)*(t+p['Tbef'])-.00074618*(t+p['Tbef'])**2+.0*(t+p['Tbef'])**3) for t in range(T)]
+        p['wtrend']['f']['n'] =[t*p['correction']*(t<Tret)+0.0*(t>=Tret)+(t<Tret)*(2.3223636 +(.02153848)*(t+p['Tbef']) -.00021086*(t+p['Tbef'])**2+.0*(t+p['Tbef'])**3) for t in range(T)]
         
-        p['wtrend']['m']['e'] = [0.0*(t>=Tret-2)+(t<Tret-2)*(2.3854005  +.11658547*(t+2+p['Tbef']) -.00314674*(t+2+p['Tbef'])**2+ .00002645*(t+2+p['Tbef'])**3) for t in range(T)]
-        p['wtrend']['m']['n'] = [0.0*(t>=Tret-2)+(t<Tret-2)*(2.411279   +.06341459*(t+2+p['Tbef']) -.00163945*(t+2+p['Tbef'])**2+ .00001333*(t+2+p['Tbef'])**3) for t in range(T)]
+        p['wtrend']['m']['e'] = [t*p['correction']*(t<Tret-2)+0.0*(t>=Tret-2)+(t<Tret-2)*(2.3854005  +(.11658547)*(t+2+p['Tbef']) -.00314674*(t+2+p['Tbef'])**2+ .00002645*(t+2+p['Tbef'])**3) for t in range(T)]
+        p['wtrend']['m']['n'] = [t*p['correction']*(t<Tret-2)+0.0*(t>=Tret-2)+(t<Tret-2)*(2.411279   +(.06341459)*(t+2+p['Tbef']) -.00163945*(t+2+p['Tbef'])**2+ .00001333*(t+2+p['Tbef'])**3) for t in range(T)]
                 
 
 
@@ -114,12 +115,11 @@ class ModelSetup(object):
         p['wtrendp']=dict()
         p['wtrendp']['f'],p['wtrendp']['m']=dict(),dict()
       
-        p['wtrendp']['f']['e'] =[0.0*(t>=Tret)+(t<Tret)*(2.6304016 +.09084669*(t+p['Tbef']) -.00296899*(t+p['Tbef'])**2+.00003033*(t+p['Tbef'])**3) for t in range(T)]
-        p['wtrendp']['f']['n'] =[0.0*(t>=Tret)+(t<Tret)*(2.2360833 +.05854567*(t+p['Tbef']) -.00205413*(t+p['Tbef'])**2+.00002566*(t+p['Tbef'])**3) for t in range(T)]
+        p['wtrendp']['f']['e'] =[t*p['correction']*(t<Tret)+0.0*(t>=Tret)+(t<Tret)*(2.6024992 +(.04391704)*(t+p['Tbef'])-.00074618*(t+p['Tbef'])**2+.0*(t+p['Tbef'])**3) for t in range(T)]
+        p['wtrendp']['f']['n'] =[t*p['correction']*(t<Tret)+0.0*(t>=Tret)+(t<Tret)*(2.3223636 +(.02153848)*(t+p['Tbef']) -.00021086*(t+p['Tbef'])**2+.0*(t+p['Tbef'])**3) for t in range(T)]
         
-        p['wtrendp']['m']['e'] = [0.0*(t>=Tret-2)+(t<Tret-2)*(2.3854005  +.11658547*(t+2+p['Tbef']) -.00314674*(t+2+p['Tbef'])**2+ .00002645*(t+2+p['Tbef'])**3) for t in range(T)]
-        p['wtrendp']['m']['n'] = [0.0*(t>=Tret-2)+(t<Tret-2)*(2.411279   +.06341459*(t+2+p['Tbef']) -.00163945*(t+2+p['Tbef'])**2+ .00001333*(t+2+p['Tbef'])**3) for t in range(T)]
-                
+        p['wtrendp']['m']['e'] = [t*p['correction']*(t<Tret-2)+0.0*(t>=Tret-2)+(t<Tret-2)*(2.3854005  +(.11658547)*(t+2+p['Tbef']) -.00314674*(t+2+p['Tbef'])**2+ .00002645*(t+2+p['Tbef'])**3) for t in range(T)]
+        p['wtrendp']['m']['n'] = [t*p['correction']*(t<Tret-2)+0.0*(t>=Tret-2)+(t<Tret-2)*(2.411279   +(.06341459)*(t+2+p['Tbef']) -.00163945*(t+2+p['Tbef'])**2+ .00001333*(t+2+p['Tbef'])**3) for t in range(T)]
 
   
         p['util_lam'] = 0.19#0.4
@@ -380,6 +380,15 @@ class ModelSetup(object):
             exogrid['zm_t']['e'],  exogrid['zm_t_mat']['e'] = rouw_nonst(p['T'],p['sig_zm']['e']*period_year**0.5,p['sig_zm_0']['e'],p['n_zm_t'][0])
             exogrid['zm_t']['n'],  exogrid['zm_t_mat']['n'] = rouw_nonst(p['T'],p['sig_zm']['n']*period_year**0.5,p['sig_zm_0']['n'],p['n_zm_t'][0])
             
+            
+            #Embody the grid for women in a bigger one
+            
+            #Drift the grids
+            for e in ['e','n']:
+                for t in range(Tret):
+                    exogrid['zf_t'][e][t]=exogrid['zf_t'][e][t]-p['correction']*t
+                for t in range(Tret-2):
+                    exogrid['zm_t'][e][t]=exogrid['zm_t'][e][t]-p['correction']*t
      
             ################################
             #First mimic US pension system
@@ -390,7 +399,7 @@ class ModelSetup(object):
                 
                 #Get median income before retirement using men model income in Tret-1
                 #+ ratio of men and female labor income for the rest
-                yret=3.1#(1.73377+(.8427056/1.224638)*1.73377* 0.3246206)/(1+0.3246206)
+                yret=32.30#(1.73377+(.8427056/1.224638)*1.73377* 0.3246206)/(1+0.3246206)
                 thresh1=0.38*yret
                 thresh2=1.59*yret
                 
@@ -403,15 +412,16 @@ class ModelSetup(object):
             
             for e in ['e','n']:
                 for t in range(Tret,T):
-                    exogrid['zf_t'][e][t] = np.array([np.log(p['wret'])])
-                    exogrid['zm_t'][e][t] = np.array([np.log(p['wret'])])
+                #    exogrid['zf_t'][e][t] = np.array([np.log(p['wret'])])
+                 #   exogrid['zm_t'][e][t] = np.array([np.log(p['wret'])])
                     exogrid['zf_t_mat'][e][t] = np.atleast_2d(1.0)
+                for t in range(Tret-2,T):                      
                     exogrid['zm_t_mat'][e][t] = np.atleast_2d(1.0)
                 
                 
-                # fix transition from non-retired to retired    
-                exogrid['zf_t_mat'][Tret-1] = np.ones((p['n_zf_t'][Tret-1],1))
-                exogrid['zm_t_mat'][Tret-1] = np.ones((p['n_zm_t'][Tret-1],1))
+            #     # fix transition from non-retired to retired    
+            #     exogrid['zf_t_mat'][Tret-1] = np.ones((p['n_zf_t'][Tret-1],1))
+            #     exogrid['zm_t_mat'][Tret-1] = np.ones((p['n_zm_t'][Tret-1],1))
             
                 #Tax system as in Wu and Kruger
                 for t in range(0,Tret):
@@ -421,14 +431,17 @@ class ModelSetup(object):
                 #Comment out the following if you dont want retirment based on income
                 for t in range(Tret,T):
                    
-                    exogrid['zf_t'][e][t] = np.log(pens(np.exp(p['wtrend']['f'][e][Tret-1]+exogrid['zf_t'][e][Tret-1])))#np.array([np.log(p['wret'])])
-                    exogrid['zm_t'][e][t] = np.log(pens(np.exp(p['wtrend']['m'][e][Tret-1]+exogrid['zm_t'][e][Tret-1])))               
+                    exogrid['zf_t'][e][t] = np.log(pens(np.exp(p['wtrend']['f'][e][Tret-1]+exogrid['zf_t'][e][Tret-1])))#np.array([np.log(p['wret'])])                                
                     exogrid['zf_t_mat'][e][t] = np.diag(np.ones(len(exogrid['zf_t'][e][t])))#p.atleast_2d(1.0)
+                    
+                    
+                for t in range(Tret-2,T):
+                    exogrid['zm_t'][e][t] = np.log(pens(np.exp(p['wtrend']['m'][e][Tret-3]+exogrid['zm_t'][e][Tret-3]))) 
                     exogrid['zm_t_mat'][e][t] = np.diag(np.ones(len(exogrid['zm_t'][e][t])))
                     
                 # fix transition from non-retired to retired    
                 exogrid['zf_t_mat'][e][Tret-1] = np.diag(np.ones(len(exogrid['zf_t'][e][Tret-1])))
-                exogrid['zm_t_mat'][e][Tret-1] = np.diag(np.ones(len(exogrid['zm_t'][e][Tret-1])))
+                exogrid['zm_t_mat'][e][Tret-3] = np.diag(np.ones(len(exogrid['zm_t'][e][Tret-3])))
 
 
                
@@ -610,7 +623,7 @@ class ModelSetup(object):
 
         
         # construct finer grid for bargaining
-        ntheta_fine = 5*self.ntheta # actual number may be a bit bigger
+        ntheta_fine = 9*self.ntheta # actual number may be a bit bigger
         self.thetagrid_fine = np.unique(np.concatenate( (self.thetagrid,np.linspace(self.thetamin,self.thetamax,ntheta_fine,dtype=self.dtype)) ))
         self.ntheta_fine = self.thetagrid_fine.size
         
@@ -830,13 +843,13 @@ class ModelSetup(object):
         for iz in range(n_zown):
             p_psi = int_prob(psi_couple,mu=0.0,sig=sigma_psi_init)
             if female:
-                p_zm  = int_prob(z_partner, mu=setup.pars['dump_factor_z']*z_own[iz]+
-                                  mean,sig=0.0001+(1-setup.pars['dump_factor_z'])**0.5*sig_z_partner*setup.pars['sig_partner_mult'])
+                p_zm  = int_prob(z_partner, mu=-t*setup.pars['correction']+setup.pars['dump_factor_z']*(z_own[iz]+t*setup.pars['correction'])+
+                                  mean,sig=0.0001+(1-setup.pars['dump_factor_z'])**0.5*(sig_z_partner)*setup.pars['sig_partner_mult'])
                                             
                 p_zf  = zmat_own[iz,:]
             else:
-                p_zf  = int_prob(z_partner, mu=setup.pars['dump_factor_z']*z_own[iz]+ 
-                                 mean,sig=0.0001+(1-setup.pars['dump_factor_z'])**0.5*sig_z_partner*setup.pars['sig_partner_mult'])
+                p_zf  = int_prob(z_partner, mu=-t*setup.pars['correction']+setup.pars['dump_factor_z']*(z_own[iz]+t*setup.pars['correction'])+
+                                 mean,sig=0.0001+(1-setup.pars['dump_factor_z'])**0.5*(sig_z_partner)*setup.pars['sig_partner_mult'])
                                             
                 p_zm  = zmat_own[iz,:]
             #sm = sf
@@ -1136,7 +1149,7 @@ def tauchen_drift(z_now,z_next,rho,sigma,mu,mat):
 
     for j in range(z_next.size):
         Pi[j,:]=int_prob(z_next,mu=ez[j],sig=sigma)
-        if(ez[j]-np.sum(z_next*Pi[j,:])<-0.01):
+        if (abs(ez[j]-np.sum(z_next*Pi[j,:]))>0.001):
             
             if (f(ez[j]-1.0)>0 and f(ez[j]+1.0)<0):
                 sol = optimize.root_scalar(f, x0=ez[j],bracket=[ez[j]-1.0, ez[j]+1.0], maxiter=200,xtol=0.0001,method='bisect')
