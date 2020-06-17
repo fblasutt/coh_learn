@@ -376,7 +376,7 @@ class Agents:
                 
                 def single():
 
-                    isedu=(self.partnert[ind_raw,t]<self.setup.prob[self.sex][self.edu]['e']) 
+                    isedu=(self.partnert[ind_raw,t]<self.setup.prob[self.sex][self.edu]['e'][t]) 
                     
                     grid_edu=['e']  if  self.getadj else ['e','n']
                     

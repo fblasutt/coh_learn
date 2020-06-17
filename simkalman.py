@@ -21,12 +21,12 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
     
     N=1000000
-    T=10
+    T=20
     np.random.seed(19)
    
     sigma0=1.0
-    sigmae=0.030224609375
-    sigmamu=1.0#0.32880859375000004
+    sigmae=0.0#0.030224609375
+    sigmamu=1.1#0.32880859375000004
     
     shocke0=np.random.normal(0.0, sigma0, N)
     shockmu=np.reshape(np.random.normal(0.0, sigmamu, N*T),(N,T))

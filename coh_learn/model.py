@@ -165,9 +165,9 @@ class Model(object):
                     
                 #Now put together the expected value
                 if female:
-                    EV['expected']=setup.prob['f'][edu]['e']*EV['e']+setup.prob['f'][edu]['n']*EV['n']
+                    EV['expected']=setup.prob['f'][edu]['e'][t]*EV['e']+setup.prob['f'][edu]['n'][t]*EV['n']
                 else:
-                    EV['expected']=setup.prob['m'][edu]['e']*EV['e']+setup.prob['m'][edu]['n']*EV['n']
+                    EV['expected']=setup.prob['m'][edu]['e'][t]*EV['e']+setup.prob['m'][edu]['n'][t]*EV['n']
                 
             elif self.setup.desc[desc] == 'Couple, M':
                 EV, dec = ev_couple_m_c(setup,V_next,edu,desc,dd,t,True,draw=draw)

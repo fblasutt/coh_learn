@@ -1404,10 +1404,10 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         
 
         #Wages correlations
-        corr=np.corrcoef(np.log(wage_ft[nsinglefc1]*setup.ls_levels[-1]),np.log(wage_mpt[nsinglefc1])) 
-        corr1=np.corrcoef(np.log(wage_ft[nsinglefm1]*setup.ls_levels[-1]),np.log(wage_mpt[nsinglefm1])) 
-        corrm=np.corrcoef(np.log(wage_mt[nsinglefc2]),np.log(wage_fpt[nsinglefc2]*setup.ls_levels[-1])) 
-        corrm1=np.corrcoef(np.log(wage_mt[nsinglefm2]),np.log(wage_fpt[nsinglefm2]*setup.ls_levels[-1])) 
+        corr=np.corrcoef(wage_ft[nsinglefc1]*setup.ls_levels[-1],wage_mpt[nsinglefc1]) 
+        corr1=np.corrcoef(wage_ft[nsinglefm1]*setup.ls_levels[-1],wage_mpt[nsinglefm1]) 
+        corrm=np.corrcoef(wage_mt[nsinglefc2],wage_fpt[nsinglefc2]*setup.ls_levels[-1])
+        corrm1=np.corrcoef(wage_mt[nsinglefm2],wage_fpt[nsinglefm2]*setup.ls_levels[-1]) 
         share_fcm=np.mean(wage_ft[nsinglefc1]*setup.ls_levels[-1]/(wage_mpt[nsinglefc1]+wage_ft[nsinglefc1]*setup.ls_levels[-1])) 
         share_fmm=np.mean(wage_ft[nsinglefm1]*setup.ls_levels[-1]/(wage_mpt[nsinglefm1]+wage_ft[nsinglefm1]*setup.ls_levels[-1])) 
         share_mcm=np.mean(wage_fpt[nsinglefc2]*setup.ls_levels[-1]/(wage_mt[nsinglefc2]+wage_fpt[nsinglefc2]*setup.ls_levels[-1])) 
@@ -1419,22 +1419,25 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         print('FM Share wages earned by female in cohabitaiton is {}, for marriage only is {}'.format(share_fcm,share_fmm) )   
         print('MM Share wages earned by female in cohabitaiton is {}, for marriage only is {}'.format(share_mcm,share_mmm) )  
 
-        #For assortative mating
-        educ1=educ[:,0:30]
-        edup1=edup[:,0:30]
-        female1=female[:,0:30]
-        state1=state[:,0:30]
+        #For assortative matin
+        lime=min(20,len(edup)-1)
+       
+        educ1=educ[:,0:lime]
+        
+        edup1=edup[:,0:lime]
+        female1=female[:,0:lime]
+        state1=state[:,0:lime]
         ee=(educ1=='e') & (edup1=='e')
         ne=(educ1=='n') & (edup1=='e')
         en=(educ1=='e') & (edup1=='n')
         nn=(educ1=='n') & (edup1=='n')
         print('Share m ee: f {}, m {}'.format(np.mean(ee[(edup1!='single') & (female1==1) & (state1==2)]),np.mean(ee[(edup1!='single') & (female1==0) & (state1==2)])))
-        print('Share m ne: f {}, m {}'.format(np.mean(ne[(edup1!='single') & (female1==1) & (state1==2)]),np.mean(ne[(edup1!='single') & (female1==0) & (state1==2)])))
-        print('Share m en: f {}, m {}'.format(np.mean(en[(edup1!='single') & (female1==1) & (state1==2)]),np.mean(en[(edup1!='single') & (female1==0) & (state1==2)])))
+        print('Share m ne: f {}, m {}'.format(np.mean(ne[(edup1!='single') & (female1==1) & (state1==2)]),np.mean(en[(edup1!='single') & (female1==0) & (state1==2)])))
+        print('Share m en: f {}, m {}'.format(np.mean(en[(edup1!='single') & (female1==1) & (state1==2)]),np.mean(ne[(edup1!='single') & (female1==0) & (state1==2)])))
         print('Share m nn: f {}, m {}'.format(np.mean(nn[(edup1!='single') & (female1==1) & (state1==2)]),np.mean(nn[(edup1!='single') & (female1==0) & (state1==2)])))
         print('Share c ee: f {}, m {}'.format(np.mean(ee[(edup1!='single') & (female1==1) & (state1==3)]),np.mean(ee[(edup1!='single') & (female1==0) & (state1==3)])))
-        print('Share c ne: f {}, m {}'.format(np.mean(ne[(edup1!='single') & (female1==1) & (state1==3)]),np.mean(ne[(edup1!='single') & (female1==0) & (state1==3)])))
-        print('Share c en: f {}, m {}'.format(np.mean(en[(edup1!='single') & (female1==1) & (state1==3)]),np.mean(en[(edup1!='single') & (female1==0) & (state1==3)])))
+        print('Share c ne: f {}, m {}'.format(np.mean(ne[(edup1!='single') & (female1==1) & (state1==3)]),np.mean(en[(edup1!='single') & (female1==0) & (state1==3)])))
+        print('Share c en: f {}, m {}'.format(np.mean(en[(edup1!='single') & (female1==1) & (state1==3)]),np.mean(ne[(edup1!='single') & (female1==0) & (state1==3)])))
         print('Share c nn: f {}, m {}'.format(np.mean(nn[(edup1!='single') & (female1==1) & (state1==3)]),np.mean(nn[(edup1!='single') & (female1==0) & (state1==3)])))
                 
 
@@ -2193,52 +2196,53 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
        
         ##########################################    
         # FLS: Marriage vs. cohabitation  
-        ##########################################     
-        fig = plt.figure()    
-        f6=fig.add_subplot(2,1,1)    
+        ##########################################  
+        if len(iexo[0,:])>35:
+            fig = plt.figure()    
+            f6=fig.add_subplot(2,1,1)    
+                 
+     
+            #Construct fls by first and last point in trans matrix shocks
+            lmzz=[np.mean([((setup.all_indices(1,iexo[:,25]))[1]==0) & ((setup.all_indices(1,iexo[:,25]))[2]==0)  & (state[:,25]==2)])/np.mean(state[:,25]==2),
+                  np.mean([((setup.all_indices(1,iexo[:,35]))[1]==0) & ((setup.all_indices(1,iexo[:,35]))[2]==0)  & (state[:,35]==2)])/np.mean(state[:,35]==2)]
+    
+            lmzm=[np.mean([((setup.all_indices(1,iexo[:,25]))[1]==0) & ((setup.all_indices(1,iexo[:,25]))[2]==(setup.pars['n_zm_t'][0]-1))  & (state[:,25]==2)])/np.mean(state[:,25]==2),
+                  np.mean([((setup.all_indices(1,iexo[:,35]))[1]==0) & ((setup.all_indices(1,iexo[:,35]))[2]==(setup.pars['n_zm_t'][0]-1))  & (state[:,35]==2)])/np.mean(state[:,35]==2)]
              
- 
-        #Construct fls by first and last point in trans matrix shocks
-        lmzz=[np.mean([((setup.all_indices(1,iexo[:,25]))[1]==0) & ((setup.all_indices(1,iexo[:,25]))[2]==0)  & (state[:,25]==2)])/np.mean(state[:,25]==2),
-              np.mean([((setup.all_indices(1,iexo[:,35]))[1]==0) & ((setup.all_indices(1,iexo[:,35]))[2]==0)  & (state[:,35]==2)])/np.mean(state[:,35]==2)]
-
-        lmzm=[np.mean([((setup.all_indices(1,iexo[:,25]))[1]==0) & ((setup.all_indices(1,iexo[:,25]))[2]==(setup.pars['n_zm_t'][0]-1))  & (state[:,25]==2)])/np.mean(state[:,25]==2),
-              np.mean([((setup.all_indices(1,iexo[:,35]))[1]==0) & ((setup.all_indices(1,iexo[:,35]))[2]==(setup.pars['n_zm_t'][0]-1))  & (state[:,35]==2)])/np.mean(state[:,35]==2)]
-         
-        lmmz=[np.mean([((setup.all_indices(1,iexo[:,25]))[1]==(setup.pars['n_zf_t'][0]-1)) & ((setup.all_indices(1,iexo[:,25]))[2]==0)  & (state[:,25]==2)])/np.mean(state[:,25]==2),
-              np.mean([((setup.all_indices(1,iexo[:,35]))[1]==(setup.pars['n_zf_t'][0]-1)) & ((setup.all_indices(1,iexo[:,35]))[2]==0)  & (state[:,35]==2)])/np.mean(state[:,35]==2)]
-
-        lmmm=[np.mean([((setup.all_indices(1,iexo[:,25]))[1]==(setup.pars['n_zf_t'][0]-1)) & ((setup.all_indices(1,iexo[:,25]))[2]==(setup.pars['n_zm_t'][0]-1))  & (state[:,25]==2)])/np.mean(state[:,25]==2),
-              np.mean([((setup.all_indices(1,iexo[:,35]))[1]==(setup.pars['n_zf_t'][0]-1)) & ((setup.all_indices(1,iexo[:,35]))[2]==(setup.pars['n_zm_t'][0]-1))  & (state[:,35]==2)])/np.mean(state[:,35]==2)]
-        
-        lczz=[np.mean([((setup.all_indices(1,iexo[:,25]))[1]==0) & ((setup.all_indices(1,iexo[:,25]))[2]==0)  & (state[:,25]==3)])/np.mean(state[:,35]==3),
-              np.mean([((setup.all_indices(1,iexo[:,35]))[1]==0) & ((setup.all_indices(1,iexo[:,35]))[2]==0)  & (state[:,35]==3)])/np.mean(state[:,35]==3)]
-
-        lczm=[np.mean([((setup.all_indices(1,iexo[:,25]))[1]==0) & ((setup.all_indices(1,iexo[:,25]))[2]==(setup.pars['n_zm_t'][0]-1))  & (state[:,25]==3)])/np.mean(state[:,25]==3),
-              np.mean([((setup.all_indices(1,iexo[:,35]))[1]==0) & ((setup.all_indices(1,iexo[:,35]))[2]==(setup.pars['n_zm_t'][0]-1))  & (state[:,35]==3)])/np.mean(state[:,35]==3)]
-         
-        lcmz=[np.mean([((setup.all_indices(1,iexo[:,25]))[1]==(setup.pars['n_zf_t'][0]-1)) & ((setup.all_indices(1,iexo[:,25]))[2]==0)  & (state[:,25]==3)])/np.mean(state[:,25]==3),
-              np.mean([((setup.all_indices(1,iexo[:,35]))[1]==(setup.pars['n_zf_t'][0]-1)) & ((setup.all_indices(1,iexo[:,35]))[2]==0)  & (state[:,35]==3)])/np.mean(state[:,35]==3)]
-
-        lcmm=[np.mean([((setup.all_indices(1,iexo[:,25]))[1]==(setup.pars['n_zf_t'][0]-1)) & ((setup.all_indices(1,iexo[:,25]))[2]==(setup.pars['n_zm_t'][0]-1))  & (state[:,25]==3)])/np.mean(state[:,25]==3),
-              np.mean([((setup.all_indices(1,iexo[:,35]))[1]==(setup.pars['n_zf_t'][0]-1)) & ((setup.all_indices(1,iexo[:,35]))[2]==(setup.pars['n_zm_t'][0]-1))  & (state[:,35]==3)])/np.mean(state[:,35]==3)]
-                                                            
-        lg=2 
-        # create plot    
-        plt.plot(np.array([25,35]), lczz, linestyle='--',linewidth=1.5,color="b", label='00-C')  
-        plt.plot(np.array([25,35]), lmzz, linewidth=1.5,color="b", label='00-M')  
-        plt.plot(np.array([25,35]), lczm, linestyle='--',linewidth=1.5,color="r", label='01-C')  
-        plt.plot(np.array([25,35]), lmzm, linewidth=1.5,color="r", label='01-M')  
-        plt.plot(np.array([25,35]), lcmz, linestyle='--',linewidth=1.5,color="y", label='10-C')  
-        plt.plot(np.array([25,35]), lmmz, linewidth=1.5,color="y", label='10-M')  
-        plt.plot(np.array([25,35]), lcmm, linestyle='--',linewidth=1.5,color="g", label='11-C')  
-        plt.plot(np.array([25,35]), lmmm, linewidth=1.5,color="g", label='11-M')  
-        plt.ylim(ymin=0.0) 
-        plt.ylabel('Share married and cohabiting by grid by grid of income')
-        plt.xlabel('Age')
-        plt.legend(loc='best', fontsize='x-small',frameon=False)  
-        
-          
+            lmmz=[np.mean([((setup.all_indices(1,iexo[:,25]))[1]==(setup.pars['n_zf_t'][0]-1)) & ((setup.all_indices(1,iexo[:,25]))[2]==0)  & (state[:,25]==2)])/np.mean(state[:,25]==2),
+                  np.mean([((setup.all_indices(1,iexo[:,35]))[1]==(setup.pars['n_zf_t'][0]-1)) & ((setup.all_indices(1,iexo[:,35]))[2]==0)  & (state[:,35]==2)])/np.mean(state[:,35]==2)]
+    
+            lmmm=[np.mean([((setup.all_indices(1,iexo[:,25]))[1]==(setup.pars['n_zf_t'][0]-1)) & ((setup.all_indices(1,iexo[:,25]))[2]==(setup.pars['n_zm_t'][0]-1))  & (state[:,25]==2)])/np.mean(state[:,25]==2),
+                  np.mean([((setup.all_indices(1,iexo[:,35]))[1]==(setup.pars['n_zf_t'][0]-1)) & ((setup.all_indices(1,iexo[:,35]))[2]==(setup.pars['n_zm_t'][0]-1))  & (state[:,35]==2)])/np.mean(state[:,35]==2)]
+            
+            lczz=[np.mean([((setup.all_indices(1,iexo[:,25]))[1]==0) & ((setup.all_indices(1,iexo[:,25]))[2]==0)  & (state[:,25]==3)])/np.mean(state[:,35]==3),
+                  np.mean([((setup.all_indices(1,iexo[:,35]))[1]==0) & ((setup.all_indices(1,iexo[:,35]))[2]==0)  & (state[:,35]==3)])/np.mean(state[:,35]==3)]
+    
+            lczm=[np.mean([((setup.all_indices(1,iexo[:,25]))[1]==0) & ((setup.all_indices(1,iexo[:,25]))[2]==(setup.pars['n_zm_t'][0]-1))  & (state[:,25]==3)])/np.mean(state[:,25]==3),
+                  np.mean([((setup.all_indices(1,iexo[:,35]))[1]==0) & ((setup.all_indices(1,iexo[:,35]))[2]==(setup.pars['n_zm_t'][0]-1))  & (state[:,35]==3)])/np.mean(state[:,35]==3)]
+             
+            lcmz=[np.mean([((setup.all_indices(1,iexo[:,25]))[1]==(setup.pars['n_zf_t'][0]-1)) & ((setup.all_indices(1,iexo[:,25]))[2]==0)  & (state[:,25]==3)])/np.mean(state[:,25]==3),
+                  np.mean([((setup.all_indices(1,iexo[:,35]))[1]==(setup.pars['n_zf_t'][0]-1)) & ((setup.all_indices(1,iexo[:,35]))[2]==0)  & (state[:,35]==3)])/np.mean(state[:,35]==3)]
+    
+            lcmm=[np.mean([((setup.all_indices(1,iexo[:,25]))[1]==(setup.pars['n_zf_t'][0]-1)) & ((setup.all_indices(1,iexo[:,25]))[2]==(setup.pars['n_zm_t'][0]-1))  & (state[:,25]==3)])/np.mean(state[:,25]==3),
+                  np.mean([((setup.all_indices(1,iexo[:,35]))[1]==(setup.pars['n_zf_t'][0]-1)) & ((setup.all_indices(1,iexo[:,35]))[2]==(setup.pars['n_zm_t'][0]-1))  & (state[:,35]==3)])/np.mean(state[:,35]==3)]
+                                                                
+            lg=2 
+            # create plot    
+            plt.plot(np.array([25,35]), lczz, linestyle='--',linewidth=1.5,color="b", label='00-C')  
+            plt.plot(np.array([25,35]), lmzz, linewidth=1.5,color="b", label='00-M')  
+            plt.plot(np.array([25,35]), lczm, linestyle='--',linewidth=1.5,color="r", label='01-C')  
+            plt.plot(np.array([25,35]), lmzm, linewidth=1.5,color="r", label='01-M')  
+            plt.plot(np.array([25,35]), lcmz, linestyle='--',linewidth=1.5,color="y", label='10-C')  
+            plt.plot(np.array([25,35]), lmmz, linewidth=1.5,color="y", label='10-M')  
+            plt.plot(np.array([25,35]), lcmm, linestyle='--',linewidth=1.5,color="g", label='11-C')  
+            plt.plot(np.array([25,35]), lmmm, linewidth=1.5,color="g", label='11-M')  
+            plt.ylim(ymin=0.0) 
+            plt.ylabel('Share married and cohabiting by grid by grid of income')
+            plt.xlabel('Age')
+            plt.legend(loc='best', fontsize='x-small',frameon=False)  
+            
+              
             
         ##########################################################  
         # Histogram of Unilateral Divorce on Cohabitation Length  

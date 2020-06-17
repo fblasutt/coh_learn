@@ -329,7 +329,12 @@ class Agents:
                         shks = self.shocks_couple_iexo[ind[this_ls],t]
                         
                         #Following line takes 94% of the time for this funciton
-                        self.truel[ind[this_ls],t+1]=self.truel[ind[this_ls],t]+self.shocke[ind[this_ls],t+1]
+                        matt=self.setup.exogrid.psi_t_mat[dd][t]
+                        grid=self.setup.exogrid.psi_t[dd][t]
+                        
+                        self.truel[ind[this_ls],t+1]=grid[mc_init_normal_array(self.truel[ind[this_ls],t],grid,shocks=self.shocke[ind[this_ls],t+1],adjust=np.ones(self.truel[ind[this_ls],t].shape))]#mc_simulate(self.ipsi[ind[this_ls],t+1],matt,shocks=self.shocke[ind[this_ls],t+1])
+                       
+                        #self.truel[ind[this_ls],t+1]=self.truel[ind[this_ls],t]+self.shocke[ind[this_ls],t+1]
                         iexo_next_this_ls = mc_simulate(iexo_now[this_ls],mat.todense().T,shocks=shks)
                         self.iexo[ind[this_ls],t+1] = iexo_next_this_ls
                         self.iexos[ind[this_ls],t+1] = iexo_next_this_ls
@@ -342,6 +347,12 @@ class Agents:
                     
                     mat = self.Mlist[ipol].setup.exo_mats[sname][t]
                     self.truel[ind,t+1]=self.shocke0[ind,t+1]
+                    
+                    matt=self.setup.exogrid.psi_t_mat[0][t]
+                    grid=self.setup.exogrid.psi_t[0][t]
+                    self.truel[ind,t+1]=grid[mc_init_normal_array(np.zeros(self.shocke0[ind,t+1].shape),grid,shocks=self.shocke0[ind,t+1],adjust=np.ones(self.shocke0[ind,t+1].shape))]#
+                    #self.truel[ind,t+1]=self.shocke0[ind,t+1]
+                    
                     shks = self.shocks_single_iexo[ind,t]                    
                     iexo_next = mc_simulate(iexo_now,mat,shocks=shks) # import + add shocks     
                     self.iexo[ind,t+1] = iexo_next
@@ -376,7 +387,7 @@ class Agents:
                 
                 def single():
 
-                    isedu=(self.partnert[ind_raw,t]<self.setup.prob[self.sex][self.edu]['e']) 
+                    isedu=(self.partnert[ind_raw,t]<self.setup.prob[self.sex][self.edu]['e'][t]) 
                     if  self.getadj:
                         isedu=np.ones(isedu.shape,dtype=bool) 
                     
@@ -455,7 +466,7 @@ class Agents:
                         # shk=grid[ipsi]
                         if self.getadj:
                             print('The shock of predicted love is {}, while theoricals are {}'.format(np.std(shk),self.setup.pars['sigma_psi_init']))
-                        
+                            print('The average error is {}'.format(np.mean(abs(shk-self.shocke0[ind,t+1]))))
                         
                         
                         iall=self.Mlist[ipol].setup.all_indices(t,(izf,izm,ipsi))[0]
@@ -592,8 +603,14 @@ class Agents:
                     #ipsi=mc_simulate(ipsio,matt,shocks=self.shocks_couples[ind,t+1])
                     
                     mean=(1.0-self.setup.K[dd+1])*self.predl[ind,t]+(self.setup.K[dd+1])*self.truel[ind,t]
-                    grid=self.setup.exogrid.psi_t[dd][t+1]
+                    grid=self.setup.exogrid.psi_t[dd][t+1]                   
                     shocks=self.setup.K[dd+1]*(self.shocke[ind,t+1]+self.shockmu[ind,t+1])
+                    target=self.setup.sigmad[dd]#np.sqrt(self.setup.pars['sigma_psi_init']**2+self.setup.sigmad[dd]**2)#np.sqrt(np.var(mean)+self.setup.sigmad[dd]**2)
+                    #ipsi,adjust=mc_init_normal_corr(mean,grid,shocks=shocks,target=target)
+                    
+                    mean=(1.0-self.setup.K[dd+1])*self.predl[ind,t]+(self.setup.K[dd+1])*self.truel[ind,t+1]
+                    grid=self.setup.exogrid.psi_t[dd][t+1]                   
+                    shocks=self.setup.K[dd+1]*(self.shockmu[ind,t+1])
                     target=self.setup.sigmad[dd]#np.sqrt(self.setup.pars['sigma_psi_init']**2+self.setup.sigmad[dd]**2)#np.sqrt(np.var(mean)+self.setup.sigmad[dd]**2)
                     #ipsi,adjust=mc_init_normal_corr(mean,grid,shocks=shocks,target=target)
                     

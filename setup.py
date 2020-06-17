@@ -8,7 +8,7 @@ import numpy as np
 
 from rw_approximations import rouw_nonst, normcdf_tr,tauchen_nonst#,tauchen_nonstm
 from rw_approximations import rouw_nonstm as tauchen_nonstm
-from mc_tools import combine_matrices_two_lists,combine_matrices_two_listsf, int_prob,cut_matrix
+from mc_tools import mc_simulate,combine_matrices_two_lists,combine_matrices_two_listsf, int_prob,cut_matrix
 from scipy.stats import norm
 from collections import namedtuple
 from gridvec import VecOnGrid
@@ -30,19 +30,19 @@ class ModelSetup(object):
         p = dict()       
         period_year=1#this can be 1,2,3 or 6
         transform=1#this tells how many periods to pull together for duration moments
-        T = int(64/period_year)#
-        Tret =int(48/period_year) #int(15/period_year)#  first period when the agent is retired
+        T = int(64/period_year)#int(26/period_year)#
+        Tret =int(48/period_year) #int(18/period_year)#  first period when the agent is retired
         Tbef=int(2/period_year)
-        Tren =int(48/period_year)#int(15/period_year)# # int(42/period_year) # period starting which people do not renegotiate/divroce
-        Tmeet =int(48/period_year)#int(15/period_year)#i int(42/period_year) # period starting which you do not meet anyone
+        Tren =int(48/period_year)#int(18/period_year)# # int(42/period_year) # period starting which people do not renegotiate/divroce
+        Tmeet =int(48/period_year)#int(18/period_year)#i int(42/period_year) # period starting which you do not meet anyone
         dm=9
         
         #Measure of People
-        p['Nfe']=0.25#3
-        p['Nfn']=1-0.25#0.3
-        p['Nme']=0.25
-        p['Nmn']=1-0.25
-        p['ass']=0.4
+        p['Nfe']=np.array([min(0.25+0.00*t,1.0) for t in range(T)])#np.array([0.25]*T)#*T)
+        p['Nfn']=1.0-p['Nfe']#0.3
+        p['Nme']=np.array([min(0.25+0.00*t,1.0) for t in range(T)])#np.array([0.25]*T)
+        p['Nmn']=1-p['Nme']
+        p['ass']=0.5
         p['dm']=dm
         p['py']=period_year
         p['ty']=transform
@@ -53,9 +53,10 @@ class ModelSetup(object):
         p['sig_zf_0']  = {'e':.5694464,'n':.6121695}#{'e':3.522707,'n':2.853316}#
         p['sig_zf']    = {'e':.0256186**(0.5),'n':.0149161**(0.5)} #{'e':.02**(0.5),'n':.02**(0.5)}#{'e':.0272437**(0.5),'n':.0272437**(0.5)}#
         p['sig_zm_0']  =  {'e':.5673833,'n':.5504325}#{'e':.5449176,'n':.5449176} #{'e':3.500857,'n':2.433748}#
-        p['sig_zm']    =  {'e':.0316222**(0.5),'n':.0229727**(0.5)}# {'e':.025014**(0.5),'n':.025014**(0.5)}#
-        p['n_zf_t']      = [3]*Tret + [3]*(T-Tret)
-        p['n_zm_t']      = [3]*Tret + [3]*(T-Tret)
+        p['sig_zm']    =  {'e':.0316222*(0.5),'n':.0229727**(0.5)}# {'e':.025014**(0.5),'n':.025014**(0.5)}#
+        p['n_zf_t']      = [7]*Tret + [7]*(T-Tret)
+        p['n_zm_t']      = [5]*Tret + [5]*(T-Tret)
+        p['n_zf_correct']=2
         p['sigma_psi_mult'] = 0.28
         p['sigma_psi_mu'] = 0.1#1.0#nthe1.1
         p['sigma_psi']   = 0.11
@@ -69,15 +70,15 @@ class ModelSetup(object):
         p['sigma_psi_init']=1.0
         p['sig_partner_a'] = 0.1#0.5
         p['sig_partner_z'] = 1.2#1.0#0.4 #This is crazy powerful for the diff in diff estimate
-        p['sig_partner_mult'] = 0.75#1.12
-        p['dump_factor_z'] = 0.8#0.78#0.85#0.8
-        p['mean_partner_z_female'] = -0.1#+0.03
-        p['mean_partner_z_male'] =  0.05#-0.03
+        p['sig_partner_mult'] = 0.85#1.12
+        p['dump_factor_z'] =0.6# 0.4#0.8#0.78#0.85#0.8
+        p['mean_partner_z_female'] = 0.0#-0.8#-0.1#+0.03
+        p['mean_partner_z_male'] = 0.0# -0.6#0.05#-0.03
         p['mean_partner_a_female'] = -0.0#0.1
         p['mean_partner_a_male'] = 0.0#-0.1
         p['m_bargaining_weight'] = 0.5
-        p['pmeete'] = 0.5#0.55
-        p['pmeetn'] = 0.99
+        p['pmeete'] = 0.2#0.55
+        p['pmeetn'] = 0.8
         p['pmeet1'] = -0.0
         p['correction']=0.0
         
@@ -118,8 +119,8 @@ class ModelSetup(object):
         p['wtrendp']['f']['e'] =[t*p['correction']*(t<Tret)+0.0*(t>=Tret)+(t<Tret)*(2.6024992 +(.04391704)*(t+p['Tbef'])-.00074618*(t+p['Tbef'])**2+.0*(t+p['Tbef'])**3) for t in range(T)]
         p['wtrendp']['f']['n'] =[t*p['correction']*(t<Tret)+0.0*(t>=Tret)+(t<Tret)*(2.3223636 +(.02153848)*(t+p['Tbef']) -.00021086*(t+p['Tbef'])**2+.0*(t+p['Tbef'])**3) for t in range(T)]
         
-        p['wtrendp']['m']['e'] = [t*p['correction']*(t<Tret-2)+0.0*(t>=Tret-2)+(t<Tret-2)*(2.3854005  +(.11658547)*(t+2+p['Tbef']) -.00314674*(t+2+p['Tbef'])**2+ .00002645*(t+2+p['Tbef'])**3) for t in range(T)]
-        p['wtrendp']['m']['n'] = [t*p['correction']*(t<Tret-2)+0.0*(t>=Tret-2)+(t<Tret-2)*(2.411279   +(.06341459)*(t+2+p['Tbef']) -.00163945*(t+2+p['Tbef'])**2+ .00001333*(t+2+p['Tbef'])**3) for t in range(T)]
+        p['wtrendp']['m']['e'] = [t*p['correction']*(t<Tret-2)+0.0*(t>=Tret-2)+(t<Tret-2)*(2.3982928  +(.1340109)*(t+2+p['Tbef']) -.00502756*(t+2+p['Tbef'])**2+ .00005841*(t+2+p['Tbef'])**3) for t in range(T)]
+        p['wtrendp']['m']['n'] = [t*p['correction']*(t<Tret-2)+0.0*(t>=Tret-2)+(t<Tret-2)*(2.4647508   +(.08386113)*(t+2+p['Tbef']) -.00322518*(t+2+p['Tbef'])**2+ .00004086*(t+2+p['Tbef'])**3) for t in range(T)]
 
   
         p['util_lam'] = 0.19#0.4
@@ -325,8 +326,8 @@ class ModelSetup(object):
         
         
         # female labor supply
-        self.ls_levels = np.array([0.0,.75],dtype=self.dtype)
-        self.mlevel=.75
+        self.ls_levels = np.array([0.0,1.0],dtype=self.dtype)
+        self.mlevel=1.0
         #self.ls_utilities = np.array([p['uls'],0.0],dtype=self.dtype)
         self.ls_pdown = np.array([p['pls'],0.0],dtype=self.dtype)
         self.nls = len(self.ls_levels)
@@ -374,22 +375,63 @@ class ModelSetup(object):
             # in principle we can generalize this
             
 
-            exogrid['zf_t'],  exogrid['zf_t_mat'],exogrid['zm_t'],  exogrid['zm_t_mat']=dict(),dict(),dict(),dict()
-            exogrid['zf_t']['e'],  exogrid['zf_t_mat']['e'] = rouw_nonst(p['T'],p['sig_zf']['e']*period_year**0.5,p['sig_zf_0']['e'],p['n_zf_t'][0])
-            exogrid['zf_t']['n'],  exogrid['zf_t_mat']['n'] = rouw_nonst(p['T'],p['sig_zf']['n']*period_year**0.5,p['sig_zf_0']['n'],p['n_zf_t'][0])
+            exogrid['zf_t'],  exogrid['zf_t_mat'],zft,zftmat,exogrid['zm_t'],  exogrid['zm_t_mat']=dict(),dict(),dict(),dict(),dict(),dict()
+            zft['e'],       zftmat['e']                     = rouw_nonst(p['T'],p['sig_zf']['e']*period_year**0.5,p['sig_zf_0']['e'],p['n_zf_t'][0]-p['n_zf_correct'])
+            zft['n'],               zftmat['n']             = rouw_nonst(p['T'],p['sig_zf']['n']*period_year**0.5,p['sig_zf_0']['n'],p['n_zf_t'][0]-p['n_zf_correct'])
             exogrid['zm_t']['e'],  exogrid['zm_t_mat']['e'] = rouw_nonst(p['T'],p['sig_zm']['e']*period_year**0.5,p['sig_zm_0']['e'],p['n_zm_t'][0])
             exogrid['zm_t']['n'],  exogrid['zm_t_mat']['n'] = rouw_nonst(p['T'],p['sig_zm']['n']*period_year**0.5,p['sig_zm_0']['n'],p['n_zm_t'][0])
             
             
-            #Embody the grid for women in a bigger one
             
+            
+            #Embody the grid for women in a bigger one
+            if p['n_zf_correct']>0:
+                for edu in ['e','n']:
+                    exogrid['zf_t'][edu]=list()
+                    exogrid['zf_t_mat'][edu]=list()
+                    for t in range(p['T']):
+                        
+                        
+                        #Extend grid
+                        h=zft[edu][t][1]-zft[edu][t][0]
+                        dist1=zft[edu][t][0]-h
+                        dist0=zft[edu][t][0]-p['n_zf_correct']*h
+                        
+                        #Copy transition matrix
+                        exogrid['zf_t'][edu]=exogrid['zf_t'][edu]+[np.concatenate((np.array([dist0,dist1]),zft[edu][t]))]
+                        exogrid['zf_t_mat'][edu]=exogrid['zf_t_mat'][edu]+[np.zeros((p['n_zf_t'][t],p['n_zf_t'][t]))]
+                        exogrid['zf_t_mat'][edu][t][p['n_zf_correct']:,p['n_zf_correct']:]=zftmat[edu][t]
+                        
+                        #Shift transition matrix to fill values
+                        if t<p['T']-1:
+                            
+                            exogrid['zf_t_mat'][edu][t][0,:-p['n_zf_correct']]=zftmat[edu][t][0,:]
+                            exogrid['zf_t_mat'][edu][t][1,:-p['n_zf_correct']]=zftmat[edu][t][1,:]
+                           
+                                
+                        else:
+                            exogrid['zf_t_mat'][edu][t]=None
+                           
+                    
+            else:    
+
+                exogrid['zf_t']=zft
+                exogrid['zf_t_mat']=zftmat
+
+                    
+                    
             #Drift the grids
             for e in ['e','n']:
+                
                 for t in range(Tret):
                     exogrid['zf_t'][e][t]=exogrid['zf_t'][e][t]-p['correction']*t
                 for t in range(Tret-2):
                     exogrid['zm_t'][e][t]=exogrid['zm_t'][e][t]-p['correction']*t
-     
+                    
+                    
+                    
+
+         
             ################################
             #First mimic US pension system
             ###############################
@@ -415,8 +457,7 @@ class ModelSetup(object):
                 #    exogrid['zf_t'][e][t] = np.array([np.log(p['wret'])])
                  #   exogrid['zm_t'][e][t] = np.array([np.log(p['wret'])])
                     exogrid['zf_t_mat'][e][t] = np.atleast_2d(1.0)
-                for t in range(Tret-2,T):                      
-                    exogrid['zm_t_mat'][e][t] = np.atleast_2d(1.0)
+                 #for t in range(Tret-2,T):                      
                 
                 
             #     # fix transition from non-retired to retired    
@@ -567,8 +608,45 @@ class ModelSetup(object):
             
             
         
+                #Get distribution of productivties by age:
+        N=10000
+        shokko=np.random.random_sample((2,N,T))
+        self.exo=dict()
+        self.exo['e']=np.zeros((2,N,T+1),dtype=np.int16)
+        self.exo['n']=np.zeros((2,N,T+1),dtype=np.int16)
+        
+        self.exo['e'][0,:,0]=np.array(np.ones(N)*(self.pars['n_zm_t'][0]-1)/2,dtype=np.int16)
+        self.exo['e'][1,:,0]=np.array(np.ones(N)*(self.pars['n_zf_t'][0]-self.pars['n_zf_correct']-1)/2+self.pars['n_zf_correct'],dtype=np.int16)
+        self.exo['n'][0,:,0]=np.array(np.ones(N)*(self.pars['n_zm_t'][0]-1)/2,dtype=np.int16)
+        self.exo['n'][1,:,0]=np.array(np.ones(N)*(self.pars['n_zf_t'][0]-self.pars['n_zf_correct']-1)/2+self.pars['n_zf_correct'],dtype=np.int16)
+        
+        #Initial State
+        shocks_init = shokko[1,:,0]
+        self.exo['e'][0,:,0]=np.sum((shocks_init[:,None] > np.cumsum(int_prob(self.exogrid.zm_t['e'][0],sig=self.pars['sig_zm_0']['e']))[None,:]), axis=1) 
+        self.exo['n'][0,:,0]=np.sum((shocks_init[:,None] > np.cumsum(int_prob(self.exogrid.zm_t['n'][0],sig=self.pars['sig_zm_0']['n']))[None,:]), axis=1) 
+        self.exo['e'][1,:,0]=np.sum((shocks_init[:,None] > np.cumsum(int_prob(self.exogrid.zf_t['e'][0],sig=self.pars['sig_zf_0']['e']))[None,:]), axis=1) 
+        self.exo['n'][1,:,0]=np.sum((shocks_init[:,None] > np.cumsum(int_prob(self.exogrid.zf_t['n'][0],sig=self.pars['sig_zf_0']['n']))[None,:]), axis=1) 
+        
+       
+        for e in ['e','n']:
+            for t in range(self.pars['T']-1):
+                
+                self.exo[e][0,:,t+1]=mc_simulate(self.exo[e][0,:,t],self.exogrid.zm_t_mat[e][t],shocks=shokko[0,:,t])
+                self.exo[e][1,:,t+1]=mc_simulate(self.exo[e][1,:,t],self.exogrid.zf_t_mat[e][t],shocks=shokko[1,:,t])
+           
+        #Get theh distribution
+        self.probb=dict()
+        self.probb['f'],self.probb['m']=dict(),dict()
+        self.probb['f']['e'],self.probb['m']['e'],self.probb['f']['n'],self.probb['m']['n']=list(),list(),list(),list()
+        
+        zera=np.zeros(self.pars['n_zf_correct'])
+        for e in ['e','n']:
+            for t in range(self.pars['T']-1):
+                self.probb['m'][e]=self.probb['m'][e]+[np.unique(self.exo[e][0,:,t], return_counts=True)[1]/N]
+                self.probb['f'][e]=self.probb['f'][e]+[np.unique(self.exo[e][1,:,t], return_counts=True)[1]/N]
             
             
+        
         #Grid Couple
         self.na = 40
         self.amin = 0
@@ -748,6 +826,9 @@ class ModelSetup(object):
         self.u_precompute()
         
         
+                                  
+        
+        
     def mar_mats_assets(self,npoints=1,abar=0.0001):
         # for each grid point on single's grid it returns npoints positions
         # on (potential) couple's grid's and assets of potential partner 
@@ -824,7 +905,7 @@ class ModelSetup(object):
             z_partner = setup.exogrid.zm_t[eo][t]
             zmat_own = setup.exogrid.zf_t_mat[e][t]
             trend=setup.pars['wtrendp'][go][eo][t]
-            mean=setup.pars['mean_partner_z_female']#-setup.pars['wtrend'][go][eo][t]+setup.pars['wtrendp'][go][eo][t]
+            mean=setup.pars['mean_partner_z_female']-setup.pars['wtrend'][go][eo][t]+setup.pars['wtrendp'][go][eo][t]
             sig_z_partner=(setup.pars['sig_zm_0'][eo]**2+(t+1)*setup.pars['sig_zm'][eo]**2)**0.5
         else:
             nz_single = setup.exogrid.zm_t[e][t].shape[0]
@@ -834,7 +915,7 @@ class ModelSetup(object):
             z_partner = setup.exogrid.zf_t[eo][t]
             zmat_own = setup.exogrid.zm_t_mat[e][t]    
             trend=setup.pars['wtrendp'][go][eo][t]
-            mean=setup.pars['mean_partner_z_male']#-setup.pars['wtrend'][go][eo][t]+setup.pars['wtrendp'][go][eo][t]
+            mean=setup.pars['mean_partner_z_male']-setup.pars['wtrend'][go][eo][t]+setup.pars['wtrendp'][go][eo][t]
             sig_z_partner=(setup.pars['sig_zf_0'][eo]**2+(t+1)*setup.pars['sig_zf'][eo]**2)**0.5
             
         def ind_conv(a,b,c): return setup.all_indices(t,(a,b,c))[0]
@@ -843,14 +924,21 @@ class ModelSetup(object):
         for iz in range(n_zown):
             p_psi = int_prob(psi_couple,mu=0.0,sig=sigma_psi_init)
             if female:
-                p_zm  = int_prob(z_partner, mu=-t*setup.pars['correction']+setup.pars['dump_factor_z']*(z_own[iz]+t*setup.pars['correction'])+
+              #  p_zm  = (1-setup.pars['dump_factor_z'])*self.probb['m'][eo][t]+setup.pars['dump_factor_z']*int_prob(z_partner, mu=z_own[iz]+mean,sig=0.0001)
+                      
+                
+                p_zm  =int_prob(z_partner, mu=-t*setup.pars['correction']+setup.pars['dump_factor_z']*(z_own[iz]+t*setup.pars['correction'])+
                                   mean,sig=0.0001+(1-setup.pars['dump_factor_z'])**0.5*(sig_z_partner)*setup.pars['sig_partner_mult'])
                                             
                 p_zf  = zmat_own[iz,:]
             else:
-                p_zf  = int_prob(z_partner, mu=-t*setup.pars['correction']+setup.pars['dump_factor_z']*(z_own[iz]+t*setup.pars['correction'])+
-                                 mean,sig=0.0001+(1-setup.pars['dump_factor_z'])**0.5*(sig_z_partner)*setup.pars['sig_partner_mult'])
-                                            
+               # p_zf  = (1-setup.pars['dump_factor_z'])*self.probb['f'][eo][t]+setup.pars['dump_factor_z']*int_prob(z_partner, mu=z_own[iz]+mean,sig=0.0001)
+                     
+
+                p_zf  =int_prob(z_partner, mu=-t*setup.pars['correction']+setup.pars['dump_factor_z']*(z_own[iz]+t*setup.pars['correction'])+
+                                  mean,sig=0.0001+(1-setup.pars['dump_factor_z'])**0.5*(sig_z_partner)*setup.pars['sig_partner_mult'])
+                       
+                       
                 p_zm  = zmat_own[iz,:]
             #sm = sf
         
