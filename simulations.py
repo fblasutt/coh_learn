@@ -465,8 +465,8 @@ class Agents:
 
                         # shk=grid[ipsi]
                         if self.getadj:
-                            print('The shock of predicted love is {}, while theoricals are {}'.format(np.std(shk),self.setup.pars['sigma_psi_init']))
-                            print('The average error is {}'.format(np.mean(abs(shk-self.shocke0[ind,t+1]))))
+                            #print('The shock of predicted love is {}, while theoricals are {}'.format(np.std(shk),self.setup.pars['sigma_psi_init']))
+                            #print('The average error is {}'.format(np.mean(abs(shk-self.shocke0[ind,t+1]))))
                         
                         
                         iall=self.Mlist[ipol].setup.all_indices(t,(izf,izm,ipsi))[0]
@@ -628,9 +628,9 @@ class Agents:
   
                     
                     if self.getadj:
-                        print('In {}, the mean of past prediction is {}, average error is {}'.format(dd,np.mean(self.predl[ind,t]),np.mean(np.absolute(aft-self.truel[ind,t+1]))))
+                        #1print('In {}, the mean of past prediction is {}, average error is {}'.format(dd,np.mean(self.predl[ind,t]),np.mean(np.absolute(aft-self.truel[ind,t+1]))))
                     #print('In {}, the mean of past prediction is {}, average error is {}'.format(dd,np.mean(self.predl[ind,t]),np.mean(np.absolute(bef-aft))))
-                        print('The standard deviation of innovation in {} is {}, theorical is {}'.format(dd,np.std(diffe),self.setup.sigmad[dd]))
+                        #1print('The standard deviation of innovation in {} is {}, theorical is {}'.format(dd,np.std(diffe),self.setup.sigmad[dd]))
                     #print('target is {} actual variance is{},in grid is {}'.format(target,np.std(mean1),np.std(self.predl[ind,t+1])))
                     
                     self.predl[ind,t+1]=aft#grid[abs(mean1[:,np.newaxis]-grid).argmin(axis=1)] 

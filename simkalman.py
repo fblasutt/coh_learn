@@ -15,19 +15,24 @@ if __name__ == '__main__':
     
     
     import numpy as np
-    from mc_tools import mc_simulate, int_prob,int_proba
-    from gridvec import VecOnGrid
     from statutils import kalman
     import matplotlib.pyplot as plt
     
-    N=1000000
-    T=20
+    
+    #Set parameters
+    N=1000000 #realizations
+    T=20 #length of time series
+    
+    #set the seed
     np.random.seed(19)
    
+    #parameters of the kalman filter
     sigma0=1.0
     sigmae=0.0#0.030224609375
     sigmamu=1.1#0.32880859375000004
     
+    
+    #initialize arrays
     shocke0=np.random.normal(0.0, sigma0, N)
     shockmu=np.reshape(np.random.normal(0.0, sigmamu, N*T),(N,T))
     shocke=np.reshape(np.random.normal(0.0, sigmae, N*T),(N,T))
@@ -41,9 +46,10 @@ if __name__ == '__main__':
     upred=np.ones(shocke.shape)*-1
     error=np.ones(shocke.shape)*-1
     
+    #Get the kalman gain from external routine
     K,sigmav=kalman(1.0,sigmae**2,sigmamu**2,sigma0**2,T)
         
-    #Initialize first period
+    #Actual simulation!!
     for i in range(T):
         true[:,i]=shocke[:,i] if i==0 else true[:,i-1]+shocke[:,i]
         noise[:,i]=true[:,i]+shockmu[:,i]
@@ -51,6 +57,8 @@ if __name__ == '__main__':
         upred[:,i]=pred[:,i]+K[i]*(noise[:,i]-pred[:,i]) 
         error[:,i]=np.absolute(upred[:,i]-true[:,i])
     
+    
+    #Get some interesting moments from the simulation
     trueu=true[:,1:]-true[:,0:-1]
     nex=np.zeros(true.shape)
     nex[:,1:]=upred[:,:T-1]

@@ -63,7 +63,32 @@ def compute(dpi,dco,dma,period=3,transform=1):
     #says how many years correspond to one   
     #period   
    
+    ###############################
+    #Assortative Mating
+    #################################
+     
+    dco.loc[(dco['edusp']>=0) & (dco['edusp']<=30),'collegep']=0.0  
+    dco.loc[(dco['edusp']>=16) & (dco['edusp']<=30),'collegep']=1.0  
     
+    dma.loc[(dma['edusp']>=0) & (dma['edusp']<=30),'collegep']=0.0  
+    dma.loc[(dma['edusp']>=16) & (dma['edusp']<=30),'collegep']=1.0  
+    
+    dco1=dco.drop(columns=['timec','countc']).dropna()
+    dma1=dma.dropna()
+    
+    
+    male=np.concatenate((dco1[dco1.sex==1].college,dma1[dma1.sex==1].college))
+    malep=np.concatenate((dco1[dco1.sex==1].collegep,dma1[dma1.sex==1].collegep))
+    wmale=np.concatenate((dco1[dco1.sex==1].weight,dma1[dma1.sex==1].weight))
+    
+    female=np.concatenate((dco1[dco1.sex==2].college,dma1[dma1.sex==2].college))
+    femalep=np.concatenate((dco1[dco1.sex==2].collegep,dma1[dma1.sex==2].collegep))
+    wfemale=np.concatenate((dco1[dco1.sex==2].weight,dma1[dma1.sex==2].weight))
+    
+    
+ 
+    malecorr=np.corrcoef(male,malep)[0,1]
+    femalecorr=np.corrcoef(female,femalep)[0,1]
     ############################
     # RELATIONSHIP BY AGE
     ##########################
@@ -413,10 +438,10 @@ def compute(dpi,dco,dma,period=3,transform=1):
        
     #Create a dictionary for saving simulated moments   
     listofTuples = [("hazs" , hazs), ("hazm" , hazm),("hazd" , hazd),("hazde" , hazde),  
-                    ("everc" , everc), ("everm" , everm),("everr_e" , everr_e),("everr_ne" , everr_ne),
+                    ("everc" , everc), ("everm" , everm),("everr_e" , everr_e),("everr_ne" , everr_ne),("everr_d" , everr_ne-everr_e),
                     ("flsc" , flsc),("flsm" , flsm),
                     ("beta_edu" , beta_edu),("ref_coh",ref_dut[0:5]),('ratio_mar',ratio_mar),
-                    ("freq",freq)]   
+                    ("freq",freq),("malecorr",malecorr),("femalecorr",femalecorr)]   
     dic_mom=dict(listofTuples)   
        
     del dpi,dco,dma
@@ -458,12 +483,15 @@ def dat_moments(sampling_number=5,weighting=False,covariances=False,relative=Fal
     everm=dic['everm']
     everr_e=dic['everr_e']
     everr_ne=dic['everr_ne']
+    everr_d=dic['everr_d']
     flsc=dic['flsc']
     flsm=dic['flsm']
     beta_edu=dic['beta_edu']
     ref_coh=dic['ref_coh']
     freq=dic['freq']
     ratio_mar=dic['ratio_mar']
+    malecorr=dic['malecorr']
+    femalecorr=dic['femalecorr']
 
        
     #Use bootstrap samples to compute the weighting matrix   
@@ -483,11 +511,14 @@ def dat_moments(sampling_number=5,weighting=False,covariances=False,relative=Fal
     evermB=np.zeros((len(everm),boot))   
     everr_eB=np.zeros((len(everr_e),boot))   
     everr_neB=np.zeros((len(everr_ne),boot))   
+    everr_dB=np.zeros((len(everr_d),boot))   
     flscB=np.zeros((len(flsc),boot)) 
     flsmB=np.zeros((len(flsm),boot)) 
     beta_eduB=np.zeros((1,boot))
     ref_cohB=np.zeros((len(ref_coh),boot)) 
     ratio_marB=np.zeros((1,boot))   
+    malecorrB=np.zeros((1,boot))
+    femalecorrB=np.zeros((1,boot))
        
     aa=dpeople.sample(n=nn,replace=True,weights='weight',random_state=4) 
     a_h=dcoh.sample(n=nn_c,replace=True,random_state=5) 
@@ -509,12 +540,15 @@ def dat_moments(sampling_number=5,weighting=False,covariances=False,relative=Fal
         evercB[:,i]=dicti['everc']   
         evermB[:,i]=dicti['everm']   
         everr_eB[:,i]=dicti['everr_e'] 
-        everr_neB[:,i]=dicti['everr_ne'] 
+        everr_neB[:,i]=dicti['everr_ne']
+        everr_dB[:,i]=dicti['everr_d']
         flscB[:,i]=dicti['flsc'] 
         flsmB[:,i]=dicti['flsm']  
         beta_eduB[:,i]=dicti['beta_edu']   
         ref_cohB[:,i]=dicti['ref_coh']   
         ratio_marB[:,i]=dicti['ratio_mar']
+        malecorrB[:,i]=dicti['malecorr']
+        femalecorrB[:,i]=dicti['femalecorr']
            
        
     #################################   
@@ -527,18 +561,20 @@ def dat_moments(sampling_number=5,weighting=False,covariances=False,relative=Fal
     everci=np.array((np.percentile(evercB,2.5,axis=1),np.percentile(evercB,97.5,axis=1)))   
     evermi=np.array((np.percentile(evermB,2.5,axis=1),np.percentile(evermB,97.5,axis=1)))   
     everr_ei=np.array((np.percentile(everr_eB,2.5,axis=1),np.percentile(everr_eB,97.5,axis=1)))   
-    everr_nei=np.array((np.percentile(everr_neB,2.5,axis=1),np.percentile(everr_neB,97.5,axis=1)))   
+    everr_nei=np.array((np.percentile(everr_neB,2.5,axis=1),np.percentile(everr_neB,97.5,axis=1))) 
+    everr_di=np.array((np.percentile(everr_dB,2.5,axis=1),np.percentile(everr_dB,97.5,axis=1))) 
     flsci=np.array((np.percentile(flscB,2.5,axis=1),np.percentile(flscB,97.5,axis=1))) 
     flsmi=np.array((np.percentile(flsmB,2.5,axis=1),np.percentile(flsmB,97.5,axis=1)))
     beta_edui=np.array((np.percentile(beta_eduB,2.5,axis=1),np.percentile(beta_eduB,97.5,axis=1)))   
     ref_cohi=np.array((np.percentile(ref_cohB,2.5,axis=1),np.percentile(ref_cohB,97.5,axis=1)))   
     ratio_mari=np.array((np.percentile(ratio_marB,2.5,axis=1),np.percentile(ratio_marB,97.5,axis=1)))   
-       
+    malecorri=np.array((np.percentile(malecorrB,2.5,axis=1),np.percentile(malecorrB,97.5,axis=1)))   
+    femalecorri=np.array((np.percentile(femalecorrB,2.5,axis=1),np.percentile(femalecorrB,97.5,axis=1)))   
     #Do what is next only if you want the weighting matrix      
     if weighting:   
            
         #Compute optimal Weighting Matrix   
-        col=np.concatenate((hazmB,hazsB,hazdB,hazdeB,evercB,evermB,flscB,flsmB,beta_eduB),axis=0)       
+        col=np.concatenate((hazmB,hazsB,hazdB,hazdeB,evercB,evermB,everr_dB,flscB,flsmB,beta_eduB),axis=0)       
         dim=len(col)   
         W_in=np.zeros((dim,dim))   
         for i in range(dim):   
@@ -557,7 +593,7 @@ def dat_moments(sampling_number=5,weighting=False,covariances=False,relative=Fal
     elif relative:  
           
         #Compute optimal Weighting Matrix   
-        col=np.concatenate((hazm,hazs,hazd,hazde,everc,everm,flsc,flsm,beta_edu*np.ones(1)),axis=0)       
+        col=np.concatenate((hazm,hazs,hazd,hazde,everc,everm,everr_d,flsc,flsm,beta_edu*np.ones(1)),axis=0)       
         dim=len(col)   
         W=np.zeros((dim,dim))   
         for i in range(dim):   
@@ -566,16 +602,17 @@ def dat_moments(sampling_number=5,weighting=False,covariances=False,relative=Fal
     else:   
            
         #If no weighting, just use sum of squred deviations as the objective function           
-        W=np.diag(np.ones(len(hazm)+len(hazs)+len(hazd)+len(hazde)+len(everc)+len(everm)+len(flsc)+len(flsm)+1))#two is for fls+beta_unid   
+        W=np.diag(np.ones(len(hazm)+len(hazs)+len(hazd)+len(hazde)+len(everc)+len(everm)+len(everr_d)+len(flsc)+len(flsm)+1))#two is for fls+beta_unid   
            
     listofTuples = [("hazs" , hazs), ("hazm" , hazm),("hazd" , hazd),("hazde" , hazde),  
-                    ("everc" , everc), ("everm" , everm),("everr_e" , everr_e),("everr_ne" , everr_ne),
+                    ("everc" , everc), ("everm" , everm),("everr_e" , everr_e),("everr_ne" , everr_ne),("everr_d" , everr_d),
                     ("flsc" , flsc),("flsm" , flsm),
-                    ("beta_edu" , beta_edu),("ref_coh",ref_coh),("ratio_mar",ratio_mar),
+                    ("beta_edu" , beta_edu),("ref_coh",ref_coh),("ratio_mar",ratio_mar),("malecorr",malecorr),("femalecorr",femalecorr),
                     ("hazsi" , hazsi), ("hazmi" , hazmi),("hazdi" , hazdi),  ("hazdei" , hazdei), 
-                    ("everci" , everci), ("evermi" , evermi),("everr_ei" , everr_ei),("everr_nei" , everr_nei),
+                    ("everci" , everci), ("evermi" , evermi),("everr_ei" , everr_ei),("everr_nei" , everr_nei),("everr_di" , everr_di),
                     ("flsci" , flsci),("flsmi" , flsmi),
-                    ("beta_edui" , beta_edui),("ref_cohi",ref_cohi),("ratio_mari",ratio_mari),("W",W)]   
+                    ("beta_edui" , beta_edui),("ref_cohi",ref_cohi),("ratio_mari",ratio_mari),
+                    ("malecorri",malecorri),("femalecorri",femalecorri),("W",W)]   
     
     packed_stuff=dict(listofTuples)   
     #packed_stuff = (hazm,hazs,hazd,emar,ecoh,fls_ratio,W,hazmi,hazsi,hazdi,emari,ecohi,fls_ratioi,mar,coh,mari,cohi)   

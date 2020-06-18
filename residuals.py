@@ -255,13 +255,14 @@ def mdl_resid(x=None,save_to=None,load_from=None,return_format=['distance'],
     everm_d=packed_data['everm']
     everr_e_d=packed_data['everr_e']
     everr_ne_d=packed_data['everr_ne']
+    everr_d_d=packed_data['everr_d']
     flsc_d=packed_data['flsc']
     flsm_d=packed_data['flsm']
     beta_edu_d=packed_data['beta_edu']
     ref_coh_d=packed_data['ref_coh']
     ratio_mar_d=packed_data['ratio_mar']
     W=packed_data['W']
-    dat=np.concatenate((hazm_d,hazs_d,hazd_d,hazde_d,everc_d,everm_d,flsc_d,flsm_d,beta_edu_d*np.ones(1)),axis=0)
+    dat=np.concatenate((hazm_d,hazs_d,hazd_d,hazde_d,everc_d,everm_d,everr_d_d,flsc_d,flsm_d,beta_edu_d*np.ones(1)),axis=0)
     
 
     #Get Simulated Data
@@ -274,12 +275,13 @@ def mdl_resid(x=None,save_to=None,load_from=None,return_format=['distance'],
     everm_s=moments['everm'][0:len(everm_d)]
     everr_e_s=moments['everr_e'][0:len(everr_e_d)]
     everr_ne_s=moments['everr_ne'][0:len(everr_ne_d)]
+    everr_d_s=moments['everr_d'][0:len(everr_d_d)]
     flsc_s=moments['flsc']
     flsm_s=moments['flsm']
     beta_edu_s=moments['beta_edu']
     ref_coh_s=moments['ref_coh']  
     ratio_mar_s=moments['ratio_mar'] 
-    sim=np.concatenate((hazm_s,hazs_s,hazd_s,hazde_s,everc_s,everm_s,flsc_s,flsm_s,beta_edu_s*np.ones(1)),axis=0)
+    sim=np.concatenate((hazm_s,hazs_s,hazd_s,hazde_s,everc_s,everm_s,everr_d_s,flsc_s,flsm_s,beta_edu_s*np.ones(1)),axis=0)
 
 
 

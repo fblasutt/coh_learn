@@ -16,28 +16,25 @@ def calibration_params(xin=None,xfix=None):
     # format is name: (lb,ub,xinit)
     # I am not sure if this should be ordered or not but let's do ordered
     # just in case...
-    
     params = OrderedDict(
-              zlost=(0.55, 0.85, 0.1),
-              sigma_psi=(0.2, 0.75, 0.01),#sigma_psi=(0.005, 0.8, 0.01),
-              multpsi=(0.01, 0.2, 0.2),#sigma_psi_mult=(0.5, 5.0, 0.02),
-              util_alp=(0.001, 0.25, 0.01),#util_alp=(0.01, 0.4, 0.25),
-              u_shift_coh=(-0.025, -0.0001, 0.01),
-              z_drift = (-0.15, -0.06, -0.001),#z_drift = (-0.3, 0.0, -0.1)
-              util_xi=(0.85, 1.15, 0.001),
-              sigma_psi_mu=(0.4, 1.2, 0.001)
-                        )
-             
-    params = OrderedDict(
-          zlost=(0.12, 0.55, 0.1),
-          sigma_psi=(0.05, 0.5, 0.01),#sigma_psi=(0.005, 0.8, 0.01),
-          multpsi=(0.06, 0.30, 0.2),#sigma_psi_mult=(0.5, 5.0, 0.02),
-          util_alp=(40.0, 170.0, 0.01),#util_alp=(0.01, 0.4, 0.25),
-          u_shift=(-0.25, 0.04, 0.01),
-          z_drift = (-0.2, -0.06, -0.001),#z_drift = (-0.3, 0.0, -0.1)
-          util_xi=(1.62, 1.80, 0.001),
-          sigma_psi_mu=(0.4, 1.0, 0.001)
-                    )
+              zlost=(0.20, 0.75, 0.05),
+              multpsi=(0.1, 0.4, 0.02),#sigma_psi_mult=(0.5, 5.0, 0.02),
+              util_alp=(4.0, 11.4, 0.5),#util_alp=(0.01, 0.4, 0.25),          
+              sigma_psi_mu=(0.8, 2.0, 0.2),
+              pmeete=(0.1,0.5,0.1),
+              pmeetn=(0.4,1.0,0.1))
+        
+    # params = OrderedDict(
+    #           zlost=(0.20, 0.75, 0.1),
+    #           sigma_psi=(0.2, 0.75, 0.01),#sigma_psi=(0.005, 0.8, 0.01),
+    #           multpsi=(0.01, 0.2, 0.2),#sigma_psi_mult=(0.5, 5.0, 0.02),
+    #           util_alp=(0.001, 0.25, 0.01),#util_alp=(0.01, 0.4, 0.25),
+    #           u_shift_coh=(-0.025, -0.0001, 0.01),
+    #           z_drift = (-0.15, -0.06, -0.001),#z_drift = (-0.3, 0.0, -0.1)
+    #           util_xi=(0.85, 1.15, 0.001),
+    #           sigma_psi_mu=(0.4, 1.2, 0.001)
+    #                     )
+
     # update params is some dict with values was supplied
     if xin is not None:
         assert type(xin) is dict

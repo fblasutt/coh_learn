@@ -91,8 +91,8 @@ def v_ren_vt(setup,V,marriage,dd,edu,desc,t,return_extra=False,return_vdiv_only=
     
         moneyf = setup.exogrid.zf_t[edu[0]][t]+setup.pars['wtrend']['f'][edu[0]][t]
         moneym = setup.exogrid.zm_t[edu[1]][t]+setup.pars['wtrend']['m'][edu[1]][t]
-        money_ataxf=np.exp(np.log(1.0-0.1)+(1.0-0.0)*moneyf)
-        money_ataxm=np.exp(np.log(1.0-0.1)+(1.0-0.0)*moneym)
+        money_ataxf=np.exp(np.log(1.0-0.0)+(1.0-0.0)*moneyf)
+        money_ataxm=np.exp(np.log(1.0-0.0)+(1.0-0.0)*moneym)
     
         
         A=setup.pars['A']
@@ -187,7 +187,7 @@ def v_ren_vt(setup,V,marriage,dd,edu,desc,t,return_extra=False,return_vdiv_only=
                                     vf_n, vm_n,
                                     itht, wntht, thtgrid)     
                 
-            # #First: cohabitation versus separation
+            #First: cohabitation versus separation
             # v_out_nor_1, vf_out_1, vm_out_1, itheta_out_1,_ = \
             #     v_ren_core_two_opts_with_int(
             #                 V[descrc]['V'][None,...],

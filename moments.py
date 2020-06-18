@@ -157,7 +157,8 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     is_unid = -1*np.ones((N,nspells),dtype=np.int16)    
     is_unid_end = -1*np.ones((N,nspells),dtype=np.int16)    
     n_spell = -1*np.ones((N,nspells),dtype=np.int16)    
-    is_spell = np.zeros((N,nspells),dtype=np.bool)    
+    is_spell = np.zeros((N,nspells),dtype=np.bool) 
+    is_fem = np.zeros((N,nspells),dtype=np.bool) 
     sp_edu=np.ones((N,nspells),dtype='<U1') 
     sp_edup=np.ones((N,nspells),dtype='<U1')
        
@@ -184,6 +185,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         sp_length[ichange,ispell[ichange]+1] = 1 # if change then 1 year right    
         state_end[ichange,ispell[ichange]] = state[ichange,t]    
         sp_dur[ichange,ispell[ichange]] = durf[ichange,t-1] 
+        is_fem[ichange,ispell[ichange]] = female[ichange,t-1] 
         state_beg[ichange,ispell[ichange]+1] = state[ichange,t] 
         sp_edu[ichange,ispell[ichange]+1] = educ[ichange,t] 
         sp_edup[ichange,ispell[ichange]+1] = edup[ichange,t] 
@@ -205,6 +207,8 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     allspells_nspells=n_spell[is_spell]  
     allspells_edu=sp_edu[is_spell]
     allspells_edup=sp_edup[is_spell]
+    allspells_female=is_fem[is_spell]
+    
     
 
          
@@ -224,7 +228,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     educ_relsp[wedu]=1.0
     
     #Use this to construct hazards   
-    spells = np.stack((allspells_beg,allspells_len,allspells_end,educ_rels),axis=1)    
+    spells = np.stack((allspells_beg,allspells_len,allspells_end,educ_rels,educ_relsp,allspells_female),axis=1)    
        
     #Use this for empirical analysis   
     spells_empiricalt=np.stack((allspells_beg,allspells_timeb,allspells_len,
@@ -457,7 +461,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     
     
     #Hazard of Divorce-Educated
-    where=all_spells['Couple, M'][:,-1]==1
+    where=all_spells['Couple, M'][:,-3]==1
     all_spells_e=all_spells['Couple, M'][where,:]
     hazde=list()    
     lgh=len(all_spells_e[:,0])    
@@ -518,7 +522,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     hazm=np.array(hazm).T    
          
          
-    where=all_spells['Couple, C'][:,-1]==1
+    where=all_spells['Couple, C'][:,-3]==1
     all_spells_e=all_spells['Couple, C'][where,:]
     
     
@@ -810,6 +814,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     
     moments['everr_e']=Ereltt[0,:]/np.sum(educ[:,0]=='e')
     moments['everr_ne']=Ereltt[1,:]/np.sum(educ[:,0]=='n')
+    moments['everr_d']=moments['everr_ne']-moments['everr_e']
     
     #
   
@@ -1371,7 +1376,21 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
 
                  
         #Check correlations 
+        edum=np.concatenate((all_spells['Couple, M'][:,-3][all_spells['Couple, M'][:,-1]==0],
+                             all_spells['Couple, C'][:,-3][all_spells['Couple, C'][:,-1]==0]))
+        
+        edupm=np.concatenate((all_spells['Couple, M'][:,-2][all_spells['Couple, M'][:,-1]==0],
+                              all_spells['Couple, C'][:,-2][all_spells['Couple, C'][:,-1]==0]))
+        
+        eduf=np.concatenate((all_spells['Couple, M'][:,-3][all_spells['Couple, M'][:,-1]==1],
+                             all_spells['Couple, C'][:,-3][all_spells['Couple, C'][:,-1]==1]))
+        
+        edupf=np.concatenate((all_spells['Couple, M'][:,-2][all_spells['Couple, M'][:,-1]==1],
+                              all_spells['Couple, C'][:,-2][all_spells['Couple, C'][:,-1]==1]))
        
+        
+        print('Correlation in education mm is {} fm is {}'.format(np.corrcoef(edum,edupm)[0,1],np.corrcoef(eduf,edupf)[0,1]))
+        
         ifemale1=(female==1) 
         imale1=(female==0) 
         nsinglefc1=(ifemale1[:,:60]) & (state[:,:60]==3) & (labor_w[:,:60]>0.1) 
@@ -1441,6 +1460,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         print('Share c nn: f {}, m {}'.format(np.mean(nn[(edup1!='single') & (female1==1) & (state1==3)]),np.mean(nn[(edup1!='single') & (female1==0) & (state1==3)])))
                 
 
+        #Correlations
 
          
         #Construct fls by first and last point in trans matrix shocks
@@ -1507,6 +1527,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
             everm_d=packed_data['everm']
             everr_e_d=packed_data['everr_e']
             everr_ne_d=packed_data['everr_ne']
+            everr_d_d=packed_data['everr_d']
             flsc_d=packed_data['flsc']
             flsm_d=packed_data['flsm']
             beta_edu_d=packed_data['beta_edu']
@@ -1521,6 +1542,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
             everm_i=packed_data['evermi']
             everr_e_i=packed_data['everr_ei']
             everr_ne_i=packed_data['everr_nei']
+            everr_d_i=packed_data['everr_di']
             flsc_i=packed_data['flsci']
             flsm_i=packed_data['flsmi']
             beta_edu_i=packed_data['beta_edui']
@@ -2007,6 +2029,26 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         plt.ylim(ymax=1.0)    
         plt.xlabel('Age', fontsize=16)    
         plt.ylabel('Share', fontsize=16)    
+        plt.margins(0,0)  
+        #plt.savefig('erel_edu.pgf', bbox_inches = 'tight',pad_inches = 0) 
+        
+        ##########################################    
+        # Relationship by Education
+        ##########################################   
+        fig = plt.figure()    
+        f4=fig.add_subplot(1.5,1,1)    
+        lg=min(len(everm_d),len(relt[1,:]))    
+        xa=(5*np.array(range(lg))+20)   
+        plt.plot(xa, everr_d_d,'b',linewidth=1.5, label='Data')    
+        plt.fill_between(xa, everr_d_i[0,:], everr_d_i[1,:],alpha=0.2,facecolor='b')    
+        plt.plot(xa, Ereltt[1,0:lg]/np.sum(educ[:,0]=='n')-Ereltt[0,0:lg]/np.sum(educ[:,0]=='e'),'r',linestyle='--',linewidth=1.5, label='Simulation')    
+        plt.legend(loc='best', fontsize=14,frameon=False)
+        #plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
+         #         fancybox=True, shadow=True, ncol=len(state_codes), fontsize='x-small')  
+
+        plt.ylim(ymax=0.5,ymin=-0.5)    
+        plt.xlabel('Age', fontsize=16)    
+        plt.ylabel('Share Differece', fontsize=16)    
         plt.margins(0,0)  
         plt.savefig('erel_edu.pgf', bbox_inches = 'tight',pad_inches = 0) 
        
