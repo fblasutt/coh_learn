@@ -91,6 +91,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
 
        
         labor_w=agents.ils_i 
+        labor_ww=labor_w.copy()
         labor_w=labor_w[:,mdl.setup.pars['Tbef']:mdl.setup.pars['T']]
         divorces_w=agents.divorces 
         theta_w=mdl.setup.thetagrid_fine[agents.itheta]  
@@ -1333,11 +1334,13 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
                 iparte=(labor_w[:,t]>0.0) & (ifemale2) & (educ[:,t]=='e') #& (state[:,t]>1) 
                 ipartne=(labor_w[:,t]>0.0) & (ifemale2) & (educ[:,t]=='n')
                 
-                log_inc_rel[0,0,t]=np.mean(np.log(wage_f2[iparte,t])) 
-                log_inc_rel[0,1,t]=np.mean(np.log(wage_m2[(imale2) & (educ[:,t]=='e'),t])) 
+                log_inc_rel[0,0,t]=np.mean(np.log(wage_f[iparte,t])) 
+                log_inc_rel[0,1,t]=np.mean(np.log(wage_m[(imale2) & (educ[:,t]=='e'),t])) 
                 
-                log_inc_rel[1,0,t]=np.mean(np.log(wage_f2[ipartne,t])) 
-                log_inc_rel[1,1,t]=np.mean(np.log(wage_m2[(imale2) & (educ[:,t]=='n'),t])) 
+                log_inc_rel[1,0,t]=np.mean(np.log(wage_f[ipartne,t])) 
+                log_inc_rel[1,1,t]=np.mean(np.log(wage_m[(imale2) & (educ[:,t]=='n'),t])) 
+                
+
                      
             
             

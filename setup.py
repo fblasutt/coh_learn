@@ -35,14 +35,14 @@ class ModelSetup(object):
         Tbef=int(2/period_year)
         Tren =int(48/period_year)#int(18/period_year)# # int(42/period_year) # period starting which people do not renegotiate/divroce
         Tmeet =int(48/period_year)#int(18/period_year)#i int(42/period_year) # period starting which you do not meet anyone
-        dm=9#11
+        dm=8#11
         
         #Measure of People
         p['Nfe']=np.array([min(0.32+0.00*t,1.0) for t in range(T)])#np.array([0.25]*T)#*T)
         p['Nfn']=1.0-p['Nfe']#0.3
         p['Nme']=np.array([min(0.264+0.00*t,1.0) for t in range(T)])#np.array([0.25]*T)
         p['Nmn']=1-p['Nme']
-        p['ass']=0.49
+        p['ass']=0.53
         p['dm']=dm
         p['py']=period_year
         p['ty']=transform
@@ -51,29 +51,29 @@ class ModelSetup(object):
         p['Tren'] = Tren
         p['Tbef'] = Tbef
         p['sig_zf_0']  = {'e':.5694464,'n':.6121695}#{'e':3.522707,'n':2.853316}#
-        p['sig_zf']    = {'e':.0056186**(0.5),'n':.0149161**(0.5)} #{'e':.02**(0.5),'n':.02**(0.5)}#{'e':.0272437**(0.5),'n':.0272437**(0.5)}#
+        p['sig_zf']    = {'e':.0261176**(0.5),'n':.0149161**(0.5)} #{'e':.02**(0.5),'n':.02**(0.5)}#{'e':.0272437**(0.5),'n':.0272437**(0.5)}#
         p['sig_zm_0']  =  {'e':.5673833,'n':.5504325}#{'e':.5449176,'n':.5449176} #{'e':3.500857,'n':2.433748}#
-        p['sig_zm']    =  {'e':.0116222*(0.5),'n':.0229727**(0.5)}# {'e':.025014**(0.5),'n':.025014**(0.5)}#
+        p['sig_zm']    =  {'e':.0316222*(0.5),'n':.0229727**(0.5)}# {'e':.025014**(0.5),'n':.025014**(0.5)}#
         p['n_zf_t']      = [5]*Tret + [5]*(T-Tret)
         p['n_zm_t']      = [3]*Tret + [3]*(T-Tret)
         p['n_zf_correct']=2
         p['sigma_psi_mult'] = 0.28
-        p['sigma_psi_mu'] = 0.1#1.0#nthe1.1
+        p['sigma_psi_mu_pre'] = 0.1#1.0#nthe1.1
         p['sigma_psi']   =0.0# 0.11
-        p['multpsi']   = 10/2.996194651745017#-1.0
+        p['multpsi']   = 1.0
         p['R_t'] = [1.02**period_year]*T
         p['n_psi_t']     = [21]*T#[21]*T
         p['beta_t'] = [0.98**period_year]*T
         p['A'] =1.0 # consumption in couple: c = (1/A)*[c_f^(1+rho) + c_m^(1+rho)]^(1/(1+rho))
         p['crra_power'] = 1.5
         p['couple_rts'] = 0.0
-        p['sigma_psi_init']=1.0
+        p['sigma_psi_init']=0.0449626592#1.0
         p['sig_partner_a'] = 0.1#0.5
         p['sig_partner_z'] = 1.2#1.0#0.4 #This is crazy powerful for the diff in diff estimate
         p['sig_partner_mult'] = 1.15#1.15
         p['dump_factor_z'] =0.3# 0.3#0.8#0.78#0.85#0.8
-        p['mean_partner_z_female'] =-0.35#
-        p['mean_partner_z_male'] = -0.15#-0.15#
+        p['mean_partner_z_female'] =-0.25#
+        p['mean_partner_z_male'] = -0.2#-0.15#
         p['mean_partner_a_female'] = -0.0#0.1
         p['mean_partner_a_male'] = 0.0#-0.1
         p['m_bargaining_weight'] = 0.5
@@ -94,34 +94,52 @@ class ModelSetup(object):
         
         
         p['u_shift_mar'] = 0.0
-        p['u_shift_coh'] =-0.0
+        p['u_shift_coh'] =0.0
         
          
 
-        
-        #Wages over time
+                 # #Wages over time-partner
         p['wtrend']=dict()
-        p['wtrend']['f'],p['wtrend']['m']=dict(),dict()
+        p['wtrend']['f'],p['wtrend']['m']=dict(),dict()       
+
       
       
-        p['wtrend']['f']['e'] =[t*p['correction']*(t<Tret)+0.0*(t>=Tret)+(t<Tret)*(2.6024992 +(.04391704)*(t+p['Tbef'])-.00074618*(t+p['Tbef'])**2+.0*(t+p['Tbef'])**3) for t in range(T)]
-        p['wtrend']['f']['n'] =[t*p['correction']*(t<Tret)+0.0*(t>=Tret)+(t<Tret)*(2.3223636 +(.02153848)*(t+p['Tbef']) -.00021086*(t+p['Tbef'])**2+.0*(t+p['Tbef'])**3) for t in range(T)]
+        # p['wtrend']['f']['e'] =[t*p['correction']*(t<Tret)+0.0*(t>=Tret)+(t<Tret)*(2.6171558 +(.03626223)*(t+p['Tbef'])-.0005829*(t+p['Tbef'])**2+.0*(t+p['Tbef'])**3) for t in range(T)]
+        # p['wtrend']['f']['n'] =[t*p['correction']*(t<Tret)+0.0*(t>=Tret)+(t<Tret)*(2.3188577 +(.02013329)*(t+p['Tbef']) -.00023405*(t+p['Tbef'])**2+.0*(t+p['Tbef'])**3) for t in range(T)]
+       
+        # p['wtrend']['m']['e'] = [t*p['correction']*(t<Tret-2)+0.0*(t>=Tret-2)+(t<Tret-2)*(2.3854005  +(.11658547)*(t+2+p['Tbef']) -.00314674*(t+2+p['Tbef'])**2+ .00002645*(t+2+p['Tbef'])**3) for t in range(T)]
+        # p['wtrend']['m']['n'] = [t*p['correction']*(t<Tret-2)+0.0*(t>=Tret-2)+(t<Tret-2)*(2.4193351   +(.06240424)*(t+2+p['Tbef']) -.00160054*(t+2+p['Tbef'])**2+ .00001287*(t+2+p['Tbef'])**3) for t in range(T)]
+       
+        # #Wages over time-partner
+        # p['wtrendp']=dict()
+        # p['wtrendp']['f'],p['wtrendp']['m']=dict(),dict()
+      
+        # p['wtrendp']['f']['e'] =[t*p['correction']*(t<Tret)+0.0*(t>=Tret)+(t<Tret)*(2.5173924 +(.10129988)*(t+p['Tbef'])-.00350539*(t+p['Tbef'])**2+.00003795*(t+p['Tbef'])**3) for t in range(T)]
+        # p['wtrendp']['f']['n'] =[t*p['correction']*(t<Tret)+0.0*(t>=Tret)+(t<Tret)*(2.3182552 +(.0457936)*(t+p['Tbef']) -.00124753*(t+p['Tbef'])**2+.00001292*(t+p['Tbef'])**3) for t in range(T)]
+       
         
-        p['wtrend']['m']['e'] = [t*p['correction']*(t<Tret-2)+0.0*(t>=Tret-2)+(t<Tret-2)*(2.3854005  +(.11658547)*(t+2+p['Tbef']) -.00314674*(t+2+p['Tbef'])**2+ .00002645*(t+2+p['Tbef'])**3) for t in range(T)]
-        p['wtrend']['m']['n'] = [t*p['correction']*(t<Tret-2)+0.0*(t>=Tret-2)+(t<Tret-2)*(2.411279   +(.06341459)*(t+2+p['Tbef']) -.00163945*(t+2+p['Tbef'])**2+ .00001333*(t+2+p['Tbef'])**3) for t in range(T)]
-                
+        # p['wtrendp']['m']['e'] = [t*p['correction']*(t<Tret-2)+0.0*(t>=Tret-2)+(t<Tret-2)*(2.3982928  +(.1340109)*(t+2+p['Tbef']) -.00502756*(t+2+p['Tbef'])**2+ .00005841*(t+2+p['Tbef'])**3) for t in range(T)]
+        # p['wtrendp']['m']['n'] = [t*p['correction']*(t<Tret-2)+0.0*(t>=Tret-2)+(t<Tret-2)*(2.4705215   +(.05736889)*(t+2+p['Tbef']) -.00202793*(t+2+p['Tbef'])**2+ .00002582*(t+2+p['Tbef'])**3) for t in range(T)]
+       
 
-
-        #Wages over time-partner
+        
+        p['wtrend']['f']['e'] =[t*p['correction']*(t<Tret)+0.0*(t>=Tret)+(t<Tret)*(2.6171558 +(.03626223)*(t+p['Tbef']+1)-.0005829*(t+p['Tbef']+1)**2+.0*(t+p['Tbef']+1)**3) for t in range(T)]
+        p['wtrend']['f']['n'] =[t*p['correction']*(t<Tret)+0.0*(t>=Tret)+(t<Tret)*(2.3188577 +(.02013329)*(t+p['Tbef']+1)-.00023405*(t+p['Tbef']+1)**2+.0*(t+p['Tbef']+1)**3) for t in range(T)]
+       
+        p['wtrend']['m']['e'] = [t*p['correction']*(t<Tret-2)+0.0*(t>=Tret-2)+(t<Tret-2)*(2.3854005  +(.11658547)*(t+p['Tbef']+1) -.00314674*(t+p['Tbef']+1)**2+ .00002645*(t+p['Tbef']+1)**3) for t in range(T)]
+        p['wtrend']['m']['n'] = [t*p['correction']*(t<Tret-2)+0.0*(t>=Tret-2)+(t<Tret-2)*(2.4193351   +(.06240424)*(t+p['Tbef']+1) -.00160054*(t+p['Tbef']+1)**2+ .00001287*(t+p['Tbef']+1)**3) for t in range(T)]
+       
+         #Wages over time-partner
         p['wtrendp']=dict()
         p['wtrendp']['f'],p['wtrendp']['m']=dict(),dict()
       
-        p['wtrendp']['f']['e'] =[t*p['correction']*(t<Tret)+0.0*(t>=Tret)+(t<Tret)*(2.6024992 +(.04391704)*(t+p['Tbef'])-.00074618*(t+p['Tbef'])**2+.0*(t+p['Tbef'])**3) for t in range(T)]
-        p['wtrendp']['f']['n'] =[t*p['correction']*(t<Tret)+0.0*(t>=Tret)+(t<Tret)*(2.3223636 +(.02153848)*(t+p['Tbef']) -.00021086*(t+p['Tbef'])**2+.0*(t+p['Tbef'])**3) for t in range(T)]
+        p['wtrendp']['f']['e'] =[t*p['correction']*(t<Tret)+0.0*(t>=Tret)+(t<Tret)*(2.5173924 +(.10129988)*(t+p['Tbef']+1)-.00350539*(t+p['Tbef']+1)**2+.00003795*(t+p['Tbef']+1)**3) for t in range(T)]
+        p['wtrendp']['f']['n'] =[t*p['correction']*(t<Tret)+0.0*(t>=Tret)+(t<Tret)*(2.3182552 +(.0457936)*(t+p['Tbef']+1) -.00124753*(t+p['Tbef']+1)**2+.00001292*(t+p['Tbef']+1)**3) for t in range(T)]
+       
         
-        p['wtrendp']['m']['e'] = [t*p['correction']*(t<Tret-2)+0.0*(t>=Tret-2)+(t<Tret-2)*(2.3982928  +(.1340109)*(t+2+p['Tbef']) -.00502756*(t+2+p['Tbef'])**2+ .00005841*(t+2+p['Tbef'])**3) for t in range(T)]
-        p['wtrendp']['m']['n'] = [t*p['correction']*(t<Tret-2)+0.0*(t>=Tret-2)+(t<Tret-2)*(2.4647508   +(.08386113)*(t+2+p['Tbef']) -.00322518*(t+2+p['Tbef'])**2+ .00004086*(t+2+p['Tbef'])**3) for t in range(T)]
-
+        p['wtrendp']['m']['e'] = [t*p['correction']*(t<Tret-2)+0.0*(t>=Tret-2)+(t<Tret-2)*(2.3982928  +(.1340109)*(t+p['Tbef']+1) -.00502756*(t+p['Tbef']+1)**2+ .00005841*(t+p['Tbef']+1)**3) for t in range(T)]
+        p['wtrendp']['m']['n'] = [t*p['correction']*(t<Tret-2)+0.0*(t>=Tret-2)+(t<Tret-2)*(2.4705215   +(.05736889)*(t+p['Tbef']+1) -.00202793*(t+p['Tbef']+1)**2+ .00002582*(t+p['Tbef']+1)**3) for t in range(T)]
+       
   
         p['util_lam'] = 0.19#0.4
         p['util_alp'] = 0.5
@@ -142,7 +160,7 @@ class ModelSetup(object):
         #Adjust kappa and alpha to make sense of relative prices
         p['util_alp_m']=p['util_alp']*(1.0/(p['rprice_durables'])**(1.0-p['util_xi']))
         p['util_kap_m']=p['util_kap']*p['rprice_durables']**p['util_lam']
-            
+        p['sigma_psi_mu']=p['sigma_psi_init']*p['sigma_psi_mu_pre']
             
 
         #Get the probability of meeting, adjusting for year-period
@@ -498,13 +516,17 @@ class ModelSetup(object):
             print(self.K[0],self.K[1],self.K[2],self.K[3])
             #New way of getting transition matrix
             psit, matri=list(np.ones((T))),list(np.ones((T)))
+            
             sigmainitial=np.sqrt((self.pars['sigma_psi_init']/2.0)**2)+(np.sum(self.sigmad**2)-len(self.sigmad)*self.sigmad[-1]**2)
+            sigmainitial=np.sqrt((self.pars['sigma_psi_init'])**2)+(np.sum(self.sigmad**2)-len(self.sigmad)*self.sigmad[-1]**2)
+           
             sigmabase=np.sqrt([sigmainitial**2+(t)*self.sigmad[-1]**2 for t in range(T+p['dm']+1)])
             sigmadp=np.concatenate((np.array([0.0]),self.sigmad))
             sigmadi=self.sigmad[::-1]
             for i in range(T):
                 
-                base=max(sigmabase[i+p['dm']]**2-np.sum(self.sigmad**2)+0.01,0.001)
+                #base=max(sigmabase[i+p['dm']]**2-np.sum(self.sigmad**2)+0.01,0.001)
+                base=max(sigmabase[i+p['dm']]**2-np.sum(self.sigmad**2)+0.000000001,0.0000000001)
                 sigp=np.sqrt([base+np.cumsum(sigmadp**2)[dd] for dd in range(p['dm']+1)])
                 #sigp=np.sqrt([base+np.sum(sigmadi[p['dm']-dd:]**2) for dd in range(p['dm']+1)])
                 psit[i],matri[i] = tauchen_nonstm(p['dm']+1,0.0,0.0,p['n_psi_t'][0],sd_z=sigp)

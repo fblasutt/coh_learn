@@ -207,6 +207,10 @@ if __name__ == '__main__':
     
     #GOOD ONE: npsi 21, ntheta 11-7. dump 0.3 sig 1.15 alpha 0.53 drift 0.2
     x0 = np.array([0.22155838,  0.19626592 ,11.67366755,  1.35678889 , 0.19755867 , 0.71320478])
+
+    x0 = np.array([0.22155838,  0.0449626592 ,11.67366755,  1.35678889 , 0.19755867 , 0.71320478])
+    x0 = np.array([0.22155838,  0.0949626592  ,11.67366755, 1.35678889 , 0.19755867 , 0.71320478])
+    #x0 = np.array([0.22155838,  1.0 ,11.67366755,  0.0549626592*1.35678889 , 0.19755867 , 0.71320478])
     
     
     
@@ -226,7 +230,7 @@ if __name__ == '__main__':
     out, mdl, agents, res = mdl_resid(x0,return_format=['distance','models','agents','scaled residuals'],
                                       #load_from=['mdl_save_bil_le.pkl'],#'mdl_save_uni.pkl'],
                                       solve_transition=False,                                    
-                                      save_to=['mdl_save_bil_le.pkl'],#'mdl_save_uni.pkl'],
+                                      #save_to=['mdl_save_bil_le.pkl'],#'mdl_save_uni.pkl'],
                                       store_path=path,
                                        verbose=True,calibration_report=False,draw=graphs,graphs=graphs,
                                       welf=False) #Switch to true for decomposition of welfare analysis
