@@ -23,6 +23,14 @@ def calibration_params(xin=None,xfix=None):
               sigma_psi_mu=(0.8, 2.0, 0.2),
               pmeete=(0.1,0.5,0.1),
               pmeetn=(0.4,1.0,0.1))
+    
+    params = OrderedDict(
+              zlost=(0.04, 0.3, 0.05),
+              multpsi=(0.08, 0.3, 0.02),#sigma_psi_mult=(0.5, 5.0, 0.02),
+              util_alp=(4.0, 11.4, 0.5),#util_alp=(0.01, 0.4, 0.25),          
+              sigma_psi_mu=(0.4, 1.4, 0.2),
+              pmeete=(0.1,0.5,0.1),
+              pmeetn=(0.4,1.0,0.1))
         
     # params = OrderedDict(
     #           zlost=(0.20, 0.75, 0.1),

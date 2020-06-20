@@ -464,7 +464,7 @@ class Agents:
 
 
                         # shk=grid[ipsi]
-                        if self.getadj:
+                        #if self.getadj:
                             #print('The shock of predicted love is {}, while theoricals are {}'.format(np.std(shk),self.setup.pars['sigma_psi_init']))
                             #print('The average error is {}'.format(np.mean(abs(shk-self.shocke0[ind,t+1]))))
                         
@@ -627,7 +627,7 @@ class Agents:
                     
   
                     
-                    if self.getadj:
+                    #if self.getadj:
                         #1print('In {}, the mean of past prediction is {}, average error is {}'.format(dd,np.mean(self.predl[ind,t]),np.mean(np.absolute(aft-self.truel[ind,t+1]))))
                     #print('In {}, the mean of past prediction is {}, average error is {}'.format(dd,np.mean(self.predl[ind,t]),np.mean(np.absolute(bef-aft))))
                         #1print('The standard deviation of innovation in {} is {}, theorical is {}'.format(dd,np.std(diffe),self.setup.sigmad[dd]))

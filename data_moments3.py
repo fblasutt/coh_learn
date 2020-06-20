@@ -574,12 +574,12 @@ def dat_moments(sampling_number=5,weighting=False,covariances=False,relative=Fal
     if weighting:   
            
         #Compute optimal Weighting Matrix   
-        col=np.concatenate((hazmB,hazsB,hazdB,hazdeB,evercB,evermB,everr_dB,flscB,flsmB,beta_eduB),axis=0)       
+        col=np.concatenate((hazmB,hazsB,hazdB,evercB,evermB,everr_dB,flscB,flsmB),axis=0)       
         dim=len(col)   
         W_in=np.zeros((dim,dim))   
         for i in range(dim):   
             for j in range(dim):   
-                W_in[i,j]=(1/(boot-1))*np.cov(col[i,:],col[j,:])[0][1]   
+                W_in[i,j]=1/np.cov(col[i,:],col[j,:])[0][1]#*(1/(boot-1))   
                  
         if not covariances:   
             W_in = np.diag(np.diag(W_in))   
@@ -593,7 +593,7 @@ def dat_moments(sampling_number=5,weighting=False,covariances=False,relative=Fal
     elif relative:  
           
         #Compute optimal Weighting Matrix   
-        col=np.concatenate((hazm,hazs,hazd,hazde,everc,everm,everr_d,flsc,flsm,beta_edu*np.ones(1)),axis=0)       
+        col=np.concatenate((hazm,hazs,hazd,everc,everm,everr_d,flsc,flsm),axis=0)       
         dim=len(col)   
         W=np.zeros((dim,dim))   
         for i in range(dim):   
@@ -602,7 +602,7 @@ def dat_moments(sampling_number=5,weighting=False,covariances=False,relative=Fal
     else:   
            
         #If no weighting, just use sum of squred deviations as the objective function           
-        W=np.diag(np.ones(len(hazm)+len(hazs)+len(hazd)+len(hazde)+len(everc)+len(everm)+len(everr_d)+len(flsc)+len(flsm)+1))#two is for fls+beta_unid   
+        W=np.diag(np.ones(len(hazm)+len(hazs)+len(hazd)+len(everc)+len(everm)+len(everr_d)+len(flsc)+len(flsm)))#two is for fls+beta_unid   
            
     listofTuples = [("hazs" , hazs), ("hazm" , hazm),("hazd" , hazd),("hazde" , hazde),  
                     ("everc" , everc), ("everm" , everm),("everr_e" , everr_e),("everr_ne" , everr_ne),("everr_d" , everr_d),

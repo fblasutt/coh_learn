@@ -35,14 +35,14 @@ class ModelSetup(object):
         Tbef=int(2/period_year)
         Tren =int(48/period_year)#int(18/period_year)# # int(42/period_year) # period starting which people do not renegotiate/divroce
         Tmeet =int(48/period_year)#int(18/period_year)#i int(42/period_year) # period starting which you do not meet anyone
-        dm=4
+        dm=9#11
         
         #Measure of People
         p['Nfe']=np.array([min(0.32+0.00*t,1.0) for t in range(T)])#np.array([0.25]*T)#*T)
         p['Nfn']=1.0-p['Nfe']#0.3
         p['Nme']=np.array([min(0.264+0.00*t,1.0) for t in range(T)])#np.array([0.25]*T)
         p['Nmn']=1-p['Nme']
-        p['ass']=0.53
+        p['ass']=0.49
         p['dm']=dm
         p['py']=period_year
         p['ty']=transform
@@ -51,12 +51,12 @@ class ModelSetup(object):
         p['Tren'] = Tren
         p['Tbef'] = Tbef
         p['sig_zf_0']  = {'e':.5694464,'n':.6121695}#{'e':3.522707,'n':2.853316}#
-        p['sig_zf']    = {'e':.0256186**(0.5),'n':.0149161**(0.5)} #{'e':.02**(0.5),'n':.02**(0.5)}#{'e':.0272437**(0.5),'n':.0272437**(0.5)}#
+        p['sig_zf']    = {'e':.0056186**(0.5),'n':.0149161**(0.5)} #{'e':.02**(0.5),'n':.02**(0.5)}#{'e':.0272437**(0.5),'n':.0272437**(0.5)}#
         p['sig_zm_0']  =  {'e':.5673833,'n':.5504325}#{'e':.5449176,'n':.5449176} #{'e':3.500857,'n':2.433748}#
-        p['sig_zm']    =  {'e':.0316222*(0.5),'n':.0229727**(0.5)}# {'e':.025014**(0.5),'n':.025014**(0.5)}#
-        p['n_zf_t']      = [4]*Tret + [4]*(T-Tret)
+        p['sig_zm']    =  {'e':.0116222*(0.5),'n':.0229727**(0.5)}# {'e':.025014**(0.5),'n':.025014**(0.5)}#
+        p['n_zf_t']      = [5]*Tret + [5]*(T-Tret)
         p['n_zm_t']      = [3]*Tret + [3]*(T-Tret)
-        p['n_zf_correct']=1
+        p['n_zf_correct']=2
         p['sigma_psi_mult'] = 0.28
         p['sigma_psi_mu'] = 0.1#1.0#nthe1.1
         p['sigma_psi']   =0.0# 0.11
@@ -70,10 +70,10 @@ class ModelSetup(object):
         p['sigma_psi_init']=1.0
         p['sig_partner_a'] = 0.1#0.5
         p['sig_partner_z'] = 1.2#1.0#0.4 #This is crazy powerful for the diff in diff estimate
-        p['sig_partner_mult'] = 1.15#1.12
-        p['dump_factor_z'] =0.3# 0.4#0.8#0.78#0.85#0.8
-        p['mean_partner_z_female'] = -0.25#-0.8#-0.1#+0.03
-        p['mean_partner_z_male'] = -0.15# -0.6#0.05#-0.03
+        p['sig_partner_mult'] = 1.15#1.15
+        p['dump_factor_z'] =0.3# 0.3#0.8#0.78#0.85#0.8
+        p['mean_partner_z_female'] =-0.35#
+        p['mean_partner_z_male'] = -0.15#-0.15#
         p['mean_partner_a_female'] = -0.0#0.1
         p['mean_partner_a_male'] = 0.0#-0.1
         p['m_bargaining_weight'] = 0.5
@@ -82,7 +82,7 @@ class ModelSetup(object):
         p['pmeet1'] = -0.0
         p['correction']=0.0
         
-        p['z_drift'] = -0.1#-0.2
+        p['z_drift'] = -0.2#-0.2
         
         
         
@@ -395,11 +395,11 @@ class ModelSetup(object):
                         #Extend grid
                         h=zft[edu][t][1]-zft[edu][t][0]
                         dist1=zft[edu][t][0]-h
-                        #dist0=zft[edu][t][0]-p['n_zf_correct']*h
+                        dist0=zft[edu][t][0]-p['n_zf_correct']*h
                         
                         #Copy transition matrix
-                        #exogrid['zf_t'][edu]=exogrid['zf_t'][edu]+[np.concatenate((np.array([dist0,dist1]),zft[edu][t]))]
-                        exogrid['zf_t'][edu]=exogrid['zf_t'][edu]+[np.concatenate((np.array([dist1]),zft[edu][t]))]
+                        exogrid['zf_t'][edu]=exogrid['zf_t'][edu]+[np.concatenate((np.array([dist0,dist1]),zft[edu][t]))]
+                        #exogrid['zf_t'][edu]=exogrid['zf_t'][edu]+[np.concatenate((np.array([dist1]),zft[edu][t]))]
                         exogrid['zf_t_mat'][edu]=exogrid['zf_t_mat'][edu]+[np.zeros((p['n_zf_t'][t],p['n_zf_t'][t]))]
                         exogrid['zf_t_mat'][edu][t][p['n_zf_correct']:,p['n_zf_correct']:]=zftmat[edu][t]
                         
@@ -407,7 +407,7 @@ class ModelSetup(object):
                         if t<p['T']-1:
                             
                             exogrid['zf_t_mat'][edu][t][0,:-p['n_zf_correct']]=zftmat[edu][t][0,:]
-                            #exogrid['zf_t_mat'][edu][t][1,:-p['n_zf_correct']]=zftmat[edu][t][1,:]
+                            exogrid['zf_t_mat'][edu][t][1,:-p['n_zf_correct']]=zftmat[edu][t][1,:]
                            
                                 
                         else:
@@ -702,7 +702,7 @@ class ModelSetup(object):
 
         
         # construct finer grid for bargaining
-        ntheta_fine = 7*self.ntheta # actual number may be a bit bigger
+        ntheta_fine = 7*self.ntheta #7*self.ntheta actual number may be a bit bigger
         self.thetagrid_fine = np.unique(np.concatenate( (self.thetagrid,np.linspace(self.thetamin,self.thetamax,ntheta_fine,dtype=self.dtype)) ))
         self.ntheta_fine = self.thetagrid_fine.size
         

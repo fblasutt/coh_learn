@@ -187,7 +187,7 @@ def v_ren_vt(setup,V,marriage,dd,edu,desc,t,return_extra=False,return_vdiv_only=
                                     vf_n, vm_n,
                                     itht, wntht, thtgrid)     
                 
-            #First: cohabitation versus separation
+            # #First: cohabitation versus separation
             # v_out_nor_1, vf_out_1, vm_out_1, itheta_out_1,_ = \
             #     v_ren_core_two_opts_with_int(
             #                 V[descrc]['V'][None,...],

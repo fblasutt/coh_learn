@@ -364,6 +364,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
             
         raw_dut=raw_dut/raw_dut[0]
         ref_dut[0]=1.0
+
         
         #Get paramter for education
         beta_div_edu_s=cox_join.hazard_ratios_['edu']
@@ -426,6 +427,11 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
             cox_sep=cph.fit(data_coh_panda3, duration_col='duration', event_col='endd')   
             haz_sep=cox_sep.hazard_ratios_['edu']   
             haz_sepp=1.0#cox_sep.hazard_ratios_['edup']   
+            
+            
+                    
+            #Save to stata
+            data_coh_panda.to_stata('animals.dta')
                
         except:    
             print('No data for unilateral divorce regression...')    
@@ -435,6 +441,23 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
             haz_sepp=1.0  
             haz_joinp=1.0  
             haz_marp=1.0  
+            
+            
+    ####################################
+    #Save Spells of Singleness
+    ###################################
+    if draw:
+        data_single=pd.DataFrame(data=spells_empiricalt[(spells_empiricalt[:,0]<=2),1:9] ,
+                                                           columns=['age','duration','end','rel','uni','coh','edu','edup'])    
+   
+
+            
+            
+                    
+        #Save to stata
+        data_single.to_stata('compete_single.dta')
+               
+
         
     ##################################    
     # Construct the Hazard functions    
