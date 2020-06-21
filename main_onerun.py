@@ -46,7 +46,7 @@ if __name__ == '__main__':
     #For graphs later
     graphs=True
     #Build  data moments and pickle them
-    #dat_moments(period=1,sampling_number=2,weighting=True,transform=1)
+    #dat_moments(period=1,sampling_number=100,weighting=True,transform=1)
     
          
     #Initialize the file with parameters
@@ -209,8 +209,8 @@ if __name__ == '__main__':
     x0 = np.array([0.22155838,  0.19626592 ,11.67366755,  1.35678889 , 0.19755867 , 0.71320478])
 
     x0 = np.array([0.22155838,  0.0449626592 ,11.67366755,  1.35678889 , 0.19755867 , 0.71320478])
-    x0 = np.array([0.22155838,  0.0949626592  ,11.67366755, 1.35678889 , 0.19755867 , 0.71320478])
-    #x0 = np.array([0.22155838,  1.0 ,11.67366755,  0.0549626592*1.35678889 , 0.19755867 , 0.71320478])
+    #x0 = np.array([0.22155838,  0.0949626592  ,11.67366755, 1.35678889 , 0.19755867 , 0.71320478])
+    x0 = np.array([ 0.45136718750000004,  0.05181640625, 10.157031250000001,1.19453125,0.20468750000000002,0.58515625])
     
     
     

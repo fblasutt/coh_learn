@@ -87,7 +87,7 @@ class Agents:
         np.random.seed(2)
         self.shockmu=np.reshape(np.random.normal(0.0, self.setup.pars['sigma_psi_mu'], N*T),(N,T))
         np.random.seed(3)
-        self.shocke0=np.reshape(np.random.normal(0.0, self.setup.pars['sigma_psi_init'], N*T),(N,T))#np.reshape(np.random.logistic(0.0,np.sqrt(3)/np.pi, N*T),(N,T))#
+        self.shocke0=np.reshape(np.random.normal(0.0, self.setup.pars['sigma_psi_init_k'], N*T),(N,T))#np.reshape(np.random.logistic(0.0,np.sqrt(3)/np.pi, N*T),(N,T))#
           
         
         z_t = self.setup.exogrid.zf_t[self.edu] if female else self.setup.exogrid.zm_t[self.edu]
@@ -334,7 +334,7 @@ class Agents:
                         
                         self.truel[ind[this_ls],t+1]=grid[mc_init_normal_array(self.truel[ind[this_ls],t],grid,shocks=self.shocke[ind[this_ls],t+1],adjust=np.ones(self.truel[ind[this_ls],t].shape))]#mc_simulate(self.ipsi[ind[this_ls],t+1],matt,shocks=self.shocke[ind[this_ls],t+1])
                       
-                        #self.truel[ind[this_ls],t+1]=self.truel[ind[this_ls],t]+self.shocke[ind[this_ls],t+1]
+                        self.truel[ind[this_ls],t+1]=self.truel[ind[this_ls],t]+self.shocke[ind[this_ls],t+1]
                         iexo_next_this_ls = mc_simulate(iexo_now[this_ls],mat.todense().T,shocks=shks)
                         self.iexo[ind[this_ls],t+1] = iexo_next_this_ls
                         self.iexos[ind[this_ls],t+1] = iexo_next_this_ls
@@ -351,7 +351,7 @@ class Agents:
                     matt=self.setup.exogrid.psi_t_mat[0][t]
                     grid=self.setup.exogrid.psi_t[0][t]
                     self.truel[ind,t+1]=grid[mc_init_normal_array(np.zeros(self.shocke0[ind,t+1].shape),grid,shocks=self.shocke0[ind,t+1],adjust=np.ones(self.shocke0[ind,t+1].shape))]#
-                    #self.truel[ind,t+1]=self.shocke0[ind,t+1]
+                    self.truel[ind,t+1]=self.shocke0[ind,t+1]
                     
                     shks = self.shocks_single_iexo[ind,t]                    
                     iexo_next = mc_simulate(iexo_now,mat,shocks=shks) # import + add shocks     
@@ -464,9 +464,9 @@ class Agents:
 
 
                         # shk=grid[ipsi]
-                        if self.getadj:
-                            print('The shock of predicted love is {}, while theoricals are {}'.format(np.std(shk),self.setup.pars['sigma_psi_init']))
-                            print('The average error is {}'.format(np.mean(abs(shk-self.shocke0[ind,t+1]))))
+                        # if self.getadj:
+                        #     print('The shock of predicted love is {}, while theoricals are {}'.format(np.std(shk),self.setup.pars['sigma_psi_init']))
+                        #     print('The average error is {}'.format(np.mean(abs(shk-self.shocke0[ind,t+1]))))
                         
                         
                         iall=self.Mlist[ipol].setup.all_indices(t,(izf,izm,ipsi))[0]
@@ -627,11 +627,11 @@ class Agents:
                     
   
                     
-                    if self.getadj:
-                        print('In {}, the mean of past prediction is {}, average error is {}'.format(dd,np.mean(self.predl[ind,t]),np.mean(np.absolute(aft-self.truel[ind,t+1]))))
-                    #print('In {}, the mean of past prediction is {}, average error is {}'.format(dd,np.mean(self.predl[ind,t]),np.mean(np.absolute(bef-aft))))
-                        print('The standard deviation of innovation in {} is {}, theorical is {}'.format(dd,np.std(diffe),self.setup.sigmad[dd]))
-                    #print('target is {} actual variance is{},in grid is {}'.format(target,np.std(mean1),np.std(self.predl[ind,t+1])))
+                    # if self.getadj:
+                    #     print('In {}, the mean of past prediction is {}, average error is {}'.format(dd,np.mean(self.predl[ind,t]),np.mean(np.absolute(aft-self.truel[ind,t+1]))))
+                    # #print('In {}, the mean of past prediction is {}, average error is {}'.format(dd,np.mean(self.predl[ind,t]),np.mean(np.absolute(bef-aft))))
+                    #     print('The standard deviation of innovation in {} is {}, theorical is {}'.format(dd,np.std(diffe),self.setup.sigmad[dd]))
+                    # #print('target is {} actual variance is{},in grid is {}'.format(target,np.std(mean1),np.std(self.predl[ind,t+1])))
                     
                     self.predl[ind,t+1]=aft#grid[abs(mean1[:,np.newaxis]-grid).argmin(axis=1)] 
                     iall=self.Mlist[ipol].setup.all_indices(t,(izf,izm,ipsi))[0]

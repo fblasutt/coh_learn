@@ -35,7 +35,7 @@ class ModelSetup(object):
         Tbef=int(2/period_year)
         Tren =int(48/period_year)#int(18/period_year)# # int(42/period_year) # period starting which people do not renegotiate/divroce
         Tmeet =int(48/period_year)#int(18/period_year)#i int(42/period_year) # period starting which you do not meet anyone
-        dm=8#11
+        dm=7#11
         
         #Measure of People
         p['Nfe']=np.array([min(0.32+0.00*t,1.0) for t in range(T)])#np.array([0.25]*T)#*T)
@@ -67,7 +67,7 @@ class ModelSetup(object):
         p['A'] =1.0 # consumption in couple: c = (1/A)*[c_f^(1+rho) + c_m^(1+rho)]^(1/(1+rho))
         p['crra_power'] = 1.5
         p['couple_rts'] = 0.0
-        p['sigma_psi_init']=0.0449626592#1.0
+        p['sigma_psi_init_k']=0.0449626592#1.0
         p['sig_partner_a'] = 0.1#0.5
         p['sig_partner_z'] = 1.2#1.0#0.4 #This is crazy powerful for the diff in diff estimate
         p['sig_partner_mult'] = 1.15#1.15
@@ -82,7 +82,7 @@ class ModelSetup(object):
         p['pmeet1'] = -0.0
         p['correction']=0.0
         
-        p['z_drift'] = -0.2#-0.2
+        p['z_drift'] = -0.15#-0.2
         
         
         
@@ -160,7 +160,8 @@ class ModelSetup(object):
         #Adjust kappa and alpha to make sense of relative prices
         p['util_alp_m']=p['util_alp']*(1.0/(p['rprice_durables'])**(1.0-p['util_xi']))
         p['util_kap_m']=p['util_kap']*p['rprice_durables']**p['util_lam']
-        p['sigma_psi_mu']=p['sigma_psi_init']*p['sigma_psi_mu_pre']
+        p['sigma_psi_init']=p['sigma_psi_init_k'].copy()
+        p['sigma_psi_mu']=p['sigma_psi_init_k']*p['sigma_psi_mu_pre']
             
 
         #Get the probability of meeting, adjusting for year-period
@@ -181,7 +182,7 @@ class ModelSetup(object):
         
         
         def f(x): 
-            return (x**(3/2) - (p['sigma_psi_mu']**2+x)*p['sigma_psi_init'])#(p['sigma_psi_mult']*p['sigma_psi']))
+            return (x**(3/2) - (p['sigma_psi_mu']**2+x)*p['sigma_psi_init_k'])#(p['sigma_psi_mult']*p['sigma_psi']))
             #return (np.sqrt(x)*x)-(p['sigma_psi_mu']**2+x)*(p['sigma_psi_mult']*p['sigma_psi'])
         
   
@@ -194,7 +195,7 @@ class ModelSetup(object):
   
         
         #Get Variance of Love shock by Duration using Kalman Filter
-        self.K,sigma=kalman(1.0,p['sigma_psi']**2,p['sigma_psi_mu']**2,(p['sigma_psi_init'])**2,p['dm']+1)
+        self.K,sigma=kalman(1.0,p['sigma_psi']**2,p['sigma_psi_mu']**2,(p['sigma_psi_init_k'])**2,p['dm']+1)
         #K,sigma=kalman(1.0,p['sigma_psi']**2,p['sigma_psi_mu']**2,(sigma0)**2,p['dm'])
         #Get variance by duration
         self.sigmad=-1*np.ones((p['dm']))
@@ -517,9 +518,9 @@ class ModelSetup(object):
             #New way of getting transition matrix
             psit, matri=list(np.ones((T))),list(np.ones((T)))
             
-            sigmainitial=np.sqrt((self.pars['sigma_psi_init']/2.0)**2)+(np.sum(self.sigmad**2)-len(self.sigmad)*self.sigmad[-1]**2)
             sigmainitial=np.sqrt((self.pars['sigma_psi_init'])**2)+(np.sum(self.sigmad**2)-len(self.sigmad)*self.sigmad[-1]**2)
-           
+            sigmainitial=self.pars['sigma_psi_init']
+            
             sigmabase=np.sqrt([sigmainitial**2+(t)*self.sigmad[-1]**2 for t in range(T+p['dm']+1)])
             sigmadp=np.concatenate((np.array([0.0]),self.sigmad))
             sigmadi=self.sigmad[::-1]

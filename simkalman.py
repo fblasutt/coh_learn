@@ -27,9 +27,9 @@ if __name__ == '__main__':
     np.random.seed(19)
    
     #parameters of the kalman filter
-    sigma0=0.0449626592#1.0
+    sigma0=0.05181640625
     sigmae=0.0#0.030224609375
-    sigmamu=0.0449626592*1.35678889#1.1#0.32880859375000004
+    sigmamu=0.05181640625*1.19453125#1.1#0.32880859375000004
     
     
     #initialize arrays
