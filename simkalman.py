@@ -20,16 +20,16 @@ if __name__ == '__main__':
     
     
     #Set parameters
-    N=1000000 #realizations
-    T=20 #length of time series
+    N=100000 #realizations
+    T=10 #length of time series
     
     #set the seed
     np.random.seed(19)
    
     #parameters of the kalman filter
-    sigma0=0.05181640625
+    sigma0=0.057529296875000004
     sigmae=0.0#0.030224609375
-    sigmamu=0.05181640625*1.19453125#1.1#0.32880859375000004
+    sigmamu=0.057529296875000004*2.170234375#1.1#0.32880859375000004
     
     
     #initialize arrays

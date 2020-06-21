@@ -527,7 +527,7 @@ class ModelSetup(object):
             for i in range(T):
                 
                 #base=max(sigmabase[i+p['dm']]**2-np.sum(self.sigmad**2)+0.01,0.001)
-                base=max(sigmabase[i+p['dm']]**2-np.sum(self.sigmad**2)+0.000000001,0.0000000001)
+                base=max(sigmabase[i+p['dm']]**2-np.sum(self.sigmad**2)+0.000000001,(self.pars['sigma_psi_init']/2.5)**2)
                 sigp=np.sqrt([base+np.cumsum(sigmadp**2)[dd] for dd in range(p['dm']+1)])
                 #sigp=np.sqrt([base+np.sum(sigmadi[p['dm']-dd:]**2) for dd in range(p['dm']+1)])
                 psit[i],matri[i] = tauchen_nonstm(p['dm']+1,0.0,0.0,p['n_psi_t'][0],sd_z=sigp)
