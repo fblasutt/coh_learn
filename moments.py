@@ -2122,21 +2122,21 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
          
         sns.kdeplot(psi_check[statecpsi], shade=True,shade_lowest=False,linewidth=0.01, color="r", bw=.05,label = 'Cohabitaition') 
         sns.kdeplot(psi_check[statempsi], shade=True,shade_lowest=False,linewidth=0.01, color="b", bw=.05,label = 'Marriage') 
-        sns.kdeplot(psi_check[changec], color="r", bw=.05,label = 'Cohabitaition Beg') 
-        sns.kdeplot(psi_check[changem], color="b", bw=.05,label = 'Marriage Beg')   
+        sns.kdeplot(psi_check[changec], color="r", bw=.05,label = 'Cohabitaition---Initial') 
+        sns.kdeplot(psi_check[changem], color="b", bw=.05,label = 'Marriage---Initial')   
         plt.legend(loc='best', fontsize='x-small',frameon=False)
         #plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
          #         fancybox=True, shadow=True, ncol=len(state_codes), fontsize='x-small')    
-        plt.xlabel('Love Shock')    
+        plt.xlabel('Match Quality $\hat{\psi}_d$')    
         plt.ylabel('Denisty') 
-        
+        plt.savefig('psidist_total.pgf', bbox_inches = 'tight',pad_inches = 0)  
 
          
         ##########################################    
         # Distribution of Love - Cumulative 
         ##########################################   
         fig = plt.figure()    
-        f1=fig.add_subplot(2,1,1) 
+        f1=fig.add_subplot(1.5,1,1) 
          
         # evaluate the histogram 
         valuesc, basec = np.histogram(psi_check[changec], bins=1000) 
@@ -2149,13 +2149,13 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         #cumulativect = np.cumsum(valuesct) 
         #cumulativemt = np.cumsum(valuesmt) 
         # plot the cumulative function 
-        plt.plot(basec[:-1], cumulativec/max(cumulativec), c='red',label = 'Cohabitaition') 
-        plt.plot(basem[:-1], cumulativem/max(cumulativem), c='blue',label = 'Marriage') 
+        plt.plot(basec[:-1], cumulativec/max(cumulativec), c='red',markersize=6,label = 'Cohabitaition') 
+        plt.plot(basem[:-1], cumulativem/max(cumulativem), c='blue',markersize=6,label = 'Marriage') 
         #plt.plot(basect[:-1], cumulativect/max(cumulativect),linestyle='--', c='red',label = 'Cohabitaition-All') 
         #plt.plot(basemt[:-1], cumulativemt/max(cumulativemt),linestyle='--', c='blue',label = 'Marriage-All') 
-        plt.legend(loc='best', fontsize='x-small',frameon=False,ncol=2)      
-        plt.xlabel('Love Shock $\psi$')    
-        plt.ylabel('Probability')  
+        plt.legend(loc='best', fontsize=14,frameon=False,ncol=1)      
+        plt.xlabel('Match Quality at Meeting $\hat{\psi}^v_1$', fontsize=16)    
+        plt.ylabel('Probability', fontsize=16)  
         plt.savefig('psidist.pgf', bbox_inches = 'tight',pad_inches = 0)  
          
  
@@ -2228,7 +2228,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         plt.xlabel('Age')
         plt.legend(loc='best', fontsize='x-small',frameon=False,ncol=2)     
         plt.xticks(np.arange(3), ('24-26','29-31','34-36'))
-        plt.ylim(ymax=1.0,ymin=0.0) 
+        plt.ylim(ymax=.357,ymin=0.0) 
         plt.savefig('labor.pgf', bbox_inches = 'tight',pad_inches = 0)
         
         #plt.ylim(ymax=0.1)    
@@ -2252,7 +2252,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         plt.plot(np.array([25,35]), full_flsm['n']['e'], linewidth=1.5,color="y", label='fls-ne-M')  
         plt.plot(np.array([25,35]), full_flsc['n']['n'], linestyle='--',linewidth=1.5,color="g", label='fls-nn-C')  
         plt.plot(np.array([25,35]), full_flsm['n']['n'], linewidth=1.5,color="g", label='fls-nn-M')  
-        plt.ylim(ymax=1.0,ymin=0.0) 
+        plt.ylim(ymax=.357,ymin=0.0) 
         plt.ylabel('FLS mar and coh')
         plt.xlabel('Age')
         plt.legend(loc='best', fontsize='x-small',frameon=False)  

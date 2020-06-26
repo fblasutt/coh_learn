@@ -304,6 +304,7 @@ def compute(dpi,dco,dma,period=3,transform=1):
        
     status=status[listv][dpi['sex']==2]
     labor=dpi[filter_col_lab][dpi['sex']==2]
+    laborm=dpi[filter_col_lab][dpi['sex']==1]
     
     
 
@@ -311,8 +312,11 @@ def compute(dpi,dco,dma,period=3,transform=1):
     
     #Get age
     agei=np.array(12*(1997-dpi['birthy'])-dpi['birthm'],dtype=np.int16)[dpi['sex']==2]
+    agej=np.array(12*(1997-dpi['birthy'])-dpi['birthm'],dtype=np.int16)[dpi['sex']==1]
     dime=np.array(len(np.array(labor)[0,:]),dtype=np.int16)
+    dimem=np.array(len(np.array(laborm)[0,:]),dtype=np.int16)
     ageb=np.reshape(np.repeat(agei,dime),(len(agei),dime))+np.linspace(1,dime,dime,dtype=np.int16)
+    agebb=np.reshape(np.repeat(agej,dimem),(len(agej),dimem))+np.linspace(1,dimem,dimem,dtype=np.int16)
     
     #Get weights
     weightsa=np.array(dpi['weight'])[dpi['sex']==2]
@@ -331,12 +335,14 @@ def compute(dpi,dco,dma,period=3,transform=1):
     edu=np.array(edu)[np.isnan(labor)==False]
     status=np.array(status)[np.isnan(labor)==False]
     agebf=np.array(ageb)[np.isnan(labor)==False]
+    agebm=np.array(agebb)[np.isnan(laborm)==False]
     wgt=np.array(wgt)[np.isnan(labor)==False]
     labor=np.array(labor)[np.isnan(labor)==False]
+    laborm=np.array(laborm)[np.isnan(laborm)==False]
     
     flsm,flsc=np.zeros((3)),np.zeros((3))
     #FLFP at age 25 and 30 and 35  24-26//29-31//34-36
-    labor=labor/160.0
+    labor=(labor/120.0)*.357
     flsm[0]=np.average(labor[(status>=200) &  (agebf>=300-12) & (agebf<312+12) ],
                  weights=wgt[(status>=200) &  (agebf>=300-12) & (agebf<312+12)  ])
     
@@ -579,7 +585,7 @@ def dat_moments(sampling_number=5,weighting=False,covariances=False,relative=Fal
         W_in=np.zeros((dim,dim))   
         for i in range(dim):   
             for j in range(dim):   
-                W_in[i,j]=1/np.cov(col[i,:],col[j,:])[0][1]#*(1/(boot-1))   
+                W_in[i,j]=1/np.cov(col[i,:],col[j,:])[0][1]*(1/(boot-1))   
                  
         if not covariances:   
             W_in = np.diag(np.diag(W_in))   

@@ -62,4 +62,4 @@ filter_col3=['PuBID_1997']+['PUBID_1997']+ ['id']+['birthy']+['birthm']+['sex']+
 filter_colm=filter_col+filter_col1+filter_col2+filter_col3
 final=dpeople[filter_colm]
 
-final.to_csv('full1.csv')
+#final.to_csv('full1.csv')

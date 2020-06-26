@@ -141,10 +141,12 @@ class ModelSetup(object):
         p['wtrendp']['m']['n'] = [t*p['correction']*(t<Tret-2)+0.0*(t>=Tret-2)+(t<Tret-2)*(2.4705215   +(.05736889)*(t+p['Tbef']+1) -.00202793*(t+p['Tbef']+1)**2+ .00002582*(t+p['Tbef']+1)**3) for t in range(T)]
        
   
-        p['util_lam'] = 0.19#0.4
+        p['util_lam'] = 0.189#0.4
         p['util_alp'] = 0.5
         p['util_xi'] = 1.5
-        p['util_kap'] = (1-0.21)/(0.21)
+        p['util_kap'] = (1-0.206)/(0.206)
+        
+        #To be consistent with Greenwood divide alpha by (theta=0.26)**((1-xi)/lam)
         p['rprice_durables'] = 1.0#
         p['u_shift']=0.0
         
@@ -345,6 +347,8 @@ class ModelSetup(object):
         
         
         # female labor supply
+        #self.ls_levels = np.array([0.0,.357],dtype=self.dtype)
+        #self.mlevel=.357
         self.ls_levels = np.array([0.0,.75],dtype=self.dtype)
         self.mlevel=.75
         #self.ls_utilities = np.array([p['uls'],0.0],dtype=self.dtype)
