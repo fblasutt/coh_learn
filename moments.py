@@ -2228,7 +2228,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         plt.xlabel('Age')
         plt.legend(loc='best', fontsize='x-small',frameon=False,ncol=2)     
         plt.xticks(np.arange(3), ('24-26','29-31','34-36'))
-        plt.ylim(ymax=.357,ymin=0.0) 
+        plt.ylim(ymax=1.0,ymin=0.0) 
         plt.savefig('labor.pgf', bbox_inches = 'tight',pad_inches = 0)
         
         #plt.ylim(ymax=0.1)    
@@ -2252,7 +2252,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         plt.plot(np.array([25,35]), full_flsm['n']['e'], linewidth=1.5,color="y", label='fls-ne-M')  
         plt.plot(np.array([25,35]), full_flsc['n']['n'], linestyle='--',linewidth=1.5,color="g", label='fls-nn-C')  
         plt.plot(np.array([25,35]), full_flsm['n']['n'], linewidth=1.5,color="g", label='fls-nn-M')  
-        plt.ylim(ymax=.357,ymin=0.0) 
+        plt.ylim(ymax=1.0,ymin=0.0) 
         plt.ylabel('FLS mar and coh')
         plt.xlabel('Age')
         plt.legend(loc='best', fontsize='x-small',frameon=False)  

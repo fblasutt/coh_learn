@@ -342,7 +342,7 @@ def compute(dpi,dco,dma,period=3,transform=1):
     
     flsm,flsc=np.zeros((3)),np.zeros((3))
     #FLFP at age 25 and 30 and 35  24-26//29-31//34-36
-    labor=(labor/120.0)*.357
+    labor=(labor/120.0)*0.8038
     flsm[0]=np.average(labor[(status>=200) &  (agebf>=300-12) & (agebf<312+12) ],
                  weights=wgt[(status>=200) &  (agebf>=300-12) & (agebf<312+12)  ])
     

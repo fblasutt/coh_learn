@@ -349,8 +349,8 @@ class ModelSetup(object):
         # female labor supply
         #self.ls_levels = np.array([0.0,.357],dtype=self.dtype)
         #self.mlevel=.357
-        self.ls_levels = np.array([0.0,.75],dtype=self.dtype)
-        self.mlevel=.75
+        self.ls_levels = np.array([0.0,0.8038],dtype=self.dtype)
+        self.mlevel=0.8038
         #self.ls_utilities = np.array([p['uls'],0.0],dtype=self.dtype)
         self.ls_pdown = np.array([p['pls'],0.0],dtype=self.dtype)
         self.nls = len(self.ls_levels)
