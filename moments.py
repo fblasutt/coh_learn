@@ -164,9 +164,10 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     sp_edup=np.ones((N,nspells),dtype='<U1')
        
          
-    state_beg[:,0] = 0 # THIS ASSUMES EVERYONE STARTS AS SINGLE   #TODO consistent with men stuff? 
+    state_beg[:,0] = female[:,0] # THIS ASSUMES EVERYONE STARTS AS SINGLE   #TODO consistent with men stuff? 
     time_beg[:,0] = 0    
     sp_length[:,0] = 1    
+    sp_edu[:,0]=educ[:,0]
     is_spell[:,0] = True    
     ispell = np.zeros((N,),dtype=np.int8)    
          
@@ -221,12 +222,16 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         
     #Modify education to be 0/1
     wedu=(allspells_edu=='e')
-    educ_rels=np.zeros(allspells_edu.shape)
+    wedun=(allspells_edu=='n')
+    educ_rels=np.ones(allspells_edu.shape)*-1
     educ_rels[wedu]=1.0
+    educ_rels[wedun]=0.0
     
-    wedu=(allspells_edup=='e')
-    educ_relsp=np.zeros(allspells_edup.shape)
-    educ_relsp[wedu]=1.0
+    wedup=(allspells_edup=='e')
+    wedunp=(allspells_edup=='n')
+    educ_relsp=np.ones(allspells_edup.shape)*-1
+    educ_relsp[wedup]=1.0
+    educ_relsp[wedunp]=0.0
     
     #Use this to construct hazards   
     spells = np.stack((allspells_beg,allspells_len,allspells_end,educ_rels,educ_relsp,allspells_female),axis=1)    
@@ -448,7 +453,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     #Save Spells of Singleness
     ###################################
     if draw:
-        data_single=pd.DataFrame(data=spells_empiricalt[(spells_empiricalt[:,0]<=2),1:9] ,
+        data_single=pd.DataFrame(data=spells_empiricalt[(spells_empiricalt[:,0]<=1),1:9] ,
                                                            columns=['age','duration','end','rel','uni','coh','edu','edup'])    
    
 
@@ -709,6 +714,39 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     if draw:
         
         
+        ####################################
+        #Save agents for the experiment
+        ##################################
+        import dill
+        if mdl.setup.pars['u_shift_coh']>=0.0:
+            dill.dump(state_old, open('nor_agents.pkl','wb+'))
+            
+        if mdl.setup.pars['u_shift_coh']<0.0:
+            
+            #Do the experiment
+            with open('nor_agents.pkl','rb') as file:agents2=dill.load(file)
+            where=agents2==3
+            where2=agents2>=2
+            wherec=np.cumsum(where2,axis=1)
+            wcoh=(where) & (wherec==1)
+            
+            print('The couples that cohabited and now marry is {}'.format(np.mean(state_old[wcoh]==2)))
+            
+            
+        ###########################
+        #Some stuff for experiments
+        ###########################
+        
+        div7=1.0
+        for i in range(6):div7=div7*(1-moments['hazard div'][i])
+        print('The couples that survived 7 periods is {}'.format(div7))
+             
+        laborm=np.mean(labor_par[(state_par[:]==2) & (ages>=5) & (ages<=15)]*setup.ls_levels[-1])
+        laborc=np.mean(labor_par[(state_par[:]==3) & (ages>=5) & (ages<=15)]*setup.ls_levels[-1])
+        
+        
+        print('Labor in marriage and cohabitation is {} and {}'.format(laborm,laborc))
+        
         ################ 
         #Ratio of fls  
         ############### 
@@ -792,7 +830,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     reltt=reltt[:,pos]  
     moments['everm']=reltt[2,:]/N
     moments['everc']=reltt[3,:]/N
-                 
+    if draw:print('Share married at 35 is {}'.format( moments['everm'][-1]))
          
 
         

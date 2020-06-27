@@ -24,12 +24,22 @@ def calibration_params(xin=None,xfix=None):
               pmeete=(0.1,0.5,0.1),
               pmeetn=(0.4,1.0,0.1))
     
+    
+    
     params = OrderedDict(
               zlost=(0.08, 0.58, 0.05),
               sigma_psi_init_k=(0.03, 0.075, 0.02),#sigma_psi_mult=(0.5, 5.0, 0.02),
               util_alp=(8.0, 13.0, 0.5),#util_alp=(0.01, 0.4, 0.25),          
               sigma_psi_mu_pre=(1.0, 2.0, 0.2),
               pmeete=(0.1,0.35,0.1),
+              pmeetn=(0.5,1.0,0.1))
+    
+    params = OrderedDict(
+              zlost=(0.08, 0.33, 0.05),
+              sigma_psi_init_k=(0.03, 0.055, 0.02),#sigma_psi_mult=(0.5, 5.0, 0.02),
+              util_alp=(6.0, 11.0, 0.5),#util_alp=(0.01, 0.4, 0.25),          
+              sigma_psi_mu_pre=(1.0, 2.0, 0.2),
+              pmeete=(0.25,0.65,0.1),
               pmeetn=(0.5,1.0,0.1))
         
     # params = OrderedDict(

@@ -31,11 +31,11 @@ class ModelSetup(object):
         period_year=1#this can be 1,2,3 or 6
         transform=1#this tells how many periods to pull together for duration moments
         T = int(64/period_year)#int(26/period_year)#
-        Tret =int(48/period_year) #int(18/period_year)#  first period when the agent is retired
+        Tret =int(48/period_year) # int(18/period_year)# first period when the agent is retired
         Tbef=int(2/period_year)
-        Tren =int(48/period_year)#int(18/period_year)# # int(42/period_year) # period starting which people do not renegotiate/divroce
+        Tren =int(48/period_year)# int(18/period_year)## int(42/period_year) # period starting which people do not renegotiate/divroce
         Tmeet =int(48/period_year)#int(18/period_year)#i int(42/period_year) # period starting which you do not meet anyone
-        dm=7#11
+        dm=9#11
         
         #Measure of People
         p['Nfe']=np.array([min(0.32+0.00*t,1.0) for t in range(T)])#np.array([0.25]*T)#*T)
@@ -50,10 +50,12 @@ class ModelSetup(object):
         p['Tret'] = Tret
         p['Tren'] = Tren
         p['Tbef'] = Tbef
-        p['sig_zf_0']  = {'e':.5694464,'n':.6121695}#{'e':3.522707,'n':2.853316}#
-        p['sig_zf']    = {'e':.0261176**(0.5),'n':.0149161**(0.5)} #{'e':.02**(0.5),'n':.02**(0.5)}#{'e':.0272437**(0.5),'n':.0272437**(0.5)}#
-        p['sig_zm_0']  =  {'e':.5673833,'n':.5504325}#{'e':.5449176,'n':.5449176} #{'e':3.500857,'n':2.433748}#
-        p['sig_zm']    =  {'e':.0316222*(0.5),'n':.0229727**(0.5)}# {'e':.025014**(0.5),'n':.025014**(0.5)}#
+        p['sig_zf_0']  = {'e':.5694464,'n':.6121695}
+        p['sig_zf']    = {'e':.0261176**(0.5),'n':.0149161**(0.5)}
+        #p['sig_zf']    = {'e':.0141176**(0.5),'n':.0141176**(0.5)}
+        p['sig_zm_0']  =  {'e':.5673833,'n':.5504325}
+        p['sig_zm']    =  {'e':.0316222*(0.5),'n':.0229727**(0.5)}
+        #p['sig_zm']    =  {'e':.0226222*(0.5),'n':.0226222**(0.5)}
         p['n_zf_t']      = [5]*Tret + [5]*(T-Tret)
         p['n_zm_t']      = [3]*Tret + [3]*(T-Tret)
         p['n_zf_correct']=2

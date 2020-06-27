@@ -221,7 +221,7 @@ def mdl_resid(x=None,save_to=None,load_from=None,return_format=['distance'],
     Nfn=Nf-int(Nf*mdl.setup.pars['Nfe'][0])
    
     agents_feme = Agents( mdl_list ,age_uni['female'],female=True,edu='e',pswitchlist=None,verbose=False,N=Nfe,draw=draw,array_adjust=adjust)
-   
+    
     agents_male = Agents( mdl_list ,age_uni['male'],female=False,edu='e',pswitchlist=None,verbose=False,N=Nme,draw=draw,array_adjust=adjust)
    
     agents_femn = Agents( mdl_list ,age_uni['female'],female=True,edu='n',pswitchlist=None,verbose=False,N=Nfn,draw=draw,array_adjust=adjust)
@@ -229,6 +229,7 @@ def mdl_resid(x=None,save_to=None,load_from=None,return_format=['distance'],
     agents_maln = Agents( mdl_list ,age_uni['male'],female=False,edu='n',pswitchlist=None,verbose=False,N=Nmn,draw=draw,array_adjust=adjust)
    
     agents_pooled = AgentsPooled([agents_feme,agents_male,agents_femn,agents_maln])#AgentsPooled([agents_femn,agents_maln])#
+    
     
     
     #Compute moments
