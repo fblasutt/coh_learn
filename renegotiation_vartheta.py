@@ -334,7 +334,8 @@ def v_div_vartheta(setup,dc,dd,t,sc,Vmale,Vfemale,izf,izm,
 
 
 @njit(parallel=True)
-def v_ren_core_two_opts_with_int(v_y_ni, vf_y_ni, vm_y_ni, vf_n_ni, vm_n_ni, itht, wntht, thtgrid):
+def v_ren_core_two_opts_with_int(v_y_ni, vf_y_ni, vm_y_ni, vf_n_ni, vm_n_ni, itht, wntht, thtgrid, 
+                                 rescale=False):
     # this takes values with no interpolation and interpolates inside
     # this also makes a choice of mar / coh
     # choice is based on comparing v_y_ni_0 vs v_y_ni_1 in the interpolated pt
@@ -466,177 +467,17 @@ def v_ren_core_two_opts_with_int(v_y_ni, vf_y_ni, vm_y_ni, vf_n_ni, vm_n_ni, ith
                 found_decrease = False
                 
                 
-                # these loops can be improved by monotonicity
-                for it_increase in range(it+1,nt):   
-                    if (vf_opt[it_increase] >= vf_no and vm_opt[it_increase] >= vm_no):
-                        found_increase = True
-                        break
-                
-                
-                
-                for it_decrease in range(it-1,-1,-1):
-                    if (vf_opt[it_decrease] >= vf_no and vm_opt[it_decrease] >= vm_no):
-                        found_decrease = True
-                        break
+                # if vf_y < vf_no and vm_y >= vm_no:
+                #     for it_increase in range(it+1,nt):  
+                #         if (vf_opt[it_increase] >= vf_no and vm_opt[it_increase] >= vm_no):
+                #             it_ren=it_increase
+                #             break
                     
-                
-                if found_increase and found_decrease:
-                    dist_increase = it_increase - it
-                    dist_decrease = it - it_decrease
-                    
-                    if dist_increase != dist_decrease:
-                        it_ren = it_increase if dist_increase < dist_decrease else it_decrease
-                    else:
-                        # tie breaker
-                        dist_mid_inc = np.abs(it_increase - (nt/2))
-                        dist_mid_dec = np.abs(it_decrease - (nt/2))
-                        it_ren = it_increase if dist_mid_inc < dist_mid_dec else it_decrease
-                    
-                elif found_increase and not found_decrease:
-                    it_ren = it_increase
-                elif found_decrease and not found_increase:
-                    it_ren = it_decrease
-                else:
-                    it_ren = -1 # check this!
-                    
-                # finally fill the values    
-                    
-                if it_ren == -1:
-                    tht = thtgrid[it]
-                    v_out[ia,ie,it] = tht*vf_no + (1-tht)*vm_no
-                    vf_out[ia,ie,it] = vf_no
-                    vm_out[ia,ie,it] = vm_no
-                    itheta_out[ia,ie,it] = -1
-                else:
-                    # here we need to rescale
-                    
-                    
-                    
-                    vf_y = vf_opt[it_ren]              
-                    vm_y = vm_opt[it_ren]
-                    v_y  =  v_opt[it_ren]
-                    
-                    v_out[ia,ie,it] = v_y
-                    vf_out[ia,ie,it] = vf_y
-                    vm_out[ia,ie,it] = vm_y
-                    itheta_out[ia,ie,it] = it_ren
-                
-    
-    return v_out, vf_out, vm_out, itheta_out, ichoice_out
-
-@njit(parallel=True)
-def v_ren_core_two_opts_with_int2(v_y_ni, vf_y_ni, vm_y_ni, vf_n_ni, vm_n_ni, itht, wntht, thtgrid):
-    # this takes values with no interpolation and interpolates inside
-    # this also makes a choice of mar / coh
-    # choice is based on comparing v_y_ni_0 vs v_y_ni_1 in the interpolated pt
-
-
-    # this code is not really elegant but @njit requires some dumb things
-    # note that v_y_ni has either 1 or 2 elements at 0th dimension
-    # (so if two functions are passed, v_y_ni is np.stack(v_y_c,v_y_m)),
-    # otherwise it is just v_y_m[None,...]. x[0] is equivalent to x[0,...].
-    
-   
-  
-    v_y_ni_0 = v_y_ni[0]
-    vf_y_ni_0 = vf_y_ni[0]
-    vm_y_ni_0 = vm_y_ni[0]
-        
-    
-    dtype = v_y_ni.dtype
-    
-        
-    na, ne, nt_coarse = v_y_ni_0.shape
-    nt = thtgrid.size
-    
-    shp = (na,ne,nt)
-    
-    v_out = np.empty(shp,dtype=dtype)
-    vm_out = np.empty(shp,dtype=dtype)
-    vf_out = np.empty(shp,dtype=dtype)
-    
-    itheta_out = np.full(v_out.shape,-1,dtype=np.int16)
-    ichoice_out = np.zeros(v_out.shape,dtype=np.bool_)
-    
-    
-    f1 = np.float32(1)
-    
-    
-    for ia in prange(na):
-        for ie in prange(ne):
-            # first we form value functions and choices
-            # then we do renegotiation
-            # this saves lots of operations
-            
-            v_opt = np.empty((nt,),dtype=dtype)
-            vf_opt = np.empty((nt,),dtype=dtype)
-            vm_opt = np.empty((nt,),dtype=dtype)
-            
-            vf_no_t = np.empty((nt,),dtype=dtype)
-            vm_no_t = np.empty((nt,),dtype=dtype)
-            
-            # this part does all interpolations and maximization
-            vf_no_t[:] = vf_n_ni[ia,ie,:]
-            vm_no_t[:] = vm_n_ni[ia,ie,:]
-            for it in range(nt):
-                it_c = itht[it]
-                it_cp = it_c+1
-                wn_c = wntht[it]
-                wt_c = f1 - wn_c
-                
-                def wsum(x):
-                    return x[ia,ie,it_c]*wt_c + x[ia,ie,it_cp]*wn_c
-                
-                v_y_0 = wsum(v_y_ni_0)
-                
-
-                
-            
-                  
-                vf_opt[it] = wsum(vf_y_ni_0)
-                vm_opt[it] = wsum(vm_y_ni_0)
-                v_opt[it] = v_y_0
-                
-                
-            
-            for it in range(nt):
-                
-                
-                vf_y = vf_opt[it]                
-                vm_y = vm_opt[it]
-                v_y = v_opt[it]
-                
-                vf_no = vf_no_t[it]
-                vm_no = vm_no_t[it]
-                
-                if vf_y >= vf_no and vm_y >= vm_no:
-                    # no search just fill the value
-                    itheta_out[ia,ie,it] = it    
-                    vf_out[ia,ie,it] = vf_y
-                    vm_out[ia,ie,it] = vm_y
-                    v_out[ia,ie,it] = v_y
-                    continue
-                    
-                if vf_y < vf_no and vm_y < vm_no:
-                    # no search
-                    tht = thtgrid[it]
-                    v_out[ia,ie,it] = tht*vf_no + (f1-tht)*vm_no
-                    vf_out[ia,ie,it] = vf_no
-                    vm_out[ia,ie,it] = vm_no
-                    itheta_out[ia,ie,it] = -1
-                    continue
-                
-                
-                # in the points left one guy agrees and one disagrees
-                
-                # run two loops: forward and backward
-                # see if there is anything to replace
-                
-                it_ren = -1
-                
-                found_increase = False
-                found_decrease = False
-                
+                # if vf_y >= vf_no and vm_y < vm_no:
+                #     for it_decrease in range(it-1,-1,-1): 
+                #         if (vf_opt[it_increase] >= vf_no and vm_opt[it_increase] >= vm_no):
+                #             it_ren=it_increase
+                #             break
                 
                 # these loops can be improved by monotonicity
                 for it_increase in range(it+1,nt):   
@@ -682,13 +523,19 @@ def v_ren_core_two_opts_with_int2(v_y_ni, vf_y_ni, vm_y_ni, vf_n_ni, vm_n_ni, it
                 else:
                     # here we need to rescale
                     
+                    if rescale:
+                        tht_old = thtgrid[it]
+                        tht_new = thtgrid[it_ren]
+                        factor = np.maximum( (1-tht_old)/(1-tht_new), tht_old/tht_new )
+                    else:
+                        factor = 1
                     
                     
                     vf_y = vf_opt[it_ren]              
                     vm_y = vm_opt[it_ren]
                     v_y  =  v_opt[it_ren]
                     
-                    v_out[ia,ie,it] = v_y
+                    v_out[ia,ie,it] = factor*v_y
                     vf_out[ia,ie,it] = vf_y
                     vm_out[ia,ie,it] = vm_y
                     itheta_out[ia,ie,it] = it_ren
