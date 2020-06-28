@@ -35,7 +35,7 @@ class ModelSetup(object):
         Tbef=int(2/period_year)
         Tren =int(48/period_year)# int(18/period_year)## int(42/period_year) # period starting which people do not renegotiate/divroce
         Tmeet =int(48/period_year)#int(18/period_year)#i int(42/period_year) # period starting which you do not meet anyone
-        dm=9#11
+        dm=7#11
         
         #Measure of People
         p['Nfe']=np.array([min(0.32+0.00*t,1.0) for t in range(T)])#np.array([0.25]*T)#*T)
@@ -127,9 +127,11 @@ class ModelSetup(object):
         
         p['wtrend']['f']['e'] =[t*p['correction']*(t<Tret)+0.0*(t>=Tret)+(t<Tret)*(2.6171558 +(.03626223)*(t+p['Tbef']+1)-.0005829*(t+p['Tbef']+1)**2+.0*(t+p['Tbef']+1)**3) for t in range(T)]
         p['wtrend']['f']['n'] =[t*p['correction']*(t<Tret)+0.0*(t>=Tret)+(t<Tret)*(2.3188577 +(.02013329)*(t+p['Tbef']+1)-.00023405*(t+p['Tbef']+1)**2+.0*(t+p['Tbef']+1)**3) for t in range(T)]
-       
+        #p['wtrend']['f']['n'] =[t*p['correction']*(t<Tret)+0.0*(t>=Tret)+(t<Tret)*(2.6171558 +(.03626223)*(t+p['Tbef']+1)-.0005829*(t+p['Tbef']+1)**2+.0*(t+p['Tbef']+1)**3) for t in range(T)]
+        
         p['wtrend']['m']['e'] = [t*p['correction']*(t<Tret-2)+0.0*(t>=Tret-2)+(t<Tret-2)*(2.3854005  +(.11658547)*(t+p['Tbef']+1) -.00314674*(t+p['Tbef']+1)**2+ .00002645*(t+p['Tbef']+1)**3) for t in range(T)]
         p['wtrend']['m']['n'] = [t*p['correction']*(t<Tret-2)+0.0*(t>=Tret-2)+(t<Tret-2)*(2.4193351   +(.06240424)*(t+p['Tbef']+1) -.00160054*(t+p['Tbef']+1)**2+ .00001287*(t+p['Tbef']+1)**3) for t in range(T)]
+        #p['wtrend']['m']['n'] = [t*p['correction']*(t<Tret-2)+0.0*(t>=Tret-2)+(t<Tret-2)*(2.3854005  +(.11658547)*(t+p['Tbef']+1) -.00314674*(t+p['Tbef']+1)**2+ .00002645*(t+p['Tbef']+1)**3) for t in range(T)]
        
          #Wages over time-partner
         p['wtrendp']=dict()
@@ -137,11 +139,11 @@ class ModelSetup(object):
       
         p['wtrendp']['f']['e'] =[t*p['correction']*(t<Tret)+0.0*(t>=Tret)+(t<Tret)*(2.5173924 +(.10129988)*(t+p['Tbef']+1)-.00350539*(t+p['Tbef']+1)**2+.00003795*(t+p['Tbef']+1)**3) for t in range(T)]
         p['wtrendp']['f']['n'] =[t*p['correction']*(t<Tret)+0.0*(t>=Tret)+(t<Tret)*(2.3182552 +(.0457936)*(t+p['Tbef']+1) -.00124753*(t+p['Tbef']+1)**2+.00001292*(t+p['Tbef']+1)**3) for t in range(T)]
-       
+        #p['wtrendp']['f']['n'] =[t*p['correction']*(t<Tret)+0.0*(t>=Tret)+(t<Tret)*(2.5173924 +(.10129988)*(t+p['Tbef']+1)-.00350539*(t+p['Tbef']+1)**2+.00003795*(t+p['Tbef']+1)**3) for t in range(T)]
         
         p['wtrendp']['m']['e'] = [t*p['correction']*(t<Tret-2)+0.0*(t>=Tret-2)+(t<Tret-2)*(2.3982928  +(.1340109)*(t+p['Tbef']+1) -.00502756*(t+p['Tbef']+1)**2+ .00005841*(t+p['Tbef']+1)**3) for t in range(T)]
         p['wtrendp']['m']['n'] = [t*p['correction']*(t<Tret-2)+0.0*(t>=Tret-2)+(t<Tret-2)*(2.4705215   +(.05736889)*(t+p['Tbef']+1) -.00202793*(t+p['Tbef']+1)**2+ .00002582*(t+p['Tbef']+1)**3) for t in range(T)]
-       
+        #p['wtrendp']['m']['n'] = [t*p['correction']*(t<Tret-2)+0.0*(t>=Tret-2)+(t<Tret-2)*(2.3982928  +(.1340109)*(t+p['Tbef']+1) -.00502756*(t+p['Tbef']+1)**2+ .00005841*(t+p['Tbef']+1)**3) for t in range(T)]     
   
         p['util_lam'] = 0.189#0.4
         p['util_alp'] = 0.5
