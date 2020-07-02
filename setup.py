@@ -53,12 +53,14 @@ class ModelSetup(object):
         p['sig_zf_0']  = {'e':.5694464,'n':.6121695}
         p['sig_zf']    = {'e':.0261176**(0.5),'n':.0149161**(0.5)}
         #p['sig_zf']    = {'e':.0141176**(0.5),'n':.0141176**(0.5)}
+        #p['sig_zf']    = {'e':.0261176**(0.5),'n':.0269161**(0.5)}
         p['sig_zm_0']  =  {'e':.5673833,'n':.5504325}
-        p['sig_zm']    =  {'e':.0316222*(0.5),'n':.0229727**(0.5)}
-        #p['sig_zm']    =  {'e':.0226222*(0.5),'n':.0226222**(0.5)}
+        p['sig_zm']    =  {'e':.0316222**(0.5),'n':.0229727**(0.5)}
+        #p['sig_zm']    =  {'e':.0226222**(0.5),'n':.0226222**(0.5)}
+        #p['sig_zm']    =  {'e':.0316222**(0.5),'n':.0316222**(0.5)}
         p['n_zf_t']      = [5]*Tret + [5]*(T-Tret)
         p['n_zm_t']      = [3]*Tret + [3]*(T-Tret)
-        p['n_zf_correct']=1
+        p['n_zf_correct']=2
         p['sigma_psi_mult'] = 0.28
         p['sigma_psi_mu_pre'] = 0.1#1.0#nthe1.1
         p['sigma_psi']   =0.0# 0.11
@@ -128,10 +130,12 @@ class ModelSetup(object):
         p['wtrend']['f']['e'] =[t*p['correction']*(t<Tret)+0.0*(t>=Tret)+(t<Tret)*(2.6171558 +(.03626223)*(t+p['Tbef']+1)-.0005829*(t+p['Tbef']+1)**2+.0*(t+p['Tbef']+1)**3) for t in range(T)]
         p['wtrend']['f']['n'] =[t*p['correction']*(t<Tret)+0.0*(t>=Tret)+(t<Tret)*(2.3188577 +(.02013329)*(t+p['Tbef']+1)-.00023405*(t+p['Tbef']+1)**2+.0*(t+p['Tbef']+1)**3) for t in range(T)]
         #p['wtrend']['f']['n'] =[t*p['correction']*(t<Tret)+0.0*(t>=Tret)+(t<Tret)*(2.6171558 +(.03626223)*(t+p['Tbef']+1)-.0005829*(t+p['Tbef']+1)**2+.0*(t+p['Tbef']+1)**3) for t in range(T)]
+        #p['wtrend']['f']['e'] =[t*p['correction']*(t<Tret)+0.0*(t>=Tret)+(t<Tret)*(2.3188577 +(.02013329)*(t+p['Tbef']+1)-.00023405*(t+p['Tbef']+1)**2+.0*(t+p['Tbef']+1)**3) for t in range(T)]
         
         p['wtrend']['m']['e'] = [t*p['correction']*(t<Tret-2)+0.0*(t>=Tret-2)+(t<Tret-2)*(2.3854005  +(.11658547)*(t+p['Tbef']+1) -.00314674*(t+p['Tbef']+1)**2+ .00002645*(t+p['Tbef']+1)**3) for t in range(T)]
         p['wtrend']['m']['n'] = [t*p['correction']*(t<Tret-2)+0.0*(t>=Tret-2)+(t<Tret-2)*(2.4193351   +(.06240424)*(t+p['Tbef']+1) -.00160054*(t+p['Tbef']+1)**2+ .00001287*(t+p['Tbef']+1)**3) for t in range(T)]
         #p['wtrend']['m']['n'] = [t*p['correction']*(t<Tret-2)+0.0*(t>=Tret-2)+(t<Tret-2)*(2.3854005  +(.11658547)*(t+p['Tbef']+1) -.00314674*(t+p['Tbef']+1)**2+ .00002645*(t+p['Tbef']+1)**3) for t in range(T)]
+        #p['wtrend']['m']['e'] = [t*p['correction']*(t<Tret-2)+0.0*(t>=Tret-2)+(t<Tret-2)*(2.4193351   +(.06240424)*(t+p['Tbef']+1) -.00160054*(t+p['Tbef']+1)**2+ .00001287*(t+p['Tbef']+1)**3) for t in range(T)]
        
          #Wages over time-partner
         p['wtrendp']=dict()
@@ -140,10 +144,20 @@ class ModelSetup(object):
         p['wtrendp']['f']['e'] =[t*p['correction']*(t<Tret)+0.0*(t>=Tret)+(t<Tret)*(2.5173924 +(.10129988)*(t+p['Tbef']+1)-.00350539*(t+p['Tbef']+1)**2+.00003795*(t+p['Tbef']+1)**3) for t in range(T)]
         p['wtrendp']['f']['n'] =[t*p['correction']*(t<Tret)+0.0*(t>=Tret)+(t<Tret)*(2.3182552 +(.0457936)*(t+p['Tbef']+1) -.00124753*(t+p['Tbef']+1)**2+.00001292*(t+p['Tbef']+1)**3) for t in range(T)]
         #p['wtrendp']['f']['n'] =[t*p['correction']*(t<Tret)+0.0*(t>=Tret)+(t<Tret)*(2.5173924 +(.10129988)*(t+p['Tbef']+1)-.00350539*(t+p['Tbef']+1)**2+.00003795*(t+p['Tbef']+1)**3) for t in range(T)]
+        #p['wtrendp']['f']['e'] =[t*p['correction']*(t<Tret)+0.0*(t>=Tret)+(t<Tret)*(2.3182552 +(.0457936)*(t+p['Tbef']+1) -.00124753*(t+p['Tbef']+1)**2+.00001292*(t+p['Tbef']+1)**3) for t in range(T)]
         
         p['wtrendp']['m']['e'] = [t*p['correction']*(t<Tret-2)+0.0*(t>=Tret-2)+(t<Tret-2)*(2.3982928  +(.1340109)*(t+p['Tbef']+1) -.00502756*(t+p['Tbef']+1)**2+ .00005841*(t+p['Tbef']+1)**3) for t in range(T)]
         p['wtrendp']['m']['n'] = [t*p['correction']*(t<Tret-2)+0.0*(t>=Tret-2)+(t<Tret-2)*(2.4705215   +(.05736889)*(t+p['Tbef']+1) -.00202793*(t+p['Tbef']+1)**2+ .00002582*(t+p['Tbef']+1)**3) for t in range(T)]
-        #p['wtrendp']['m']['n'] = [t*p['correction']*(t<Tret-2)+0.0*(t>=Tret-2)+(t<Tret-2)*(2.3982928  +(.1340109)*(t+p['Tbef']+1) -.00502756*(t+p['Tbef']+1)**2+ .00005841*(t+p['Tbef']+1)**3) for t in range(T)]     
+       # p['wtrendp']['m']['n'] = [t*p['correction']*(t<Tret-2)+0.0*(t>=Tret-2)+(t<Tret-2)*(2.3982928  +(.1340109)*(t+p['Tbef']+1) -.00502756*(t+p['Tbef']+1)**2+ .00005841*(t+p['Tbef']+1)**3) for t in range(T)] 
+        #p['wtrendp']['m']['e'] = [t*p['correction']*(t<Tret-2)+0.0*(t>=Tret-2)+(t<Tret-2)*(2.4705215   +(.05736889)*(t+p['Tbef']+1) -.00202793*(t+p['Tbef']+1)**2+ .00002582*(t+p['Tbef']+1)**3) for t in range(T)]
+  
+        #p['wtrend']['f']['e'] = [t*p['correction']*(t<Tret-2)+0.0*(t>=Tret-2)+(t<Tret-2)*(2.3854005  +(.11658547)*(t+p['Tbef']+1) -.00314674*(t+p['Tbef']+1)**2+ .00002645*(t+p['Tbef']+1)**3) for t in range(T)]
+        #p['wtrend']['f']['n'] = [t*p['correction']*(t<Tret-2)+0.0*(t>=Tret-2)+(t<Tret-2)*(2.4193351   +(.06240424)*(t+p['Tbef']+1) -.00160054*(t+p['Tbef']+1)**2+ .00001287*(t+p['Tbef']+1)**3) for t in range(T)]
+        #p['wtrendp']['f']['e'] = [t*p['correction']*(t<Tret-2)+0.0*(t>=Tret-2)+(t<Tret-2)*(2.3982928  +(.1340109)*(t+p['Tbef']+1) -.00502756*(t+p['Tbef']+1)**2+ .00005841*(t+p['Tbef']+1)**3) for t in range(T)]
+        #p['wtrendp']['f']['n'] = [t*p['correction']*(t<Tret-2)+0.0*(t>=Tret-2)+(t<Tret-2)*(2.4705215   +(.05736889)*(t+p['Tbef']+1) -.00202793*(t+p['Tbef']+1)**2+ .00002582*(t+p['Tbef']+1)**3) for t in range(T)]
+    
+  
+    
   
         p['util_lam'] = 0.189#0.4
         p['util_alp'] = 0.5
@@ -425,8 +439,8 @@ class ModelSetup(object):
                         dist0=zft[edu][t][0]-p['n_zf_correct']*h
                         
                         #Copy transition matrix
-                        #exogrid['zf_t'][edu]=exogrid['zf_t'][edu]+[np.concatenate((np.array([dist0,dist1]),zft[edu][t]))]
-                        exogrid['zf_t'][edu]=exogrid['zf_t'][edu]+[np.concatenate((np.array([dist1]),zft[edu][t]))]
+                        exogrid['zf_t'][edu]=exogrid['zf_t'][edu]+[np.concatenate((np.array([dist0,dist1]),zft[edu][t]))]
+                        #exogrid['zf_t'][edu]=exogrid['zf_t'][edu]+[np.concatenate((np.array([dist1]),zft[edu][t]))]
                         exogrid['zf_t_mat'][edu]=exogrid['zf_t_mat'][edu]+[np.zeros((p['n_zf_t'][t],p['n_zf_t'][t]))]
                         exogrid['zf_t_mat'][edu][t][p['n_zf_correct']:,p['n_zf_correct']:]=zftmat[edu][t]
                         
@@ -434,7 +448,7 @@ class ModelSetup(object):
                         if t<p['T']-1:
                             
                             exogrid['zf_t_mat'][edu][t][0,:-p['n_zf_correct']]=zftmat[edu][t][0,:]
-                            #exogrid['zf_t_mat'][edu][t][1,:-p['n_zf_correct']]=zftmat[edu][t][1,:]
+                            exogrid['zf_t_mat'][edu][t][1,:-p['n_zf_correct']]=zftmat[edu][t][1,:]
                            
                                 
                         else:
@@ -733,7 +747,7 @@ class ModelSetup(object):
 
         
         # construct finer grid for bargaining
-        ntheta_fine = 7*self.ntheta #7*self.ntheta actual number may be a bit bigger
+        ntheta_fine =7*self.ntheta #7*self.ntheta actual number may be a bit bigger
         self.thetagrid_fine = np.unique(np.concatenate( (self.thetagrid,np.linspace(self.thetamin,self.thetamax,ntheta_fine,dtype=self.dtype)) ))
         self.ntheta_fine = self.thetagrid_fine.size
         

@@ -426,7 +426,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
             haz_mar=cox_mar.hazard_ratios_['edu'] 
             haz_marp=1.0#cox_mar.hazard_ratios_['edup'] 
                
-            #Cox where risk is separatio   
+            #Cox where risk is Breakup   
             data_coh_panda['endd']=0.0   
             data_coh_panda.loc[data_coh_panda['end']==0.0,'endd']=1.0   
             data_coh_panda3=data_coh_panda.drop(['end','coh','uni','edup'], axis=1)   
@@ -510,7 +510,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     hazde.reverse()    
     hazde=np.array(hazde).T  
          
-    #Hazard of Separation    
+    #Hazard of Breakupn    
     hazs=list()    
     lgh=len(all_spells['Couple, C'][:,0])    
     for t in range(mdl.setup.pars['T']):    
@@ -555,7 +555,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     all_spells_e=all_spells['Couple, C'][where,:]
     
     
-    #Hazard of Separation    
+    #Hazard of Breakup    
     hazse=list()    
     lgh=len(all_spells_e[:,0])    
     for t in range(mdl.setup.pars['T']):    
@@ -831,6 +831,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     moments['everm']=reltt[2,:]/N
     moments['everc']=reltt[3,:]/N
     if draw:print('Share married at 35 is {}'.format( moments['everm'][-1]))
+    if draw:print('Share cohabiting at 35 is {}'.format( moments['everc'][-1]))
          
 
         
@@ -878,6 +879,8 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     moments['everr_ne']=Ereltt[1,:]/np.sum(educ[:,0]=='n')
     moments['everr_d']=moments['everr_ne']-moments['everr_e']
     
+    
+    
     #
   
     ecoh1=np.cumsum(state==3,axis=1)>1
@@ -909,12 +912,13 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         for t in range(lenn):    
                    
                  
-             
-            #Arrays for preparation    
-            is_statem = (np.any(state[:,:t+1]==2,1)) & (educ[:,t+1]==ed)          
-            is_statec = (np.any(state[:,:t+1]==3,1)) & (educ[:,t+1]==ed)    
             
-            if not (np.any(is_state) or np.any(is_state1)): continue    
+            #Arrays for preparation    
+           
+            is_statem = (((np.any(state_old[:,:max(t+3,0)]==2,1)) & (educ[:,0]==ed) & (female[:,0]==1))  |   ((np.any(state_old[:,:max(t+1,0)]==2,1)) & (educ[:,0]==ed) & (female[:,0]==0)))       
+            is_statec = (((np.any(state_old[:,:max(t+3,0)]==3,1)) & (educ[:,0]==ed) & (female[:,0]==1))  |   ((np.any(state_old[:,:max(t+1,0)]==3,1)) & (educ[:,0]==ed) & (female[:,0]==0)))   
+            
+            if not (np.any(is_statem) or np.any(is_statec)): continue    
              
           
             #Relationship over time    
@@ -926,11 +930,14 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     #Now, before saving the moments, take interval of 5 years    
     # if (mdl.setup.pars['Tret']>=mdl.setup.pars['Tret']):            
     EEreltt=EErelt[:,:,:mdl.setup.pars['Tret']-mdl.setup.pars['Tbef']+1]           
-    EEreltt=EEreltt[:,:,pos]    
+    EEreltt=EEreltt[:,:,pos]
     
-
- 
- 
+    
+    
+    if draw:print('Share married  e at 35 is {}'.format(EEreltt[0,0,3]/np.sum(educ[:,0]=='e')))
+    if draw:print('Share married  n at 35 is {}'.format(EEreltt[0,1,3]/np.sum(educ[:,0]=='n')))
+    if draw:print('Share cohabit  e at 35 is {}'.format(EEreltt[1,0,3]/np.sum(educ[:,0]=='e')))
+    if draw:print('Share cohabit  n at 35 is {}'.format(EEreltt[1,1,3]/np.sum(educ[:,0]=='n')))
    
      
     ################################################## 
@@ -1102,7 +1109,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
             macmp=(macm) & (assetss_w[:,i]>0) 
             macfp=(macf) & (assetss_w[:,i]>0) 
              
-            #Corr assets at separation+share 
+            #Corr assets at Breakup+share 
             if np.any(acf):corr_ass_sepf[i]=np.corrcoef(assets_w[acf,i],(assetss_w[acf,i]-assets_w[acf,i]))[0,1] 
             if np.any(acm):corr_ass_sepm[i]=np.corrcoef(assets_w[acm,i],(assetss_w[acm,i]-assets_w[acm,i]))[0,1] 
             if np.any(acf):share_ass_sepf[i]=0.5 
@@ -1687,7 +1694,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         plt.savefig('hazde.pgf', bbox_inches = 'tight',pad_inches = 0)  
              
         #############################################    
-        # Hazard of Separation    
+        # Hazard of Breakup    
         #############################################    
         fig = plt.figure()    
         f1=fig.add_subplot(1.5,1,1)    
@@ -1704,12 +1711,12 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         plt.savefig('hazs.pgf', bbox_inches = 'tight',pad_inches = 0)  
         
         #############################################    
-        # Hazard of Separation    Educated
+        # Hazard of Breakup    Educated
         #############################################    
         fig = plt.figure()    
         f1=fig.add_subplot(2,1,1)    
         lg=min(len(hazs_d),len(hazse))  
-        plt.plot(np.array(range(lg))+1, hazse[0:lg],one, linestyle='--',linewidth=1.5, label='Hazard of Separation Edu - S')    
+        plt.plot(np.array(range(lg))+1, hazse[0:lg],one, linestyle='--',linewidth=1.5, label='Hazard of Breakup Edu - S')    
         plt.legend(loc='best', ncol=1, fontsize='x-small',frameon=False)
         #plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
          #         fancybox=True, shadow=True, ncol=3, fontsize='x-small')    
@@ -1895,7 +1902,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
             plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15),    
                       fancybox=True, shadow=True, ncol=2, fontsize=14)    
             plt.xlabel('Age', fontsize=16)    
-            plt.ylabel('Average Log Wage', fontsize=16)
+            plt.ylabel('Average Productivity', fontsize=16)
             plt.savefig('sy_minc.pgf', bbox_inches = 'tight',pad_inches = 0)  
              
             ##########################################    
@@ -1914,7 +1921,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
             plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15),    
                       fancybox=True, shadow=True, ncol=2, fontsize=14)    
             plt.xlabel('Age', fontsize=16)    
-            plt.ylabel('Log Wage Variance', fontsize=16)  
+            plt.ylabel('Productivity Variance', fontsize=16)  
             plt.savefig('sy_vinc.pgf', bbox_inches = 'tight',pad_inches = 0)
              
         ##########################################    
@@ -1970,8 +1977,8 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         lend=len(wage_fs) 
         agea=np.array(range(lend))+20 
         
-        plt.plot(agea, corr_ass_sepf,color='r',markersize=3, label='Separation-fm') 
-        plt.plot(agea, corr_ass_sepm,color='b',markersize=3, label='Separation-mm') 
+        plt.plot(agea, corr_ass_sepf,color='r',markersize=3, label='Breakup-fm') 
+        plt.plot(agea, corr_ass_sepm,color='b',markersize=3, label='Breakup-mm') 
         plt.plot(agea, mcorr_ass_sepf,color='m',markersize=3, label='Divorce-fm') 
         plt.plot(agea, mcorr_ass_sepm,color='k',markersize=3, label='Divorce-mm') 
         plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
@@ -2008,8 +2015,8 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         lend=len(wage_fs) 
         agea=np.array(range(lend))+20 
         
-        plt.plot(agea, share_ass_sepf,color='r',markersize=3, label='Separation-fm') 
-        plt.plot(agea, share_ass_sepm,color='b',markersize=3, label='Separation-mm') 
+        plt.plot(agea, share_ass_sepf,color='r',markersize=3, label='Breakupn-fm') 
+        plt.plot(agea, share_ass_sepm,color='b',markersize=3, label='Breakupn-mm') 
         plt.plot(agea, mshare_ass_sepf,color='m',markersize=3, label='Divorce-fm') 
         plt.plot(agea, mshare_ass_sepm,color='k',markersize=3, label='Divorce-mm') 
         plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
@@ -2195,8 +2202,11 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         plt.xlabel('Match Quality at Meeting $\hat{\psi}^v_1$', fontsize=16)    
         plt.ylabel('Probability', fontsize=16)  
         plt.savefig('psidist.pgf', bbox_inches = 'tight',pad_inches = 0)  
-         
- 
+        
+        ccc=cumulativec/max(cumulativec)
+        mmm=cumulativem/max(cumulativem)
+        print('The share of couples cohabiting+marrying wiht mq<0 is {} and {}'.format(ccc[basec[:-1]<=0][-1],mmm[basem[:-1]<=0][-1]))
+
         ##########################################    
         # Distribution of Love by Education
         #################################
@@ -2364,7 +2374,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         plt.axhline(y=1.0,linewidth=0.1, color='r')   
         plt.errorbar(x, y, yerr=yerr, fmt='o', elinewidth=0.03)   
         plt.ylabel('Relative Hazard - Education')   
-        plt.xticks(x, ["Overall Risk","Risk of Marriage","Risk of Separation"] )  
+        plt.xticks(x, ["Overall Risk","Risk of Marriage","Risk of Breakup"] )  
         #plt.ylim(ymax=1.2,ymin=0.7)   
         plt.xlim(xmax=1.0,xmin=0.0)   
         
@@ -2382,7 +2392,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         # plt.axhline(y=1.0,linewidth=0.1, color='r')   
         # plt.errorbar(x, y, yerr=yerr, fmt='o', elinewidth=0.03)   
         # plt.ylabel('Relative Hazard - Education Partner')   
-        # plt.xticks(x, ["Overall Risk","Risk of Marriage","Risk of Separation"] )  
+        # plt.xticks(x, ["Overall Risk","Risk of Marriage","Risk of Breakupn"] )  
         # #plt.ylim(ymax=1.2,ymin=0.7)   
         # plt.xlim(xmax=1.0,xmin=0.0)   
         
@@ -2486,6 +2496,38 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         plt.ylabel('Rel. Haz. of Divorce')  
         plt.savefig('cohrel.pgf', bbox_inches = 'tight',pad_inches = 0)  
         
+        
+                ############################################################ 
+        # Graph at the beginning-
+        ################################################################### 
+         
+        fig = plt.figure()    
+        f1=fig.add_subplot(2,1,1) 
+         
+        base=np.array([0.1,0.2,0.3,0.4,0.5,0.6,0.7])
+        em=np.array([0.42,0.52453333,0.56366667,0.5506,0.53206667,0.53346667,0.50626667])
+       # ec=np.array([0.845,.830,.814,.789,0.754,0.75,0.74])
+
+
+        # plot the cumulative function 
+        plt.plot(base,em, c='red',label = 'Marriage') 
+        #plt.plot(base,ec, c='blue',label = 'Cohabitation') 
+        plt.legend(loc='best', fontsize='x-small',frameon=False,ncol=2)  
+        plt.xlabel('Cost of Divorce $1-\kappa$')    
+        plt.ylabel('Share Ever married at 35')  
+        plt.savefig('divor.pgf', bbox_inches = 'tight',pad_inches = 0)  
+            #cost   sharem   sharec
+    #0.1    0.425     0.845
+    #0.2    0.475     0.830
+    #0.25   0.522     0.802
+    #0.3    0.511     0.814
+    #0.35   0.541     0.7916
+    #0.4    0.514     0.789
+    #0.45   0.543     0.765
+    #0.5    0.55     0.754
+    #0.55   0.531     0.751
+    #0.6    0.514     0.7509
+    #0.7    0.45      0.74
         
         ##########################################    
         # Put graphs together    

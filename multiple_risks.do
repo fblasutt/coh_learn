@@ -1,9 +1,22 @@
 **Transition to Marriage from Cohabitation
 clear all
 use C:\Users\Fabio\Dropbox\coh_learn\animals.dta 
+
+
+*change duration!!!
+gen change=0
+replace change=1 if age+duration>40
+drop if age>=40
+replace duration=40-age if change==1
+replace _end=3 if change==1
+
+
 replace _end=0 if _end==1
 replace endd=0
 replace endd=1 if _end==2
+
+
+
 stset duration ,   failure(endd)
 gen homo=0
 replace homo=1 if edu==1 & edup==1
@@ -22,6 +35,15 @@ sum marry if edu==1 & edup==1
 **Transition to Marriage from singleness
 clear all
 use C:\Users\Fabio\Dropbox\coh_learn\compete_single.dta 
+
+*change duration!!!
+gen change=0
+replace change=1 if age+duration>40
+drop if age>=40
+replace duration=40-age if change==1
+replace _end=0 if change==1
+
+
 replace _end=0 if _end==1
 
 
@@ -42,6 +64,15 @@ sum marry if edu==1
 
 clear all
 use C:\Users\Fabio\Dropbox\coh_learn\compete_single.dta 
+
+*change duration!!!
+gen change=0
+replace change=1 if age+duration>40
+drop if age>=40
+replace duration=40-age if change==1
+replace _end=3 if change==1
+
+
 replace _end=0 if _end==1
 
 

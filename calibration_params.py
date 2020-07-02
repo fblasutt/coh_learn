@@ -40,7 +40,8 @@ def calibration_params(xin=None,xfix=None):
               util_alp=(6.0, 11.0, 0.5),#util_alp=(0.01, 0.4, 0.25),          
               sigma_psi_mu_pre=(1.0, 2.0, 0.2),
               pmeete=(0.25,0.65,0.1),
-              pmeetn=(0.5,1.0,0.1))
+              pmeetn=(0.5,1.0,0.1),
+              z_drift = (-0.15, -0.06, -0.001))
         
     # params = OrderedDict(
     #           zlost=(0.20, 0.75, 0.1),

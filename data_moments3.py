@@ -192,6 +192,31 @@ def compute(dpi,dco,dma,period=3,transform=1):
         summ=emar_e[(agebc_e==240+i*60) & (coll==0)]+ecoh_e[(agebc_e==240+i*60) & (coll==0)]
         summ[summ>=1]=1
         everr_ne[i]=np.average(summ,weights=wgt_e[(agebc_e==240+i*60) & (coll==0)])
+        
+        
+    everm_e=np.zeros(4)
+    everm_ne=np.zeros(4)
+    for i in range(4): 
+        
+        summ=emar_e[(agebc_e==240+i*60) & (coll==1)]
+        summ[summ>=1]=1
+        everm_e[i]=np.average(summ,weights=wgt_e[(agebc_e==240+i*60) & (coll==1)])
+        
+        summ=emar_e[(agebc_e==240+i*60) & (coll==0)]
+        summ[summ>=1]=1
+        everm_ne[i]=np.average(summ,weights=wgt_e[(agebc_e==240+i*60) & (coll==0)])
+        
+    everc_e=np.zeros(4)
+    everc_ne=np.zeros(4)
+    for i in range(4): 
+        
+        summ=ecoh_e[(agebc_e==240+i*60) & (coll==1)]
+        summ[summ>=1]=1
+        everc_e[i]=np.average(summ,weights=wgt_e[(agebc_e==240+i*60) & (coll==1)])
+        
+        summ=ecoh_e[(agebc_e==240+i*60) & (coll==0)]
+        summ[summ>=1]=1
+        everc_ne[i]=np.average(summ,weights=wgt_e[(agebc_e==240+i*60) & (coll==0)])
     
     
    
