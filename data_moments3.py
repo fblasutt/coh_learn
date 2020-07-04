@@ -484,7 +484,7 @@ def compute(dpi,dco,dma,period=3,transform=1):
 #Actual moments computation + weighting matrix   
 ################################################   
    
-def dat_moments(sampling_number=5,weighting=False,covariances=False,relative=False,period=3,transform=1):   
+def dat_moments(sampling_number=5,weighting=True,covariances=False,relative=False,period=3,transform=1):   
        
        
        
@@ -610,7 +610,7 @@ def dat_moments(sampling_number=5,weighting=False,covariances=False,relative=Fal
         W_in=np.zeros((dim,dim))   
         for i in range(dim):   
             for j in range(dim):   
-                W_in[i,j]=1/np.cov(col[i,:],col[j,:])[0][1]*(1/(boot-1))   
+                W_in[i,j]=np.cov(col[i,:],col[j,:])[0][1]#*(1/(boot-1))   
                  
         if not covariances:   
             W_in = np.diag(np.diag(W_in))   

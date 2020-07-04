@@ -159,12 +159,14 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     is_unid_end = -1*np.ones((N,nspells),dtype=np.int16)    
     n_spell = -1*np.ones((N,nspells),dtype=np.int16)    
     is_spell = np.zeros((N,nspells),dtype=np.bool) 
-    is_fem = np.zeros((N,nspells),dtype=np.bool) 
+    is_fem = -1*np.ones((N,nspells),dtype=np.bool) 
     sp_edu=np.ones((N,nspells),dtype='<U1') 
     sp_edup=np.ones((N,nspells),dtype='<U1')
        
-         
-    state_beg[:,0] = female[:,0] # THIS ASSUMES EVERYONE STARTS AS SINGLE   #TODO consistent with men stuff? 
+
+    is_fem[:,0]=female[:,0]
+    state_beg[:,0] = np.ones(female[:,0].shape)
+    state_beg[:,0][female[:,0]==1] = 0.0# THIS ASSUMES EVERYONE STARTS AS SINGLE   #TODO consistent with men stuff? 
     time_beg[:,0] = 0    
     sp_length[:,0] = 1    
     sp_edu[:,0]=educ[:,0]
@@ -187,7 +189,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         sp_length[ichange,ispell[ichange]+1] = 1 # if change then 1 year right    
         state_end[ichange,ispell[ichange]] = state[ichange,t]    
         sp_dur[ichange,ispell[ichange]] = durf[ichange,t-1] 
-        is_fem[ichange,ispell[ichange]] = female[ichange,t-1] 
+        is_fem[ichange,ispell[ichange]+1] = female[ichange,ispell[ichange]+1] 
         state_beg[ichange,ispell[ichange]+1] = state[ichange,t] 
         sp_edu[ichange,ispell[ichange]+1] = educ[ichange,t] 
         sp_edup[ichange,ispell[ichange]+1] = edup[ichange,t] 
@@ -232,6 +234,8 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     educ_relsp=np.ones(allspells_edup.shape)*-1
     educ_relsp[wedup]=1.0
     educ_relsp[wedunp]=0.0
+    
+    
     
     #Use this to construct hazards   
     spells = np.stack((allspells_beg,allspells_len,allspells_end,educ_rels,educ_relsp,allspells_female),axis=1)    

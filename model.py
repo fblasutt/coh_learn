@@ -116,6 +116,7 @@ class Model(object):
             ushift = self.setup.utility_shifters[desc] 
             edu=setup.edu[desc]
             
+           
             if setup.desc[desc] == 'Female, single' or setup.desc[desc] == 'Male, single':
                 
                 female = (setup.desc[desc] == 'Female, single')     

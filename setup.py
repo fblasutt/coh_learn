@@ -30,15 +30,15 @@ class ModelSetup(object):
         p = dict()       
         period_year=1#this can be 1,2,3 or 6
         transform=1#this tells how many periods to pull together for duration moments
-        T = int(64/period_year)#
-        Tret =int(48/period_year) # int(18/period_year)# first period when the agent is retired
+        T = int(64/period_year)#int(24/period_year)# 
+        Tret =int(48/period_year) #int(18/period_year)# first period when the agent is retired
         Tbef=int(2/period_year)
         Tren =int(48/period_year)# int(18/period_year)## int(42/period_year) # period starting which people do not renegotiate/divroce
-        Tmeet =int(48/period_year)#int(18/period_year)#i int(42/period_year) # period starting which you do not meet anyone
+        Tmeet =int(48/period_year)#int(18/period_year)#int(18/period_year)#i int(42/period_year) # period starting which you do not meet anyone
         dm=8#11
         
         #Measure of People
-        p['Nfe']=np.array([min(0.32+0.00*t,1.0) for t in range(T)])#np.array([0.25]*T)#*T)
+        p['Nfe']=np.array([min(0.32+0.00*t,1.0) for t in range(T)])#*T)
         p['Nfn']=1.0-p['Nfe']#0.3
         p['Nme']=np.array([min(0.264+0.00*t,1.0) for t in range(T)])#np.array([0.25]*T)
         p['Nmn']=1-p['Nme']

@@ -39,7 +39,7 @@ if __name__ == '__main__':
     
     
     #Build  data moments and pickle them
-    #dat_moments(period=1,sampling_number=100,weighting=True,transform=1)
+    dat_moments(period=1,sampling_number=100,weighting=True,transform=1)
     
     
     

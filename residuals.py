@@ -28,7 +28,7 @@ def mdl_resid(x=None,save_to=None,load_from=None,return_format=['distance'],
               solve_transition=False,
               store_path = None,
               verbose=False,calibration_report=False,draw=False,graphs=False,
-              rel_diff=True,welf=False):
+              rel_diff=True,welf=False,se=False):
    
     from model import Model
     from setup import DivorceCosts
@@ -229,12 +229,12 @@ def mdl_resid(x=None,save_to=None,load_from=None,return_format=['distance'],
     agents_maln = Agents( mdl_list ,age_uni['male'],female=False,edu='n',pswitchlist=None,verbose=False,N=Nmn,draw=draw,array_adjust=adjust)
    
     agents_pooled = AgentsPooled([agents_feme,agents_male,agents_femn,agents_maln])#AgentsPooled([agents_femn,agents_maln])#
-    
+    #agents_pooled = AgentsPooled([agents_feme,agents_femn])
     
     
     #Compute moments
-   
     moments = moment(mdl_list,agents_pooled,agents_male,draw=draw)
+    #moments = moment(mdl_list,agents_pooled,agents_feme,draw=draw)
     
     
     ############################################################
@@ -340,6 +340,13 @@ def mdl_resid(x=None,save_to=None,load_from=None,return_format=['distance'],
     
     out_dict = {'distance':dist,'all residuals':resid_all,
                 'scaled residuals':resid_sc,'models':mdl_list,'agents':agents_pooled}
+    
+    
+    
+    #Case for standard errors
+    if se is True:
+        out_dict = {'all residuals':resid_all,'W':W }
+        
     out = [out_dict[key] for key in return_format]
     
     
