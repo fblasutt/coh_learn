@@ -831,7 +831,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         
         
      
-    reltt=reltt[:,pos]  
+    reltt=reltt[:,min(pos):max(pos)+1]  
     moments['everm']=reltt[2,:]/N
     moments['everc']=reltt[3,:]/N
     if draw:print('Share married at 35 is {}'.format( moments['everm'][-1]))
@@ -876,7 +876,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     #Now, before saving the moments, take interval of 5 years    
     # if (mdl.setup.pars['Tret']>=mdl.setup.pars['Tret']):            
     Ereltt=Erelt[:,:mdl.setup.pars['Tret']-mdl.setup.pars['Tbef']+1]           
-    Ereltt=Ereltt[:,pos]    
+    Ereltt=Ereltt[:,min(pos):max(pos)+1]    
     
     
     moments['everr_e']=Ereltt[0,:]/np.sum(educ[:,0]=='e')
@@ -934,14 +934,14 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     #Now, before saving the moments, take interval of 5 years    
     # if (mdl.setup.pars['Tret']>=mdl.setup.pars['Tret']):            
     EEreltt=EErelt[:,:,:mdl.setup.pars['Tret']-mdl.setup.pars['Tbef']+1]           
-    EEreltt=EEreltt[:,:,pos]
+    EEreltt=EEreltt[:,:,min(pos):max(pos)+1]
     
     
     
-    if draw:print('Share married  e at 35 is {}'.format(EEreltt[0,0,3]/np.sum(educ[:,0]=='e')))
-    if draw:print('Share married  n at 35 is {}'.format(EEreltt[0,1,3]/np.sum(educ[:,0]=='n')))
-    if draw:print('Share cohabit  e at 35 is {}'.format(EEreltt[1,0,3]/np.sum(educ[:,0]=='e')))
-    if draw:print('Share cohabit  n at 35 is {}'.format(EEreltt[1,1,3]/np.sum(educ[:,0]=='n')))
+    if draw:print('Share married  e at 35 is {}'.format(EEreltt[0,0,-1]/np.sum(educ[:,0]=='e')))
+    if draw:print('Share married  n at 35 is {}'.format(EEreltt[0,1,-1]/np.sum(educ[:,0]=='n')))
+    if draw:print('Share cohabit  e at 35 is {}'.format(EEreltt[1,0,-1]/np.sum(educ[:,0]=='e')))
+    if draw:print('Share cohabit  n at 35 is {}'.format(EEreltt[1,1,-1]/np.sum(educ[:,0]=='n')))
    
      
     ################################################## 
@@ -2069,7 +2069,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
       
         fig = plt.figure()    
         f4=fig.add_subplot(1.5,1,1)    
-        lg=min(len(everm_d),len(relt[1,:]))    
+        lg=len(reltt[2,:])#min(len(everm_d),len(relt[1,:]))    
         xa=(5*np.array(range(lg))+20)   
         plt.plot(xa, everm_d[0:lg],'b',linewidth=1.5, label='Married - D')    
         plt.fill_between(xa, everm_i[0,0:lg], everm_i[1,0:lg],alpha=0.2,facecolor='b')    
@@ -2089,7 +2089,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         ##########################################   
         fig = plt.figure()    
         f4=fig.add_subplot(1.5,1,1)    
-        lg=min(len(everm_d),len(relt[1,:]))    
+        lg=len(Ereltt[1,:])##min(len(everm_d),len(relt[1,:]))    
         xa=(5*np.array(range(lg))+20)   
         plt.plot(xa, everr_e_d,'b',linewidth=1.5, label='College - D')    
         plt.fill_between(xa, everr_e_i[0,:], everr_e_i[1,:],alpha=0.2,facecolor='b')    
@@ -2112,7 +2112,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         ##########################################   
         fig = plt.figure()    
         f4=fig.add_subplot(1.5,1,1)    
-        lg=min(len(everm_d),len(relt[1,:]))    
+        lg=len(Ereltt[1,:])#min(len(everm_d),len(relt[1,:]))    
         xa=(5*np.array(range(lg))+20)   
         plt.plot(xa, everr_d_d,'b',linewidth=1.5, label='Data')    
         plt.fill_between(xa, everr_d_i[0,:], everr_d_i[1,:],alpha=0.2,facecolor='b')    

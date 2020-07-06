@@ -35,13 +35,13 @@ def calibration_params(xin=None,xfix=None):
               pmeetn=(0.5,1.0,0.1))
     
     params = OrderedDict(
-              zlost=(0.08, 0.33, 0.05),
-              sigma_psi_init_k=(0.03, 0.055, 0.02),#sigma_psi_mult=(0.5, 5.0, 0.02),
-              util_alp=(6.0, 11.0, 0.5),#util_alp=(0.01, 0.4, 0.25),          
-              sigma_psi_mu_pre=(1.0, 2.0, 0.2),
-              pmeete=(0.25,0.65,0.1),
-              pmeetn=(0.5,1.0,0.1),
-              z_drift = (-0.15, -0.06, -0.001))
+              zlost=(0.1, 0.4, 0.05),
+              sigma_psi_init_k=(0.04, 0.06, 0.02),#sigma_psi_mult=(0.5, 5.0, 0.02),
+              util_alp=(8.5, 12.5, 0.5),#util_alp=(0.01, 0.4, 0.25),          
+              sigma_psi_mu_pre=(1.65, 2.4, 0.2),
+              pmeete=(0.12,0.35,0.1),
+              pmeetn=(0.6,0.9,0.1),
+              z_drift = (-0.28, -0.18, -0.001))
         
     # params = OrderedDict(
     #           zlost=(0.20, 0.75, 0.1),

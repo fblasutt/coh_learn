@@ -162,8 +162,21 @@ def compute(dpi,dco,dma,period=3,transform=1):
     agebc_c=ageb[np.isnan(ecoh)==False]
     ecoh_c=ecoh[np.isnan(ecoh)==False]
     
-    everc=np.zeros(4)
-    for i in range(4): everc[i]=np.average(ecoh_c[(agebc_c==240+i*60)],weights=wgt_c[(agebc_c==240+i*60)])
+    # everc=np.zeros(4)
+    # for i in range(4): everc[i]=np.average(ecoh_c[(agebc_c==240+i*60)],weights=wgt_c[(agebc_c==240+i*60)])
+    
+    
+    # #Marriage
+    # wgt_m=wgt[np.isnan(emar)==False]
+    # agebc_m=ageb[np.isnan(emar)==False]
+    # emar_m=emar[np.isnan(emar)==False]
+    
+    # everm=np.zeros(4)
+    # for i in range(4): everm[i]=np.average(emar_m[(agebc_m==240+i*60)],weights=wgt_m[(agebc_m==240+i*60)])
+    
+    
+    everc=np.zeros(16)
+    for i in range(16): everc[i]=np.average(ecoh_c[(agebc_c==240+i*12)],weights=wgt_c[(agebc_c==240+i*12)])
     
     
     #Marriage
@@ -171,8 +184,9 @@ def compute(dpi,dco,dma,period=3,transform=1):
     agebc_m=ageb[np.isnan(emar)==False]
     emar_m=emar[np.isnan(emar)==False]
     
-    everm=np.zeros(4)
-    for i in range(4): everm[i]=np.average(emar_m[(agebc_m==240+i*60)],weights=wgt_m[(agebc_m==240+i*60)])
+    everm=np.zeros(16)
+    for i in range(16): everm[i]=np.average(emar_m[(agebc_m==240+i*12)],weights=wgt_m[(agebc_m==240+i*12)])
+    
     
     #Relationship educated
     wgt_e=wgt[(np.isnan(emar)==False) & (np.isnan(ecoh)==False)]
@@ -181,17 +195,29 @@ def compute(dpi,dco,dma,period=3,transform=1):
     ecoh_e=ecoh[(np.isnan(emar)==False) & (np.isnan(ecoh)==False)]
     coll=coll[(np.isnan(emar)==False) & (np.isnan(ecoh)==False)]
     
-    everr_e=np.zeros(4)
-    everr_ne=np.zeros(4)
-    for i in range(4): 
+    # everr_e=np.zeros(4)
+    # everr_ne=np.zeros(4)
+    # for i in range(4): 
         
-        summ=emar_e[(agebc_e==240+i*60) & (coll==1)]+ecoh_e[(agebc_e==240+i*60) & (coll==1)]
-        summ[summ>=1]=1
-        everr_e[i]=np.average(summ,weights=wgt_e[(agebc_e==240+i*60) & (coll==1)])
+    #     summ=emar_e[(agebc_e==240+i*60) & (coll==1)]+ecoh_e[(agebc_e==240+i*60) & (coll==1)]
+    #     summ[summ>=1]=1
+    #     everr_e[i]=np.average(summ,weights=wgt_e[(agebc_e==240+i*60) & (coll==1)])
         
-        summ=emar_e[(agebc_e==240+i*60) & (coll==0)]+ecoh_e[(agebc_e==240+i*60) & (coll==0)]
+    #     summ=emar_e[(agebc_e==240+i*60) & (coll==0)]+ecoh_e[(agebc_e==240+i*60) & (coll==0)]
+    #     summ[summ>=1]=1
+    #     everr_ne[i]=np.average(summ,weights=wgt_e[(agebc_e==240+i*60) & (coll==0)])
+        
+    everr_e=np.zeros(16)
+    everr_ne=np.zeros(16)
+    for i in range(16): 
+        
+        summ=emar_e[(agebc_e==240+i*12) & (coll==1)]+ecoh_e[(agebc_e==240+i*12) & (coll==1)]
         summ[summ>=1]=1
-        everr_ne[i]=np.average(summ,weights=wgt_e[(agebc_e==240+i*60) & (coll==0)])
+        everr_e[i]=np.average(summ,weights=wgt_e[(agebc_e==240+i*12) & (coll==1)])
+        
+        summ=emar_e[(agebc_e==240+i*12) & (coll==0)]+ecoh_e[(agebc_e==240+i*12) & (coll==0)]
+        summ[summ>=1]=1
+        everr_ne[i]=np.average(summ,weights=wgt_e[(agebc_e==240+i*12) & (coll==0)])
         
         
     everm_e=np.zeros(4)

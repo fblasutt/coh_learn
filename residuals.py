@@ -212,7 +212,7 @@ def mdl_resid(x=None,save_to=None,load_from=None,return_format=['distance'],
         adjust=pickle.load(file)
     #adjust=adjust/adjust
     #Get Number of simulated agent, malea and female
-    N=15000
+    N=45000
     Nf=int(N*freq['fem'])#age_uni['share_female'])
     Nm=N-Nf
     Nme=int(Nm*mdl.setup.pars['Nme'][0])
@@ -325,7 +325,7 @@ def mdl_resid(x=None,save_to=None,load_from=None,return_format=['distance'],
     
     
     
-    resid_sc = resid_all*np.sqrt(np.diag(W)) # all residuals scaled
+    resid_sc =resid_all*np.sqrt(np.diag(W)) # all residuals scaled
     
     dist = np.dot(np.dot(resid_all,W),resid_all)
 

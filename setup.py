@@ -15,6 +15,7 @@ from gridvec import VecOnGrid
 from statutils import kalman
 from scipy import optimize
 from scipy import sparse
+from copy import deepcopy
 
 
 
@@ -30,10 +31,10 @@ class ModelSetup(object):
         p = dict()       
         period_year=1#this can be 1,2,3 or 6
         transform=1#this tells how many periods to pull together for duration moments
-        T = int(64/period_year)#int(24/period_year)# 
+        T =int(64/period_year)# int(24/period_year)# 
         Tret =int(48/period_year) #int(18/period_year)# first period when the agent is retired
         Tbef=int(2/period_year)
-        Tren =int(48/period_year)# int(18/period_year)## int(42/period_year) # period starting which people do not renegotiate/divroce
+        Tren = int(48/period_year)#int(18/period_year)## int(42/period_year) # period starting which people do not renegotiate/divroce
         Tmeet =int(48/period_year)#int(18/period_year)#int(18/period_year)#i int(42/period_year) # period starting which you do not meet anyone
         dm=8#11
         
@@ -50,6 +51,7 @@ class ModelSetup(object):
         p['Tret'] = Tret
         p['Tren'] = Tren
         p['Tbef'] = Tbef
+        p['rho_s']    =0.0#  0.15 hear, 0.127 voena, 
         p['sig_zf_0']  = {'e':.5694464,'n':.6121695}
         p['sig_zf']    = {'e':.0261176**(0.5),'n':.0149161**(0.5)}
         #p['sig_zf']    = {'e':.0141176**(0.5),'n':.0141176**(0.5)}
@@ -600,7 +602,8 @@ class ModelSetup(object):
                     exogrid['all_t_mat_by_l'][e][eo],  exogrid['all_t_mat_by_l_spt'][e][eo],exogrid['all_t'][e][eo]=list(np.ones((p['dm']))),list(np.ones((p['dm']))),list(np.ones((p['dm'])))
             
             
-            
+            exogrid['zf_t_mat2']=deepcopy(exogrid['zf_t_mat'])
+            exogrid['zf_t_mat2d']=deepcopy(exogrid['zf_t_mat'])
             for e in ['e','n']:
                 
                 #FBad shock women
@@ -619,6 +622,33 @@ class ModelSetup(object):
                     zf_t_mat_down = zf_bad.copy()
                     zfzm2, zfzmmat2 = combine_matrices_two_lists(exogrid['zf_t'][e].copy(), exogrid['zm_t'][eo].copy(), zf_t_mat_down.copy(), exogrid['zm_t_mat'][eo].copy())
                    
+                    
+                    # if p['rho_s']>0:
+                    #     for t in range(p['Tret']-1):
+                    #         for j in range(p['n_zm_t'][t]):
+                    #             for ym in range(p['n_zm_t'][t]):
+                                
+                                    
+                    #                 rhom=(1.0-p['rho_s']**2)**0.5
+                    #                 prec=exogrid['zm_t'][eo][t][j] if t>0 else 0.0
+                    #                 drif=p['rho_s']*p['sig_zf'][e]/p['sig_zm'][eo]*(exogrid['zm_t'][eo][t+1][ym]-prec)
+                    #                 mat1=tauchen_drift(exogrid['zf_t'][e][t].copy(), exogrid['zf_t'][e][t+1].copy(), 1.0, rhom*p['sig_zf'][e], drif, exogrid['zf_t_mat'][e][t])
+                    #                 mat2=tauchen_drift(exogrid['zf_t'][e][t].copy(), exogrid['zf_t'][e][t+1].copy(), 1.0, rhom*p['sig_zf'][e], drif+p['z_drift'], exogrid['zf_t_mat'][e][t])
+                    #                 for i in range(p['n_zf_t'][t]): 
+                                
+                    #                     #Modify the grid for women
+                    #                     exogrid['zf_t_mat2'][e][t][i,:]= mat1[i,:]
+    
+                    #                     exogrid['zf_t_mat2d'][e][t][i,:]=mat2[i,:]
+                                        
+                    #                     ##Update the big Matrix
+                    #                     for yf in range(p['n_zf_t'][t]):
+                                        
+                                            
+                    #                         zfzmmat[t][i*(p['n_zm_t'][t]-1)+j+i,yf*(p['n_zm_t'][t]-1)+ym+yf]=exogrid['zf_t_mat2'][e][t][i,yf]*exogrid['zm_t_mat'][eo][t][j,ym]
+                    #                         zfzmmat2[t][i*(p['n_zm_t'][t]-1)+j+i,yf*(p['n_zm_t'][t]-1)+ym+yf]=exogrid['zf_t_mat2d'][e][t][i,yf]*exogrid['zm_t_mat'][eo][t][j,ym]
+                        
+                   #Modify
                     for dd in range(p['dm']):
                      
                       
@@ -626,7 +656,6 @@ class ModelSetup(object):
                       
                         all_t_mat_sparse_T = [sparse.csc_matrix(D.T) if D is not None else None for D in all_t_mat.copy()]
                                  
-                       
                         all_t_down, all_t_mat_down = combine_matrices_two_listsf(zfzm2.copy(),exogrid['psi_t'][dd].copy(),zfzmmat2.copy(),exogrid['psi_t_mat'][dd].copy(),check=False,trim=True)                        
                         all_t_mat_down_sparse_T = [sparse.csc_matrix(D.T) if D is not None else None for D in all_t_mat_down.copy()]
                         
