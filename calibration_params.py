@@ -37,7 +37,7 @@ def calibration_params(xin=None,xfix=None):
     params = OrderedDict(
               zlost=(0.1, 0.4, 0.05),
               sigma_psi_init_k=(0.04, 0.06, 0.02),#sigma_psi_mult=(0.5, 5.0, 0.02),
-              util_alp=(8.5, 12.5, 0.5),#util_alp=(0.01, 0.4, 0.25),          
+              util_alp=(6.0, 12.5, 0.5),#util_alp=(0.01, 0.4, 0.25),          
               sigma_psi_mu_pre=(1.65, 2.4, 0.2),
               pmeete=(0.12,0.35,0.1),
               pmeetn=(0.6,0.9,0.1),

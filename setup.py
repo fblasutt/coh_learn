@@ -31,11 +31,11 @@ class ModelSetup(object):
         p = dict()       
         period_year=1#this can be 1,2,3 or 6
         transform=1#this tells how many periods to pull together for duration moments
-        T =int(64/period_year)# int(24/period_year)# 
-        Tret =int(48/period_year) #int(18/period_year)# first period when the agent is retired
+        T =int(24/period_year)# int(64/period_year)# 
+        Tret =int(18/period_year)# int(48/period_year) #first period when the agent is retired
         Tbef=int(2/period_year)
-        Tren = int(48/period_year)#int(18/period_year)## int(42/period_year) # period starting which people do not renegotiate/divroce
-        Tmeet =int(48/period_year)#int(18/period_year)#int(18/period_year)#i int(42/period_year) # period starting which you do not meet anyone
+        Tren = int(18/period_year)#int(48/period_year)## int(42/period_year) # period starting which people do not renegotiate/divroce
+        Tmeet =int(18/period_year)#int(48/period_year)#int(18/period_year)#i int(42/period_year) # period starting which you do not meet anyone
         dm=8#11
         
         #Measure of People
@@ -60,9 +60,9 @@ class ModelSetup(object):
         p['sig_zm']    =  {'e':.0316222**(0.5),'n':.0229727**(0.5)}
         #p['sig_zm']    =  {'e':.0226222**(0.5),'n':.0226222**(0.5)}
         #p['sig_zm']    =  {'e':.0316222**(0.5),'n':.0316222**(0.5)}
-        p['n_zf_t']      = [5]*Tret + [5]*(T-Tret)
+        p['n_zf_t']      = [6]*Tret + [6]*(T-Tret)
         p['n_zm_t']      = [3]*Tret + [3]*(T-Tret)
-        p['n_zf_correct']=2
+        p['n_zf_correct']=3
         p['sigma_psi_mult'] = 0.28
         p['sigma_psi_mu_pre'] = 0.1#1.0#nthe1.1
         p['sigma_psi']   =0.0# 0.11
@@ -437,11 +437,15 @@ class ModelSetup(object):
                         
                         #Extend grid
                         h=zft[edu][t][1]-zft[edu][t][0]
-                        dist1=zft[edu][t][0]-h
+                        # dist1=zft[edu][t][0]-h
+                        # dist0=zft[edu][t][0]-p['n_zf_correct']*h
+                        dist2=zft[edu][t][0]-h
+                        dist1=zft[edu][t][0]-(p['n_zf_correct']-1)*h
                         dist0=zft[edu][t][0]-p['n_zf_correct']*h
                         
                         #Copy transition matrix
-                        exogrid['zf_t'][edu]=exogrid['zf_t'][edu]+[np.concatenate((np.array([dist0,dist1]),zft[edu][t]))]
+                        exogrid['zf_t'][edu]=exogrid['zf_t'][edu]+[np.concatenate((np.array([dist0,dist1,dist2]),zft[edu][t]))]
+                        #exogrid['zf_t'][edu]=exogrid['zf_t'][edu]+[np.concatenate((np.array([dist0,dist1]),zft[edu][t]))]
                         #exogrid['zf_t'][edu]=exogrid['zf_t'][edu]+[np.concatenate((np.array([dist1]),zft[edu][t]))]
                         exogrid['zf_t_mat'][edu]=exogrid['zf_t_mat'][edu]+[np.zeros((p['n_zf_t'][t],p['n_zf_t'][t]))]
                         exogrid['zf_t_mat'][edu][t][p['n_zf_correct']:,p['n_zf_correct']:]=zftmat[edu][t]
@@ -451,6 +455,7 @@ class ModelSetup(object):
                             
                             exogrid['zf_t_mat'][edu][t][0,:-p['n_zf_correct']]=zftmat[edu][t][0,:]
                             exogrid['zf_t_mat'][edu][t][1,:-p['n_zf_correct']]=zftmat[edu][t][1,:]
+                            exogrid['zf_t_mat'][edu][t][2,:-p['n_zf_correct']]=zftmat[edu][t][2,:]
                            
                                 
                         else:
@@ -509,9 +514,9 @@ class ModelSetup(object):
             #     exogrid['zm_t_mat'][Tret-1] = np.ones((p['n_zm_t'][Tret-1],1))
             
                 #Tax system as in Wu and Kruger
-                for t in range(0,Tret):
-                    exogrid['zf_t'][e][t] = exogrid['zf_t'][e][t]#*(1-0.1327)+np.log(1-0.1575)
-                    exogrid['zm_t'][e][t] = exogrid['zm_t'][e][t]#*(1-0.1327)+np.log(1-0.1575)  
+                # for t in range(0,Tret):
+                #     exogrid['zf_t'][e][t] = exogrid['zf_t'][e][t]#*(1-0.1327)+np.log(1-0.1575)
+                #     exogrid['zm_t'][e][t] = exogrid['zm_t'][e][t]#*(1-0.1327)+np.log(1-0.1575)  
                 
                 #Comment out the following if you dont want retirment based on income
                 for t in range(Tret,T):
@@ -647,7 +652,18 @@ class ModelSetup(object):
                                             
                     #                         zfzmmat[t][i*(p['n_zm_t'][t]-1)+j+i,yf*(p['n_zm_t'][t]-1)+ym+yf]=exogrid['zf_t_mat2'][e][t][i,yf]*exogrid['zm_t_mat'][eo][t][j,ym]
                     #                         zfzmmat2[t][i*(p['n_zm_t'][t]-1)+j+i,yf*(p['n_zm_t'][t]-1)+ym+yf]=exogrid['zf_t_mat2d'][e][t][i,yf]*exogrid['zm_t_mat'][eo][t][j,ym]
-                        
+                   
+                    
+                   # #Adjust retirement as in Heatcote et al.
+                   #  for t in range(p['Tret'],p['T']):
+                   #      for j in range(len(zfzm[t])):
+                   #          pref=max(np.exp(zfzm[t][j][0])+np.exp(zfzm[t][j][1]),1.5*max(np.exp(zfzm[t][j][0]),np.exp(zfzm[t][j][1])))
+                   #          zfzm[t][j][0]=np.log(pref)
+                   #          zfzm[t][j][1]=-20.0
+                   #          pref=max(np.exp(zfzm2[t][j][0])+np.exp(zfzm2[t][j][1]),1.5*max(np.exp(zfzm2[t][j][0]),np.exp(zfzm2[t][j][1])))
+                   #          zfzm2[t][j][0]=np.log(pref)
+                   #          zfzm2[t][j][1]=-20.0
+                   
                    #Modify
                     for dd in range(p['dm']):
                      

@@ -483,7 +483,10 @@ def compute(dpi,dco,dma,period=3,transform=1):
 
        
     #Frequencies for age in the second wave   
-    freq_c= CountFrequency(dpi['cage'].tolist(),dpi['weight']) 
+    freq_cem= CountFrequency(dpi['cage'][(dpi['college']==1) & (dpi['sex']==1)].tolist(),dpi['weight'])
+    freq_cef= CountFrequency(dpi['cage'][(dpi['college']==1) & (dpi['sex']==2)].tolist(),dpi['weight'])
+    freq_cnm= CountFrequency(dpi['cage'][(dpi['college']==0) & (dpi['sex']==1)].tolist(),dpi['weight'])
+    freq_cnf= CountFrequency(dpi['cage'][(dpi['college']==0) & (dpi['sex']==2)].tolist(),dpi['weight'])
     
     #Frequencies of college by gender
     Nfe=np.average(dpi['college'][dpi['sex']==2],weights=dpi['weight'][dpi['sex']==2])
@@ -491,7 +494,7 @@ def compute(dpi,dco,dma,period=3,transform=1):
     fem=np.average(dpi['sex']==2,weights=dpi['weight'])
     
     #Put stuff in a dictionary
-    freq={'Nfe':Nfe,'Nme':Nme,'fem':fem,'freq_c':freq_c}
+    freq={'Nfe':Nfe,'Nme':Nme,'fem':fem,'freq_cem':freq_cem,'freq_cef':freq_cef,'freq_cnm':freq_cnm,'freq_cnf':freq_cnf}
        
     #Create a dictionary for saving simulated moments   
     listofTuples = [("hazs" , hazs), ("hazm" , hazm),("hazd" , hazd),("hazde" , hazde),  
