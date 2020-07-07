@@ -85,6 +85,66 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     labor_psid=agents_male.ils_i  
     iexo_psid=agents_male.iexo  
     change_psid=agents_male.policy_ind 
+    
+    
+    ###########################################    
+    #Sample selection - get age at censoring   
+    ###########################################    
+    with open('freq.pkl', 'rb') as file:     
+        freq_raw=pickle.load(file)     
+             
+   
+    aged=np.ones((state[:,0].shape))    
+        
+     
+    #Male educated    
+    freq=freq_raw['freq_cem']
+    summa=0.0    
+    summa1=0.0    
+    start=np.min(np.where((female==0) & (educ=='e'))[0])
+    for i in freq:    
+        summa+=freq[int(i)]   
+        #print(round((i-18)/mdl.setup.pars['py'],0) ,int(summa1*len(aged[(female==0) & (educ=='e')])/sum(freq.values())),int(summa*len(aged[(female==0) & (educ=='e')])/sum(freq.values())))
+        aged[start+int(summa1*len(aged[(female[:,0]==0) & (educ[:,0]=='e')])/sum(freq.values())):start+int(summa*len(aged[(female[:,0]==0) & (educ[:,0]=='e')])/sum(freq.values()))]=round((i-18)/mdl.setup.pars['py'],0)    
+       
+        summa1+=freq[int(i)]    
+        
+    #Male uneducated    
+    freq=freq_raw['freq_cnm']
+    summa=0.0
+    summa1=0.0    
+    start=np.min(np.where((female==0) & (educ=='n'))[0])
+    for i in freq:    
+        summa+=freq[int(i)]    
+        aged[start+int(summa1*len(aged[(female[:,0]==0) & (educ[:,0]=='n')])/sum(freq.values())):start+int(summa*len(aged[(female[:,0]==0) & (educ[:,0]=='n')])/sum(freq.values()))]=round((i-18)/mdl.setup.pars['py'],0)    
+        summa1+=freq[int(i)]          
+        
+    #feMale educated    
+    freq=freq_raw['freq_cef']
+    summa=0.0    
+    summa1=0.0  
+    start=np.min(np.where((female==1) & (educ=='e'))[0])
+    for i in freq:    
+        summa+=freq[int(i)]    
+        aged[start+int(summa1*len(aged[(female[:,0]==1) & (educ[:,0]=='e')])/sum(freq.values())):start+int(summa*len(aged[(female[:,0]==1) & (educ[:,0]=='e')])/sum(freq.values()))]=round((i-16)/mdl.setup.pars['py'],0)    
+        summa1+=freq[int(i)]    
+        
+    #feMale uneducated    
+    freq=freq_raw['freq_cnf']
+    summa=0.0    
+    summa1=0.0    
+    start=np.min(np.where((female==1) & (educ=='n'))[0])
+    for i in freq:    
+        summa+=freq[int(i)]    
+        aged[start+int(summa1*len(aged[(female[:,0]==1) & (educ[:,0]=='n')])/sum(freq.values())):start+int(summa*len(aged[(female[:,0]==1) & (educ[:,0]=='n')])/sum(freq.values()))]=round((i-16)/mdl.setup.pars['py'],0)    
+        summa1+=freq[int(i)]  
+        
+    aged=np.array(aged,dtype=np.int16)  
+    aged=np.reshape(np.repeat(aged,len(state[0,:])),state.shape)
+    #Get if censored
+    agei=np.cumsum(np.ones(aged.shape,dtype=np.int16),axis=1)-1   
+    censored=aged>agei
+    
   
     if draw: 
         #Import values for female labor supply (simulated men only) 
@@ -123,30 +183,13 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     state_codes = {'Female, single': 0, 'Male, single': 1, 'Couple, M': 2,'Couple, C': 3} 
     state_codes_full = {name: i for i, name in enumerate(mdl.setup.state_names)} 
     
-     ###########################################    
-    #Sample selection - get age at censoring   
-    ###########################################    
-    with open('freq.pkl', 'rb') as file:     
-        freq_raw=pickle.load(file)     
-             
-    freq=freq_raw['freq_c']
-    aged=np.ones((state.shape))    
-        
-     
-    summa=0.0    
-    summa1=0.0    
-    for i in freq:    
-        summa+=freq[int(i)]    
-        aged[int(summa1*len(aged[:])/sum(freq.values())):int(summa*len(aged[:])/sum(freq.values()))]=round((i-20)/mdl.setup.pars['py'],0)    
-        summa1+=freq[int(i)]    
-        
-    aged=np.array(aged,dtype=np.int16)     
+   
 
    
     ###########################################    
     #Moments: Construction of Spells    
     ###########################################    
-    nspells = (state[:,1:]!=state[:,:-1]).astype(np.int).sum(axis=1).max() + 1   
+    nspells = ((state[:,1:]!=state[:,:-1]) ).astype(np.int).sum(axis=1).max() + 1   
     index=np.array(np.linspace(1,len(state[:,0]),len(state[:,0]))-1,dtype=np.int16)   
     N=len(iexo[:,0])   
     state_beg = -1*np.ones((N,nspells),dtype=np.int8)    
@@ -154,7 +197,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     did_end = np.zeros((N,nspells),dtype=np.bool)    
     state_end = -1*np.ones((N,nspells),dtype=np.int8)       
     sp_length = -1*np.ones((N,nspells),dtype=np.int16)    
-    sp_dur = -1*np.ones((N,nspells),dtype=np.int16)    
+    sp_dur = -10*np.ones((N,nspells),dtype=np.int16)    
     is_unid = -1*np.ones((N,nspells),dtype=np.int16)    
     is_unid_end = -1*np.ones((N,nspells),dtype=np.int16)    
     n_spell = -1*np.ones((N,nspells),dtype=np.int16)    
@@ -174,17 +217,20 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     ispell = np.zeros((N,),dtype=np.int8)    
          
     for t in range(1,mdl.setup.pars['T']):    
-        ichange = ((state[:,t-1] != state[:,t]))    
-        ifinish=(~ichange) & (t==mdl.setup.pars['T']-1) 
-        sp_length[((~ichange)),ispell[((~ichange))]] += 1    
-        sp_dur[ifinish,ispell[ifinish]] = durf[ifinish,t] 
-        #ichange = ((state[:,t-1] != state[:,t]) & (t<=aged[:,t]))    
-        #sp_length[((~ichange) & (t<=aged[:,t])),ispell[((~ichange) & (t<=aged[:,t]))]] += 1    
-             
+       
+        ichange = ((state[:,t-1] != state[:,t])) & (censored[:,t]==True)
+        ifinish=((~ichange) & (censored[:,t]==False) & (censored[:,t-1]==True))
+        sp_length[((~ichange) & (censored[:,t]==True)),ispell[((~ichange) & (censored[:,t]==True))]] += 1    
+        sp_dur[ifinish,ispell[ifinish]] = durf[ifinish,t-1] 
+        
+        # ichange = ((state[:,t-1] != state[:,t]))
+        # ifinish=(((~ichange) & (t==mdl.setup.pars['T']-1))) 
+        # sp_length[((~ichange) ),ispell[((~ichange))]] += 1    
+        # sp_dur[ifinish,ispell[ifinish]] = durf[ifinish,t] 
+        
         if not np.any(ichange): continue    
              
-        did_end[ichange,ispell[ichange]] = True    
-             
+        did_end[ichange,ispell[ichange]] = True                
         is_spell[ichange,ispell[ichange]+1] = True    
         sp_length[ichange,ispell[ichange]+1] = 1 # if change then 1 year right    
         state_end[ichange,ispell[ichange]] = state[ichange,t]    
@@ -654,6 +700,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     labor=labor[:,mdl.setup.pars['Tbef']:mdl.setup.pars['T']]        
     female=female[:,mdl.setup.pars['Tbef']:mdl.setup.pars['T']] 
     edupp=edup[:,mdl.setup.pars['Tbef']:mdl.setup.pars['T']] 
+    censored1=censored[:,mdl.setup.pars['Tbef']:mdl.setup.pars['T']]
     #psi_check=psi_check[:,mdl.setup.pars['Tbef']:mdl.setup.pars['T']]
     ###########################################    
     #Moments: FLS   
@@ -687,22 +734,24 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     state_par=np.reshape(state,resha)[incoupler]
     labor_par=np.reshape(labor,resha) 
     labor_par=labor_par[incoupler]
+    censoredpar=np.reshape(censored1,resha) 
+    censoredpar=censoredpar[incoupler]
     #female_par=np.reshape(female,resha)[incoupler]
     
      
     mean_fls_m=0.0  
-    picky=(state_par[:]==2) & (ages>=5) & (ages<=6) #& (female_par[:]==1)
-    pickm=(state_par[:]==2) & (ages>=9) & (ages<=11) #& (female_par[:]==1)
-    picko=(state_par[:]==2) & (ages>=14) & (ages<=16) #& (female_par[:]==1)
+    picky=(state_par[:]==2) & (ages>=5) & (ages<=6) & (censoredpar==True)
+    pickm=(state_par[:]==2) & (ages>=9) & (ages<=11) & (censoredpar==True)
+    picko=(state_par[:]==2) & (ages>=14) & (ages<=16) & (censoredpar==True)
     mean_fls_m=np.zeros((3)) 
     if picky.any():mean_fls_m[0]=np.mean(labor_par[picky]*setup.ls_levels[-1])  
     if pickm.any():mean_fls_m[1]=np.mean(labor_par[pickm]*setup.ls_levels[-1])  
     if picko.any():mean_fls_m[2]=np.mean(labor_par[picko]*setup.ls_levels[-1])  
         
     mean_fls_c=0.0  
-    picky=(state_par[:]==3) & (ages>=5) & (ages<=6) #& (female_par[:]==1)
-    pickm=(state_par[:]==3) & (ages>=9) & (ages<=11) #& (female_par[:]==1)
-    picko=(state_par[:]==3) & (ages>=14) & (ages<=16) #& (female_par[:]==1)
+    picky=(state_par[:]==3) & (ages>=5) & (ages<=6) & (censoredpar==True)
+    pickm=(state_par[:]==3) & (ages>=9) & (ages<=11) & (censoredpar==True)
+    picko=(state_par[:]==3) & (ages>=14) & (ages<=16) & (censoredpar==True)
     mean_fls_c=np.zeros((3)) 
     if picky.any():mean_fls_c[0]=np.mean(labor_par[picky]*setup.ls_levels[-1])  
     if pickm.any():mean_fls_c[1]=np.mean(labor_par[pickm]*setup.ls_levels[-1])  
@@ -800,14 +849,14 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
                  
              
             #Arrays for preparation    
-            is_state = (((np.any(state_old[:,:max(t+3,0)]==ist,1))  & (female[:,0]==1))  |  ((np.any(state_old[:,:max(t+1,0)]==ist,1))  & (female[:,0]==0)))   
+            is_state = ((censored[:,min(max(t+3,0),lenn-1)]==True) & ((np.any(state_old[:,:max(t+3,0)]==ist,1))  & (female[:,0]==1))  |  ((censored[:,min(max(t+1,0),lenn-1)]==True) & (np.any(state_old[:,:max(t+1,0)]==ist,1))  & (female[:,0]==0)))   
             is_state1 = (state[:,t]==ist) 
             
             if not (np.any(is_state) or np.any(is_state1)): continue    
              
           
             #Relationship over time    
-            relt[ist,t]=np.sum(is_state)    
+            relt[ist,t]=np.sum(is_state)/np.sum( ( (censored[:,min(max(t+1,0),lenn-1)]==True) & (female[:,0]==0)) |  ( (censored[:,min(max(t+3,0),lenn-1)]==True) & (female[:,0]==1)))  
             relt1[ist,t]=np.sum(is_state1)    
              
                   
@@ -832,8 +881,8 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         
      
     reltt=reltt[:,min(pos):max(pos)+1]  
-    moments['everm']=reltt[2,:]/N
-    moments['everc']=reltt[3,:]/N
+    moments['everm']=reltt[2,:]
+    moments['everc']=reltt[3,:]
     if draw:print('Share married at 35 is {}'.format( moments['everm'][-1]))
     if draw:print('Share cohabiting at 35 is {}'.format( moments['everc'][-1]))
          
@@ -862,14 +911,14 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
                  
              
             #Arrays for preparation    
-            is_state = ((np.any(state_old[:,:max(t+3,0)]>1,1)) & (educ[:,t+1]==ed) & (female[:,0]==1)) |  ((np.any(state_old[:,:max(t+1,0)]>1,1)) & (educ[:,max(t-1,0)]==ed) & (female[:,0]==0))      
+            is_state = ((censored1[:,min(max(t+3,0),lenn-1)]==True) & (np.any(state_old[:,:max(t+3,0)]>1,1)) & (educ[:,t+1]==ed) & (female[:,0]==1)) |  ((censored1[:,min(max(t+1,0),lenn-1)]==True) & (np.any(state_old[:,:max(t+1,0)]>1,1)) & (educ[:,max(t-1,0)]==ed) & (female[:,0]==0))      
             is_state1 = (state[:,t]>1)    
             
             if not (np.any(is_state) or np.any(is_state1)): continue    
              
           
             #Relationship over time    
-            Erelt[edn,t]=np.sum(is_state)    
+            Erelt[edn,t]=np.sum(is_state)/np.sum( ((educ[:,0]==ed) & (censored1[:,min(max(t+1,0),lenn-1)]==True) & (female[:,0]==0)) |  ((educ[:,0]==ed) & (censored1[:,min(max(t+3,0),lenn-1)]==True) & (female[:,0]==1)))
             Erelt1[edn,t]=np.sum(is_state1)    
              
                   
@@ -879,8 +928,8 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
     Ereltt=Ereltt[:,min(pos):max(pos)+1]    
     
     
-    moments['everr_e']=Ereltt[0,:]/np.sum(educ[:,0]=='e')
-    moments['everr_ne']=Ereltt[1,:]/np.sum(educ[:,0]=='n')
+    moments['everr_e']=Ereltt[0,:]
+    moments['everr_ne']=Ereltt[1,:]
     moments['everr_d']=moments['everr_ne']-moments['everr_e']
     
     
@@ -2073,10 +2122,10 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         xa=(5*np.array(range(lg))+20)   
         plt.plot(xa, everm_d[0:lg],'b',linewidth=1.5, label='Married - D')    
         plt.fill_between(xa, everm_i[0,0:lg], everm_i[1,0:lg],alpha=0.2,facecolor='b')    
-        plt.plot(xa, reltt[2,0:lg]/N,'r',linestyle='--',linewidth=1.5, label='Married - S')    
+        plt.plot(xa, moments['everm'],'r',linestyle='--',linewidth=1.5, label='Married - S')    
         plt.plot(xa, everc_d[0:lg],'k',linewidth=1.5, label='Cohabiting - D')    
         plt.fill_between(xa, everc_i[0,0:lg], everc_i[1,0:lg],alpha=0.2,facecolor='k')    
-        plt.plot(xa, reltt[3,0:lg]/N,'m',linestyle='--',linewidth=1.5, label='Cohabiting - S')    
+        plt.plot(xa, moments['everc'],'m',linestyle='--',linewidth=1.5, label='Cohabiting - S')    
         plt.legend(loc='best', fontsize=14,frameon=False,ncol=2)    
         plt.ylim(ymax=1.0)    
         plt.xlabel('Age', fontsize=16)    
@@ -2116,7 +2165,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         xa=(1*np.array(range(lg))+20)   
         plt.plot(xa, everr_d_d,'b',linewidth=1.5, label='Data')    
         plt.fill_between(xa, everr_d_i[0,:], everr_d_i[1,:],alpha=0.2,facecolor='b')    
-        plt.plot(xa, Ereltt[1,0:lg]/np.sum(educ[:,0]=='n')-Ereltt[0,0:lg]/np.sum(educ[:,0]=='e'),'r',linestyle='--',linewidth=1.5, label='Simulation')    
+        plt.plot(xa, moments['everr_d'],'r',linestyle='--',linewidth=1.5, label='Simulation')    
         plt.legend(loc='best', fontsize=14,frameon=False)
         #plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
          #         fancybox=True, shadow=True, ncol=len(state_codes), fontsize='x-small')  

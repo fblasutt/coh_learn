@@ -31,11 +31,11 @@ class ModelSetup(object):
         p = dict()       
         period_year=1#this can be 1,2,3 or 6
         transform=1#this tells how many periods to pull together for duration moments
-        T =int(24/period_year)# int(64/period_year)# 
-        Tret =int(18/period_year)# int(48/period_year) #first period when the agent is retired
+        T =int(64/period_year)# int(24/period_year)# 
+        Tret = int(48/period_year) #int(18/period_year)#first period when the agent is retired
         Tbef=int(2/period_year)
-        Tren = int(18/period_year)#int(48/period_year)## int(42/period_year) # period starting which people do not renegotiate/divroce
-        Tmeet =int(18/period_year)#int(48/period_year)#int(18/period_year)#i int(42/period_year) # period starting which you do not meet anyone
+        Tren =  int(48/period_year) #int(18/period_year)#int(48/period_year)## int(42/period_year) # period starting which people do not renegotiate/divroce
+        Tmeet = int(48/period_year) #int(18/period_year)#int(48/period_year)#int(18/period_year)#i int(42/period_year) # period starting which you do not meet anyone
         dm=8#11
         
         #Measure of People
