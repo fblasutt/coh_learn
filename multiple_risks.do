@@ -4,11 +4,11 @@ use C:\Users\Fabio\Dropbox\coh_learn\animals.dta
 
 
 *change duration!!!
-gen change=0
-replace change=1 if age+duration>40
-drop if age>=40
-replace duration=40-age if change==1
-replace _end=3 if change==1
+*gen change=0
+*replace change=1 if age+duration>40
+*drop if age>=40
+*replace duration=40-age if change==1
+*replace _end=3 if change==1
 
 
 replace _end=0 if _end==1

@@ -2566,8 +2566,8 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         plt.plot(base,em, c='red',label = 'Marriage') 
         #plt.plot(base,ec, c='blue',label = 'Cohabitation') 
         plt.legend(loc='best', fontsize='x-small',frameon=False,ncol=2)  
-        plt.xlabel('Cost of Divorce $1-\kappa$')    
-        plt.ylabel('Share Ever married at 35')  
+        plt.xlabel('Cost of divorce $1-\kappa$')    
+        plt.ylabel('Share ever married at 35')  
         plt.savefig('divor.pgf', bbox_inches = 'tight',pad_inches = 0)  
             #cost   sharem   sharec
     #0.1    0.425     0.845
