@@ -43,7 +43,7 @@ class ModelSetup(object):
         p['Nfn']=1.0-p['Nfe']#0.3
         p['Nme']=np.array([min(0.264+0.00*t,1.0) for t in range(T)])#np.array([0.25]*T)
         p['Nmn']=1-p['Nme']
-        p['ass']=0.53#0.57
+        p['ass']=0.51#0.57
         p['dm']=dm
         p['py']=period_year
         p['ty']=transform
@@ -77,9 +77,9 @@ class ModelSetup(object):
         p['sig_partner_a'] = 0.1#0.5
         p['sig_partner_z'] = 1.2#1.0#0.4 #This is crazy powerful for the diff in diff estimate
         p['sig_partner_mult'] = 1.15#1.15
-        p['dump_factor_z'] =0.48# 0.3#0.8#0.78#0.85#0.8
+        p['dump_factor_z'] =0.4# 0.3#0.8#0.78#0.85#0.8
         p['mean_partner_z_female'] =-0.25#
-        p['mean_partner_z_male'] = -0.2#-0.3
+        p['mean_partner_z_male'] = -0.25#-0.3
         p['mean_partner_a_female'] = -0.0#0.1
         p['mean_partner_a_male'] = 0.0#-0.1
         p['m_bargaining_weight'] = 0.5

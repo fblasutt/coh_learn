@@ -212,7 +212,7 @@ def mdl_resid(x=None,save_to=None,load_from=None,return_format=['distance'],
         adjust=pickle.load(file)
     #adjust=adjust/adjust
     #Get Number of simulated agent, malea and female
-    N=45000
+    N=30000
     Nf=int(N*freq['fem'])#age_uni['share_female'])
     Nm=N-Nf
     Nme=int(Nm*mdl.setup.pars['Nme'][0])
