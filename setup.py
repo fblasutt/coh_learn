@@ -43,7 +43,7 @@ class ModelSetup(object):
         p['Nfn']=1.0-p['Nfe']#0.3
         p['Nme']=np.array([min(0.264+0.00*t,1.0) for t in range(T)])#np.array([0.25]*T)
         p['Nmn']=1-p['Nme']
-        p['ass']=0.51
+        p['ass']=0.53#0.57
         p['dm']=dm
         p['py']=period_year
         p['ty']=transform
@@ -77,9 +77,9 @@ class ModelSetup(object):
         p['sig_partner_a'] = 0.1#0.5
         p['sig_partner_z'] = 1.2#1.0#0.4 #This is crazy powerful for the diff in diff estimate
         p['sig_partner_mult'] = 1.15#1.15
-        p['dump_factor_z'] =0.3# 0.3#0.8#0.78#0.85#0.8
+        p['dump_factor_z'] =0.48# 0.3#0.8#0.78#0.85#0.8
         p['mean_partner_z_female'] =-0.25#
-        p['mean_partner_z_male'] = -0.3#-0.15#
+        p['mean_partner_z_male'] = -0.15#-0.3
         p['mean_partner_a_female'] = -0.0#0.1
         p['mean_partner_a_male'] = 0.0#-0.1
         p['m_bargaining_weight'] = 0.5
@@ -654,15 +654,15 @@ class ModelSetup(object):
                     #                         zfzmmat2[t][i*(p['n_zm_t'][t]-1)+j+i,yf*(p['n_zm_t'][t]-1)+ym+yf]=exogrid['zf_t_mat2d'][e][t][i,yf]*exogrid['zm_t_mat'][eo][t][j,ym]
                    
                     
-                   # #Adjust retirement as in Heatcote et al.
-                   #  for t in range(p['Tret'],p['T']):
-                   #      for j in range(len(zfzm[t])):
-                   #          pref=max(np.exp(zfzm[t][j][0])+np.exp(zfzm[t][j][1]),1.5*max(np.exp(zfzm[t][j][0]),np.exp(zfzm[t][j][1])))
-                   #          zfzm[t][j][0]=np.log(pref)
-                   #          zfzm[t][j][1]=-20.0
-                   #          pref=max(np.exp(zfzm2[t][j][0])+np.exp(zfzm2[t][j][1]),1.5*max(np.exp(zfzm2[t][j][0]),np.exp(zfzm2[t][j][1])))
-                   #          zfzm2[t][j][0]=np.log(pref)
-                   #          zfzm2[t][j][1]=-20.0
+                    #Adjust retirement as in Heatcote et al.
+                    for t in range(p['Tret'],p['T']):
+                        for j in range(len(zfzm[t])):
+                            pref=max(np.exp(zfzm[t][j][0])+np.exp(zfzm[t][j][1]),1.5*max(np.exp(zfzm[t][j][0]),np.exp(zfzm[t][j][1])))
+                            zfzm[t][j][0]=np.log(pref)
+                            zfzm[t][j][1]=-20.0
+                            pref=max(np.exp(zfzm2[t][j][0])+np.exp(zfzm2[t][j][1]),1.5*max(np.exp(zfzm2[t][j][0]),np.exp(zfzm2[t][j][1])))
+                            zfzm2[t][j][0]=np.log(pref)
+                            zfzm2[t][j][1]=-20.0
                    
                    #Modify
                     for dd in range(p['dm']):
@@ -1377,3 +1377,4 @@ def build_s_grid(agrid,n_between,da_min,da_max):
         sgrid = sgrid[1:]
         
     return sgrid
+
