@@ -46,11 +46,11 @@ if __name__ == '__main__':
     #For graphs later
     graphs=True
     #Build  data moments and pickle them
-    dat_moments(period=1,sampling_number=100,weighting=True,transform=1)
+    dat_moments(period=1,sampling_number=100,weighting=False,transform=1)
     
          
   
-    x0 = np.array([0.35,0.0719456,11.2908,1.68981,0.250931,0.776382,-0.279974])
+    x0 = np.array([ 0.378574,0.0636783,14.1403,2.59918,0.165142,0.608711,-0.297201])
    
     #Name and location of files
     if system() == 'Windows':   
@@ -92,4 +92,6 @@ if __name__ == '__main__':
     
         
     #Standard 
-    se=np.sqrt(np.diag(np.linalg.inv(np.dot(np.dot(np.transpose(G),W),G)))*(1+1/15000))
+    se=np.sqrt(np.diag(np.linalg.inv(np.dot(np.dot(np.transpose(G),W),G)))*(1+1/45000))
+    print(se)
+    print('the stanrard errors are {}'.format(se))
