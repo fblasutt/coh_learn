@@ -51,15 +51,13 @@ class ModelSetup(object):
         p['Tret'] = Tret
         p['Tren'] = Tren
         p['Tbef'] = Tbef
-        p['rho_s']    =0.0#  0.15 hear, 0.127 voena, 
+        p['rho_s']    =  0.0#0.127#0.15 #hear, 0.127 voena, 
         p['sig_zf_0']  = {'e':.5694464,'n':.6121695}
         p['sig_zf']    = {'e':.0261176**(0.5),'n':.0149161**(0.5)}
-        #p['sig_zf']    = {'e':.0141176**(0.5),'n':.0141176**(0.5)}
-        #p['sig_zf']    = {'e':.0261176**(0.5),'n':.0269161**(0.5)}
+        #p['sig_zf']    = {'e':.0141176**(0.5),'n':.0141176**(0.5)}#older cohorts
         p['sig_zm_0']  =  {'e':.5673833,'n':.5504325}
         p['sig_zm']    =  {'e':.0316222**(0.5),'n':.0229727**(0.5)}
-        #p['sig_zm']    =  {'e':.0226222**(0.5),'n':.0226222**(0.5)}
-        #p['sig_zm']    =  {'e':.0316222**(0.5),'n':.0316222**(0.5)}
+        #p['sig_zm']    =  {'e':.0226222**(0.5),'n':.0226222**(0.5)}#older cohorts
         p['n_zf_t']      = [6]*Tret + [6]*(T-Tret)
         p['n_zm_t']      = [3]*Tret + [3]*(T-Tret)
         p['n_zf_correct']=3
@@ -628,30 +626,30 @@ class ModelSetup(object):
                     zfzm2, zfzmmat2 = combine_matrices_two_lists(exogrid['zf_t'][e].copy(), exogrid['zm_t'][eo].copy(), zf_t_mat_down.copy(), exogrid['zm_t_mat'][eo].copy())
                    
                     
-                    # if p['rho_s']>0:
-                    #     for t in range(p['Tret']-1):
-                    #         for j in range(p['n_zm_t'][t]):
-                    #             for ym in range(p['n_zm_t'][t]):
+                    if p['rho_s']>0:
+                        for t in range(p['Tret']-1):
+                            for j in range(p['n_zm_t'][t]):
+                                for ym in range(p['n_zm_t'][t]):
                                 
                                     
-                    #                 rhom=(1.0-p['rho_s']**2)**0.5
-                    #                 prec=exogrid['zm_t'][eo][t][j] if t>0 else 0.0
-                    #                 drif=p['rho_s']*p['sig_zf'][e]/p['sig_zm'][eo]*(exogrid['zm_t'][eo][t+1][ym]-prec)
-                    #                 mat1=tauchen_drift(exogrid['zf_t'][e][t].copy(), exogrid['zf_t'][e][t+1].copy(), 1.0, rhom*p['sig_zf'][e], drif, exogrid['zf_t_mat'][e][t])
-                    #                 mat2=tauchen_drift(exogrid['zf_t'][e][t].copy(), exogrid['zf_t'][e][t+1].copy(), 1.0, rhom*p['sig_zf'][e], drif+p['z_drift'], exogrid['zf_t_mat'][e][t])
-                    #                 for i in range(p['n_zf_t'][t]): 
+                                    rhom=(1.0-p['rho_s']**2)**0.5
+                                    prec=exogrid['zm_t'][eo][t][j] if t>0 else 0.0
+                                    drif=p['rho_s']*p['sig_zf'][e]/p['sig_zm'][eo]*(exogrid['zm_t'][eo][t+1][ym]-prec)
+                                    mat1=tauchen_drift(exogrid['zf_t'][e][t].copy(), exogrid['zf_t'][e][t+1].copy(), 1.0, rhom*p['sig_zf'][e], drif, exogrid['zf_t_mat'][e][t])
+                                    mat2=tauchen_drift(exogrid['zf_t'][e][t].copy(), exogrid['zf_t'][e][t+1].copy(), 1.0, rhom*p['sig_zf'][e], drif+p['z_drift'], exogrid['zf_t_mat'][e][t])
+                                    for i in range(p['n_zf_t'][t]): 
                                 
-                    #                     #Modify the grid for women
-                    #                     exogrid['zf_t_mat2'][e][t][i,:]= mat1[i,:]
+                                        #Modify the grid for women
+                                        exogrid['zf_t_mat2'][e][t][i,:]= mat1[i,:]
     
-                    #                     exogrid['zf_t_mat2d'][e][t][i,:]=mat2[i,:]
+                                        exogrid['zf_t_mat2d'][e][t][i,:]=mat2[i,:]
                                         
-                    #                     ##Update the big Matrix
-                    #                     for yf in range(p['n_zf_t'][t]):
+                                        ##Update the big Matrix
+                                        for yf in range(p['n_zf_t'][t]):
                                         
                                             
-                    #                         zfzmmat[t][i*(p['n_zm_t'][t]-1)+j+i,yf*(p['n_zm_t'][t]-1)+ym+yf]=exogrid['zf_t_mat2'][e][t][i,yf]*exogrid['zm_t_mat'][eo][t][j,ym]
-                    #                         zfzmmat2[t][i*(p['n_zm_t'][t]-1)+j+i,yf*(p['n_zm_t'][t]-1)+ym+yf]=exogrid['zf_t_mat2d'][e][t][i,yf]*exogrid['zm_t_mat'][eo][t][j,ym]
+                                            zfzmmat[t][i*(p['n_zm_t'][t]-1)+j+i,yf*(p['n_zm_t'][t]-1)+ym+yf]=exogrid['zf_t_mat2'][e][t][i,yf]*exogrid['zm_t_mat'][eo][t][j,ym]
+                                            zfzmmat2[t][i*(p['n_zm_t'][t]-1)+j+i,yf*(p['n_zm_t'][t]-1)+ym+yf]=exogrid['zf_t_mat2d'][e][t][i,yf]*exogrid['zm_t_mat'][eo][t][j,ym]
                    
                     
                     #Adjust retirement as in Heatcote et al.

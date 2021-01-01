@@ -513,7 +513,7 @@ def compute(dpi,dco,dma,period=3,transform=1):
 #Actual moments computation + weighting matrix   
 ################################################   
    
-def dat_moments(sampling_number=5,weighting=True,covariances=False,relative=False,period=3,transform=1):   
+def dat_moments(sampling_number=100,weighting=True,covariances=False,relative=False,period=3,transform=1):   
        
        
        

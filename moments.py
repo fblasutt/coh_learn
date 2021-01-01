@@ -177,7 +177,8 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
          
     #Create a file with the age of the change foreach person    
     changep=agents.policy_ind   
-        
+    changep=np.zeros(changep.shape)
+
          
     #Get states codes    
     state_codes = {'Female, single': 0, 'Male, single': 1, 'Couple, M': 2,'Couple, C': 3} 
@@ -1694,7 +1695,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
                   fancybox=True, shadow=True, ncol=2, fontsize=14)   
         plt.ylim(ymin=0)    
         #plt.legend(loc='upper left', shadow=True, fontsize='x-small')    
-        plt.xlabel('Duration - Years', fontsize=16)    
+        plt.xlabel('Duration - years', fontsize=16)    
         plt.ylabel('Hazard', fontsize=16)    
         plt.savefig('hazd.pgf', bbox_inches = 'tight',pad_inches = 0)  
         
@@ -1717,7 +1718,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
          #         fancybox=True, shadow=True, ncol=3, fontsize='x-small')    
         plt.ylim(ymin=0)    
         #plt.legend(loc='upper left', shadow=True, fontsize='x-small')    
-        plt.xlabel('Duration - Years')    
+        plt.xlabel('Duration - years')    
         plt.ylabel('Hazard')    
         plt.savefig('hazd_data.pgf', bbox_inches = 'tight',pad_inches = 0)  
         
@@ -1735,14 +1736,14 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         else:    
             one='r'    
             two='b'    
-        plt.plot(np.array(range(lg))+1, hazde[0:lg],one, linestyle='--',linewidth=1.5, label='Hazard of Divorce edu - S')    
-        plt.plot(np.array(range(lg))+1, hazde_d[0:lg],two,linewidth=1.5, label='Hazard of Divorce edy - D')    
+        plt.plot(np.array(range(lg))+1, hazde[0:lg],one, linestyle='--',linewidth=1.5, label='Hazard of divorce edu - S')    
+        plt.plot(np.array(range(lg))+1, hazde_d[0:lg],two,linewidth=1.5, label='Hazard of divorce edy - D')    
         plt.fill_between(np.array(range(lg))+1, hazde_i[0,0:lg], hazde_i[1,0:lg],alpha=0.2,facecolor='b') 
         plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15),    
                   fancybox=True, shadow=True, ncol=2, fontsize=14)     
         plt.ylim(ymin=0)    
         #plt.legend(loc='upper left', shadow=True, fontsize='x-small')    
-        plt.xlabel('Duration - Years', fontsize=16)    
+        plt.xlabel('Duration - years', fontsize=16)    
         plt.ylabel('Hazard', fontsize=16)    
         plt.savefig('hazde.pgf', bbox_inches = 'tight',pad_inches = 0)  
              
@@ -1759,7 +1760,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
                   fancybox=True, shadow=True, ncol=2, fontsize=14)      
         plt.ylim(ymin=0)    
         #plt.legend(loc='upper left', shadow=True, fontsize='x-small')    
-        plt.xlabel('Duration - Years', fontsize=16)    
+        plt.xlabel('Duration - years', fontsize=16)    
         plt.ylabel('Hazard', fontsize=16)    
         plt.savefig('hazs.pgf', bbox_inches = 'tight',pad_inches = 0)  
         
@@ -1794,7 +1795,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
                   fancybox=True, shadow=True, ncol=2, fontsize=14)     
         plt.ylim(ymin=0)    
         #plt.legend(loc='upper left', shadow=True, fontsize='x-small')    
-        plt.xlabel('Duration - Years', fontsize=16)    
+        plt.xlabel('Duration - years', fontsize=16)    
         plt.ylabel('Hazard', fontsize=16)    
         plt.savefig('hazm.pgf', bbox_inches = 'tight',pad_inches = 0)  
         
@@ -1806,13 +1807,13 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         f1=fig.add_subplot(2,1,1)    
         lg=min(len(hazm_d),len(hazme))  
     
-        plt.plot(np.array(range(lg))+1, hazme[0:lg],one, linestyle='--',linewidth=1.5, label='Hazard of Marriage Edu- S')    
+        plt.plot(np.array(range(lg))+1, hazme[0:lg],one, linestyle='--',linewidth=1.5, label='Hazard of marriage edu- S')    
         plt.legend(loc='best', ncol=1, fontsize='x-small',frameon=False)
         #plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
          #         fancybox=True, shadow=True, ncol=3, fontsize='x-small')    
         plt.ylim(ymin=0)    
         #plt.legend(loc='upper left', shadow=True, fontsize='x-small')    
-        plt.xlabel('Duration - Edu Years')    
+        plt.xlabel('Duration - edu years')    
         plt.ylabel('Hazard')    
         
         
@@ -1826,7 +1827,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
              
         for ist,sname in enumerate(state_codes):    
             plt.plot(np.array(range(lenn)), ass_rel[ist,:,0],markersize=6, label=sname)    
-        plt.plot(np.array(range(lenn)), ass_rel[2,:,1], linestyle='--',color='r',markersize=6, label='Marriage male') 
+        plt.plot(np.array(range(lenn)), ass_rel[2,:,1], linestyle='--',color='r',markersize=6, label='marriage male') 
         plt.plot(np.array(range(lenn)), ass_rel[3,:,1], linestyle='--',color='b',markersize=6, label='Cohabitation other')
         plt.legend(loc='best', ncol=1, fontsize='x-small')
         plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
@@ -1893,7 +1894,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15),    
                   fancybox=True, shadow=True, ncol=2, fontsize=14)    
         plt.xlabel('Age', fontsize=16)    
-        plt.ylabel('Average Log Wage', fontsize=16)
+        plt.ylabel('Average log wage', fontsize=16)
         plt.ylim(ymax=4.5,ymin=2.0) 
         plt.savefig('em.pgf', bbox_inches = 'tight',pad_inches = 0)  
         
@@ -1907,7 +1908,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15),    
                   fancybox=True, shadow=True, ncol=2, fontsize=14)    
         plt.xlabel('Age', fontsize=16)    
-        plt.ylabel('Average Log Wage', fontsize=16)
+        plt.ylabel('Average log wage', fontsize=16)
         plt.ylim(ymax=4.5,ymin=2.0) 
         plt.savefig('nm.pgf', bbox_inches = 'tight',pad_inches = 0)  
         
@@ -1919,7 +1920,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15),    
                   fancybox=True, shadow=True, ncol=2, fontsize=14)    
         plt.xlabel('Age', fontsize=16)    
-        plt.ylabel('Average Log Wage', fontsize=16)
+        plt.ylabel('Average log wage', fontsize=16)
         plt.ylim(ymax=4.5,ymin=2.0) 
         plt.savefig('nf.pgf', bbox_inches = 'tight',pad_inches = 0)  
         
@@ -1932,7 +1933,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15),    
                   fancybox=True, shadow=True, ncol=2, fontsize=14)    
         plt.xlabel('Age', fontsize=16)    
-        plt.ylabel('Average Log Wage', fontsize=16)
+        plt.ylabel('Average log wage', fontsize=16)
         plt.ylim(ymax=4.5,ymin=2.0) 
         plt.savefig('ef.pgf', bbox_inches = 'tight',pad_inches = 0)  
                      
@@ -1955,7 +1956,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
             plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15),    
                       fancybox=True, shadow=True, ncol=2, fontsize=14)    
             plt.xlabel('Age', fontsize=16)    
-            plt.ylabel('Average Productivity', fontsize=16)
+            plt.ylabel('Average productivity', fontsize=16)
             plt.savefig('sy_minc.pgf', bbox_inches = 'tight',pad_inches = 0)  
              
             ##########################################    
@@ -1974,7 +1975,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
             plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15),    
                       fancybox=True, shadow=True, ncol=2, fontsize=14)    
             plt.xlabel('Age', fontsize=16)    
-            plt.ylabel('Productivity Variance', fontsize=16)  
+            plt.ylabel('Productivity variance', fontsize=16)  
             plt.savefig('sy_vinc.pgf', bbox_inches = 'tight',pad_inches = 0)
              
         ##########################################    
@@ -2019,7 +2020,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
                   fancybox=True, shadow=True, ncol=len(state_codes), fontsize='x-small')    
         plt.xlabel('Age')    
-        plt.ylabel('Asset Variance first meeting')  
+        plt.ylabel('Asset variance first meeting')  
          
         ##########################################    
         # Correlation Assets at Breack up 
@@ -2054,8 +2055,8 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         #plt.plot(gridcd[0:5], raw_dut[0:5],linestyle='--',color='y',markersize=3, label='Simulation')  
         plt.yticks(np.arange(0, 2, 0.2))
         plt.legend(loc='best', fontsize='x-small',frameon=False,ncol=2)     
-        plt.xlabel('Premarital Cohabitation Duration (yrs)')    
-        plt.ylabel('Rel. Haz. of Divorce')    
+        plt.xlabel('Premarital cohabitation duration (yrs)')    
+        plt.ylabel('Rel. haz. of divorce')    
         plt.savefig('prec.pgf', bbox_inches = 'tight',pad_inches = 0)
          
          
@@ -2172,7 +2173,7 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
 
         plt.ylim(ymax=0.5,ymin=-0.5)    
         plt.xlabel('Age', fontsize=16)    
-        plt.ylabel('Share Differece', fontsize=16)    
+        plt.ylabel('Share differece', fontsize=16)    
         plt.margins(0,0)  
         plt.savefig('erel_edu.pgf', bbox_inches = 'tight',pad_inches = 0) 
        
@@ -2218,14 +2219,14 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         f6=fig.add_subplot(2,1,1) 
          
          
-        sns.kdeplot(psi_check[statecpsi], shade=True,shade_lowest=False,linewidth=0.01, color="r", bw=.05,label = 'Cohabitaition') 
+        sns.kdeplot(psi_check[statecpsi], shade=True,shade_lowest=False,linewidth=0.01, color="r", bw=.05,label = 'Cohabitation') 
         sns.kdeplot(psi_check[statempsi], shade=True,shade_lowest=False,linewidth=0.01, color="b", bw=.05,label = 'Marriage') 
-        sns.kdeplot(psi_check[changec], color="r", bw=.05,label = 'Cohabitaition---Initial') 
-        sns.kdeplot(psi_check[changem], color="b", bw=.05,label = 'Marriage---Initial')   
+        sns.kdeplot(psi_check[changec], color="r", bw=.05,label = 'Cohabitation---initial') 
+        sns.kdeplot(psi_check[changem], color="b", bw=.05,label = 'Marriage---initial')   
         plt.legend(loc='best', fontsize='x-small',frameon=False)
         #plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.3),    
          #         fancybox=True, shadow=True, ncol=len(state_codes), fontsize='x-small')    
-        plt.xlabel('Match Quality $\hat{\psi}_d$')    
+        plt.xlabel('Match quality $\hat{\psi}_d$')    
         plt.ylabel('Denisty') 
         plt.savefig('psidist_total.pgf', bbox_inches = 'tight',pad_inches = 0)  
 
@@ -2247,12 +2248,12 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         #cumulativect = np.cumsum(valuesct) 
         #cumulativemt = np.cumsum(valuesmt) 
         # plot the cumulative function 
-        plt.plot(basec[:-1], cumulativec/max(cumulativec), c='red',markersize=6,label = 'Cohabitaition') 
+        plt.plot(basec[:-1], cumulativec/max(cumulativec), c='red',markersize=6,label = 'Cohabitation') 
         plt.plot(basem[:-1], cumulativem/max(cumulativem), c='blue',markersize=6,label = 'Marriage') 
-        #plt.plot(basect[:-1], cumulativect/max(cumulativect),linestyle='--', c='red',label = 'Cohabitaition-All') 
+        #plt.plot(basect[:-1], cumulativect/max(cumulativect),linestyle='--', c='red',label = 'Cohabitation-All') 
         #plt.plot(basemt[:-1], cumulativemt/max(cumulativemt),linestyle='--', c='blue',label = 'Marriage-All') 
         plt.legend(loc='best', fontsize=14,frameon=False,ncol=1)      
-        plt.xlabel('Match Quality at Meeting $\hat{\psi}^v_1$', fontsize=16)    
+        plt.xlabel('Match quality at meeting $\hat{\psi}^v_1$', fontsize=16)    
         plt.ylabel('Probability', fontsize=16)  
         plt.savefig('psidist.pgf', bbox_inches = 'tight',pad_inches = 0)  
         
@@ -2279,9 +2280,9 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         cumulativectn = np.cumsum(valuesctn) 
         cumulativemtn = np.cumsum(valuesmtn) 
         # plot the cumulative function 
-        plt.plot(basecte[:-1], cumulativecte/max(cumulativecte), c='black',label = 'Cohabitaition - Co') 
+        plt.plot(basecte[:-1], cumulativecte/max(cumulativecte), c='black',label = 'Cohabitation - Co') 
         plt.plot(basemte[:-1], cumulativemte/max(cumulativemte), c='b',label = 'Marriage - Co') 
-        plt.plot(basectn[:-1], cumulativectn/max(cumulativectn), c='y',linestyle='--',label = 'Cohabitaition - NoCo') 
+        plt.plot(basectn[:-1], cumulativectn/max(cumulativectn), c='y',linestyle='--',label = 'Cohabitation - NoCo') 
         plt.plot(basemtn[:-1], cumulativemtn/max(cumulativemtn), c='r',linestyle='--',label = 'Marriage - NoCo') 
         plt.legend(loc='best', fontsize='x-small',frameon=False)  
         plt.xlabel('Love Shock $\psi$')    
@@ -2295,9 +2296,9 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         f6=fig.add_subplot(2,1,1) 
          
          
-        sns.kdeplot(theta_t[statecpsi], shade=True,shade_lowest=False,linewidth=0.01, color="r", bw=.05,label = 'Cohabitaition') 
+        sns.kdeplot(theta_t[statecpsi], shade=True,shade_lowest=False,linewidth=0.01, color="r", bw=.05,label = 'Cohabitation') 
         sns.kdeplot(theta_t[statempsi], shade=True,shade_lowest=False,linewidth=0.01, color="b", bw=.05,label = 'Marriage') 
-        sns.kdeplot(theta_t[changec], color="r", bw=.05,label = 'Cohabitaition Beg') 
+        sns.kdeplot(theta_t[changec], color="r", bw=.05,label = 'Cohabitation Beg') 
         sns.kdeplot(theta_t[changem], color="b", bw=.05,label = 'Marriage Beg')  
         plt.legend(loc='best', fontsize='x-small',frameon=False)   
         plt.xlabel('Female Pareto Weight')    
@@ -2539,14 +2540,14 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         f1=fig.add_subplot(2,1,1) 
          
         base=np.linspace(0,5,6,dtype=np.int16)
-        raw=np.array([1.0,1.21,0.82,0.79,0.58,0.46])
-        predicted=np.array([1.0,1.11,0.84,0.78,0.76,0.72])
+        raw=np.array([1.0,1.2514311,.83249158,.72946161,.57066655,.47803476])
+        predicted=np.array([1.0,1.1016437,.84119433,.75853962,.70848346,.67333299])
         # plot the cumulative function 
-        plt.plot(base,raw, c='red',label = 'Raw Data') 
-        plt.plot(base,predicted, c='blue',label = 'Model Prediction') 
+        plt.plot(base,raw, c='red',label = 'Raw data') 
+        plt.plot(base,predicted, c='blue',label = 'Model prediction') 
         plt.legend(loc='best', fontsize='x-small',frameon=False,ncol=2)  
-        plt.xlabel('Premarital Cohabitation Duration (Years)')    
-        plt.ylabel('Rel. Haz. of Divorce')  
+        plt.xlabel('Premarital cohabitation duration (years)')    
+        plt.ylabel('Rel. haz. of divorce')  
         plt.savefig('cohrel.pgf', bbox_inches = 'tight',pad_inches = 0)  
         
         
@@ -2556,9 +2557,9 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
          
         fig = plt.figure()    
         f1=fig.add_subplot(2,1,1) 
-         
-        base=np.array([0.1,0.2,0.3,0.4,0.5,0.6,0.7])
-        em=np.array([0.42,0.52453333,0.56366667,0.5506,0.53206667,0.53346667,0.50626667])
+
+        base=np.array([0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5])
+        em=np.array([0.32709061,0.34040262,0.419,0.44451695,0.58546772,0.6153545,0.61023198,0.63219028,0.64563281,0.53554765 ])
        # ec=np.array([0.845,.830,.814,.789,0.754,0.75,0.74])
 
 
@@ -2566,8 +2567,8 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         plt.plot(base,em, c='red',label = 'Marriage') 
         #plt.plot(base,ec, c='blue',label = 'Cohabitation') 
         plt.legend(loc='best', fontsize='x-small',frameon=False,ncol=2)  
-        plt.xlabel('Cost of Divorce $1-\kappa$')    
-        plt.ylabel('Share Ever married at 35')  
+        plt.xlabel('Cost of divorce $1-\kappa$')    
+        plt.ylabel('Share ever married at 35')  
         plt.savefig('divor.pgf', bbox_inches = 'tight',pad_inches = 0)  
             #cost   sharem   sharec
     #0.1    0.425     0.845
