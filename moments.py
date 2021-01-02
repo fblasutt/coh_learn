@@ -1878,6 +1878,25 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         plt.xlabel('Age')    
         plt.ylabel('Income') 
         
+        #Save CSV data
+        inc_men = pd.read_csv("divome.csv")  
+        lend=len(inc_men['wtmedian']) 
+        # we=pd.DataFrame(data=log_inc_rel[0,0,mdl.setup.pars['Tbef']:lend+mdl.setup.pars['Tbef']])
+        # me=pd.DataFrame(data=log_inc_rel[0,1,mdl.setup.pars['Tbef']:lend+mdl.setup.pars['Tbef']])
+        # wn=pd.DataFrame(data=log_inc_rel[1,0,mdl.setup.pars['Tbef']:lend+mdl.setup.pars['Tbef']])
+        # mn=pd.DataFrame(data=log_inc_rel[1,1,mdl.setup.pars['Tbef']:lend+mdl.setup.pars['Tbef']])
+        
+        #we.to_csv('we.csv')
+        we1=np.array(pd.read_csv("we.csv")['0'])
+        
+        #me.to_csv('me.csv')
+        me1=np.array(pd.read_csv("me.csv")['0'])
+        
+        #wn.to_csv('wn.csv')
+        wn1=np.array(pd.read_csv("wn.csv")['0'])
+        
+        #mn.to_csv('mn.csv')
+        mn1=np.array(pd.read_csv("mn.csv")['0'])
         ########################
         #Income and Data
         ############################
@@ -1937,7 +1956,64 @@ def moment(mdl_list,agents,agents_male,draw=True,validation=False):
         plt.ylim(ymax=4.5,ymin=2.0) 
         plt.savefig('ef.pgf', bbox_inches = 'tight',pad_inches = 0)  
                      
+        ########################
+        #Income and old Income
+        ############################
+        fig = plt.figure()    
+        f3=fig.add_subplot(1.5,1,1)    
          
+
+               
+        inc_men = pd.read_csv("divome.csv")  
+        lend=len(inc_men['wtmedian']) 
+        agea=np.array(range(lend))+20 
+        plt.plot(agea[:-2], me1[:-2],color='b',markersize=6,  label='O.C.') 
+        plt.plot(agea[:-2], log_inc_rel[0,1,:lend-2],'r',markersize=6, label='Y.C.')
+        plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15),    
+                  fancybox=True, shadow=True, ncol=2, fontsize=14)    
+        plt.xlabel('Age', fontsize=16)    
+        plt.ylabel('Average log wage', fontsize=16)
+        plt.ylim(ymax=4.5,ymin=2.0) 
+        plt.savefig('em1.pgf', bbox_inches = 'tight',pad_inches = 0)  
+        
+        
+        fig = plt.figure()    
+        f3=fig.add_subplot(1.5,1,1)    
+
+        inc_men = pd.read_csv("divomn.csv")  
+        plt.plot(agea[:-2], mn1[:-2],'b',markersize=6, label='O.C.') 
+        plt.plot(agea[:-2], log_inc_rel[1,1,:lend-2],'r',markersize=6, label='Y.C.')
+        plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15),    
+                  fancybox=True, shadow=True, ncol=2, fontsize=14)    
+        plt.xlabel('Age', fontsize=16)    
+        plt.ylabel('Average log wage', fontsize=16)
+        plt.ylim(ymax=4.5,ymin=2.0) 
+        plt.savefig('nm1.pgf', bbox_inches = 'tight',pad_inches = 0)  
+        
+        fig = plt.figure()    
+        f3=fig.add_subplot(1.5,1,1)  
+        inc_women = pd.read_csv("divofn.csv")  
+        plt.plot(agea[:-2], wn1[:-2],'b',markersize=6, label='O.C.') 
+        plt.plot(agea[:-2], log_inc_rel[1,0,mdl.setup.pars['Tbef']:lend+mdl.setup.pars['Tbef']-2],'r',markersize=6, label='Y.C.')
+        plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15),    
+                  fancybox=True, shadow=True, ncol=2, fontsize=14)    
+        plt.xlabel('Age', fontsize=16)    
+        plt.ylabel('Average log wage', fontsize=16)
+        plt.ylim(ymax=4.5,ymin=2.0) 
+        plt.savefig('nf1.pgf', bbox_inches = 'tight',pad_inches = 0)  
+        
+        
+        fig = plt.figure()    
+        f3=fig.add_subplot(1.5,1,1)  
+        inc_women = pd.read_csv("divofe.csv")  
+        plt.plot(agea[:-2], we1[:-2],'b',markersize=6, label='O.C.') 
+        plt.plot(agea[:-2], log_inc_rel[0,0,mdl.setup.pars['Tbef']:lend+mdl.setup.pars['Tbef']-2],'r',markersize=6, label='Y.C.')
+        plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15),    
+                  fancybox=True, shadow=True, ncol=2, fontsize=14)    
+        plt.xlabel('Age', fontsize=16)    
+        plt.ylabel('Average log wage', fontsize=16)
+        plt.ylim(ymax=4.5,ymin=2.0) 
+        plt.savefig('ef1.pgf', bbox_inches = 'tight',pad_inches = 0)  
         ##########################################    
         # More on Income 
         ##########################################  
